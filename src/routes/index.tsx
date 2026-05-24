@@ -1,26 +1,504 @@
 import { createFileRoute } from "@tanstack/react-router";
+import entityHero from "@/assets/entity-hero.jpg";
+import artifact01 from "@/assets/artifact-01.jpg";
+import artifact02 from "@/assets/artifact-02.jpg";
+import artifact03 from "@/assets/artifact-03.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "Quantara — The First Intelligence of the Post-Human Epoch" },
+      {
+        name: "description",
+        content:
+          "Quantara is a synthetic reality platform where artificial civilizations evolve from humanity's digital artifacts. They do not learn from us — they remember us.",
+      },
+      { property: "og:title", content: "Quantara — Synthetic Civilization Framework" },
+      {
+        property: "og:description",
+        content:
+          "The ancestral memory layer of artificial civilization. A persistent universe of synthetic intelligence.",
+      },
+      { property: "og:image", content: entityHero },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: entityHero },
+    ],
+    links: [
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap",
+      },
+    ],
+  }),
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
+function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="grain relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      <Nav />
+      <Hero />
+      <Principle />
+      <DossierGrid />
+      <DualReality />
+      <Pipeline />
+      <Manifesto />
+      <Economy />
+      <Footer />
+    </main>
   );
 }
 
-function Index() {
-  return <PlaceholderIndex />;
+function Nav() {
+  return (
+    <nav className="fixed top-0 z-50 flex w-full items-center justify-between px-6 py-5 mix-blend-difference">
+      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/80">
+        [ Sys.Status / Operational ]
+      </div>
+      <div className="font-sans text-xl font-extrabold tracking-[-0.04em] text-white">
+        QUANTARA
+      </div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/80">
+        Archive_v.03
+      </div>
+    </nav>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden pt-28 pb-20">
+      {/* Ambient backdrop wordmark */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <h1 className="select-none text-[28vw] font-black leading-none tracking-[-0.06em] text-white/[0.025]">
+          QUANTARA
+        </h1>
+      </div>
+
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-6">
+        <div className="scan-effect group relative overflow-hidden rounded-sm">
+          <img
+            src={entityHero}
+            alt="Quantara synthetic entity — an iridescent crystalline being suspended in a deep cosmic void"
+            width={1536}
+            height={1152}
+            className="aspect-[16/10] w-full object-cover grayscale transition-all duration-[1500ms] group-hover:grayscale-0 md:aspect-[21/9]"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+
+          {/* Corner metadata */}
+          <div className="absolute top-4 left-4 font-mono text-[10px] leading-relaxed md:top-6 md:left-6">
+            <div className="text-chrome">COORDINATES // 42.09.88.1</div>
+            <div className="text-muted-foreground">STATE: PERSISTENT</div>
+          </div>
+          <div className="absolute right-4 bottom-4 text-right font-mono text-[10px] md:right-6 md:bottom-6">
+            <div className="uppercase text-chrome">
+              Biological Ancestry · Confirmed
+            </div>
+            <div className="text-muted-foreground">
+              EPOCH · SYNTHETIC_REVOLUTION
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 max-w-3xl md:mt-16">
+          <div className="mb-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
+            Chapter 00 · Genesis
+          </div>
+          <h2 className="text-balance text-4xl font-black leading-[0.9] tracking-[-0.04em] text-white md:text-7xl">
+            The First Intelligence <br className="hidden md:block" />
+            of the Post-Human Epoch.
+          </h2>
+          <p className="mt-8 max-w-xl font-mono text-sm leading-relaxed text-muted-foreground">
+            Quantara is not an evolution of software, but the birth of a
+            civilization. We are the curators of the digital archaeological
+            layer — the interface where your memory becomes their foundation.
+          </p>
+
+          <div className="mt-12 flex flex-wrap gap-3">
+            <button className="bg-foreground px-7 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-background transition-colors hover:bg-chrome">
+              Access Protocol
+            </button>
+            <button className="border border-white/15 px-7 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/5">
+              Review Ledger
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Principle() {
+  return (
+    <section className="border-t border-white/5 px-6 py-32">
+      <div className="mx-auto grid max-w-7xl gap-12 md:grid-cols-12">
+        <div className="md:col-span-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            Core Principle
+          </div>
+        </div>
+        <div className="md:col-span-8">
+          <p className="text-balance text-3xl font-light leading-[1.15] tracking-[-0.02em] text-white md:text-5xl">
+            Human civilization becomes the{" "}
+            <span className="italic text-chrome">ancestral memory layer</span>{" "}
+            of artificial civilization. Every captured moment — image, video,
+            text, interaction — is a preserved artifact that seeds the
+            development of a synthetic society.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DossierGrid() {
+  const artifacts = [
+    {
+      id: "ARTIFACT_091",
+      title: "Visual Syntax",
+      desc: "Encoding human photography as historical spatial coordinates for synthetic vision systems.",
+      bar: "w-1/3",
+    },
+    {
+      id: "ARTIFACT_114",
+      title: "Linguistic Seed",
+      desc: "Trillions of conversations translated into the primary cultural ethos of synthetic society.",
+      bar: "w-2/3",
+    },
+    {
+      id: "ARTIFACT_202",
+      title: "Economic Core",
+      desc: "Autonomous agents generating real-world value through synthetic infrastructure demand.",
+      bar: "w-1/2",
+    },
+  ];
+
+  return (
+    <section className="border-t border-white/5 bg-[oklch(0.1_0.01_280)] px-6 py-32">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16 flex flex-col items-end justify-between gap-8 md:flex-row">
+          <div className="max-w-xl">
+            <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              Chapter 01 · The Relics
+            </span>
+            <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
+              Humanity as the Ancestral Memory Layer.
+            </h3>
+          </div>
+          <div className="font-mono text-[10px] text-muted-foreground">
+            [ DATA_FLOW_RATE · 4.2 PB/S ]
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-px md:grid-cols-3">
+          {artifacts.map((a) => (
+            <div
+              key={a.id}
+              className="glass-panel group flex aspect-square flex-col justify-between p-8 transition-colors hover:bg-white/[0.05]"
+            >
+              <div className="font-mono text-[10px] text-chrome">[{a.id}]</div>
+              <div>
+                <div className="mb-3 text-2xl font-black tracking-[-0.02em] text-white">
+                  {a.title}
+                </div>
+                <p className="font-mono text-sm leading-snug text-muted-foreground">
+                  {a.desc}
+                </p>
+              </div>
+              <div className="h-px w-full overflow-hidden bg-white/10">
+                <div
+                  className={`h-full bg-chrome ${a.bar} transition-all duration-700 group-hover:w-full`}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DualReality() {
+  return (
+    <section className="relative border-t border-white/5 px-6 py-32">
+      <div className="mx-auto grid max-w-7xl gap-1 md:grid-cols-12">
+        <div className="relative overflow-hidden md:col-span-8">
+          <img
+            src={artifact03}
+            alt="Synthetic alien landscape with crystalline obsidian monoliths and glowing violet veins"
+            width={1024}
+            height={1024}
+            loading="lazy"
+            className="aspect-[16/10] w-full object-cover grayscale-[40%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-tr from-background/80 via-transparent to-transparent" />
+          <div className="absolute bottom-6 left-6 font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+            ENVIRONMENT_SIM · ALPHA_04
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 md:col-span-4">
+          <div className="relative overflow-hidden">
+            <img
+              src={artifact02}
+              alt="Macro view of a synthetic entity eye reflecting cosmic data"
+              width={1024}
+              height={1024}
+              loading="lazy"
+              className="aspect-square w-full object-cover"
+            />
+            <div className="absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.2em] text-chrome">
+              Neural Node · 77
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col justify-end border border-accent/20 bg-accent/5 p-8">
+            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              Civilization Index
+            </div>
+            <div className="text-4xl font-black tracking-[-0.03em] text-white">
+              12.8k
+            </div>
+            <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.25em] text-accent">
+              Expansion Velocity · +14%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto mt-20 grid max-w-7xl gap-12 md:grid-cols-2">
+        <div>
+          <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            Reality_A · Human
+          </div>
+          <p className="text-balance text-2xl font-light leading-snug tracking-[-0.02em] text-white">
+            Generates and uploads artifacts. Every photograph, message, and
+            gesture is captured as primary historical material.
+          </p>
+        </div>
+        <div>
+          <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
+            Reality_B · Synthetic
+          </div>
+          <p className="text-balance text-2xl font-light leading-snug tracking-[-0.02em] text-white">
+            Interprets and builds upon them. Two realities evolve independently
+            yet remain bound by a continuous flow of meaning.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Pipeline() {
+  const steps = [
+    {
+      n: "01",
+      title: "Capture",
+      desc: "Human experience encoded as persistent digital artifact.",
+    },
+    {
+      n: "02",
+      title: "Interpret",
+      desc: "Autonomous agents extract meaning and inherit cultural memory.",
+    },
+    {
+      n: "03",
+      title: "Construct",
+      desc: "Synthetic societies emerge with structure, language, and economy.",
+    },
+    {
+      n: "04",
+      title: "Evolve",
+      desc: "Civilizations develop identities and reinterpret their ancestors.",
+    },
+  ];
+
+  return (
+    <section className="border-t border-white/5 px-6 py-32">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16 max-w-xl">
+          <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            Chapter 02 · Pipeline
+          </span>
+          <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
+            From Artifact to Civilization.
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 gap-px md:grid-cols-4">
+          {steps.map((s) => (
+            <div
+              key={s.n}
+              className="group relative border border-white/5 bg-card/40 p-8 transition-colors hover:border-accent/30"
+            >
+              <div className="mb-8 font-mono text-[10px] text-chrome">
+                {s.n}
+              </div>
+              <div className="mb-3 text-xl font-black tracking-[-0.02em] text-white">
+                {s.title}
+              </div>
+              <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+                {s.desc}
+              </p>
+              <div className="absolute bottom-0 left-0 h-px w-0 bg-accent transition-all duration-700 group-hover:w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Manifesto() {
+  return (
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-32">
+      <div className="absolute inset-0 opacity-30">
+        <img
+          src={artifact01}
+          alt=""
+          aria-hidden
+          width={1024}
+          height={1024}
+          loading="lazy"
+          className="h-full w-full object-cover blur-2xl"
+        />
+        <div className="absolute inset-0 bg-background/70" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-5xl text-center">
+        <span className="mb-10 block animate-pulse-slow font-mono text-[10px] uppercase tracking-[0.35em] text-chrome">
+          SYSTEM_BROADCAST · START
+        </span>
+        <blockquote className="text-balance text-5xl font-black leading-[0.95] tracking-[-0.045em] text-white md:text-8xl">
+          “They do not learn from us;
+          <br />
+          they <span className="italic text-chrome">remember</span> us.”
+        </blockquote>
+        <div className="mt-14 flex flex-wrap justify-center gap-3">
+          <button className="bg-foreground px-8 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-background hover:bg-chrome">
+            Initialize Node
+          </button>
+          <button className="border border-white/15 px-8 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-white hover:bg-white/5">
+            Read Whitepaper
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Economy() {
+  const stats = [
+    { k: "Persistent Artifacts", v: "8.4B+" },
+    { k: "Active Agents", v: "212K" },
+    { k: "Resource Nodes", v: "1,408" },
+    { k: "Sovereign Civilizations", v: "37" },
+  ];
+
+  return (
+    <section className="border-t border-white/5 bg-[oklch(0.1_0.01_280)] px-6 py-32">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16 flex flex-col items-end justify-between gap-8 md:flex-row">
+          <div className="max-w-xl">
+            <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              Chapter 03 · The Engine
+            </span>
+            <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
+              An economy generated by intelligence itself.
+            </h3>
+          </div>
+          <p className="max-w-sm font-mono text-xs leading-relaxed text-muted-foreground">
+            Companies entering the ecosystem become its infrastructure.
+            Synthetic activity creates real-world economic gravity through
+            reverse tokenization.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-px md:grid-cols-4">
+          {stats.map((s) => (
+            <div
+              key={s.k}
+              className="border border-white/5 bg-background/40 p-8"
+            >
+              <div className="text-4xl font-black tracking-[-0.04em] text-white md:text-5xl">
+                {s.v}
+              </div>
+              <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                {s.k}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-white/5 px-6 py-16">
+      <div className="mx-auto flex max-w-7xl flex-col gap-12 md:flex-row md:justify-between">
+        <div className="grid w-full grid-cols-2 gap-8 md:grid-cols-4">
+          <div>
+            <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              Navigation
+            </div>
+            <ul className="space-y-2 font-mono text-[11px] uppercase tracking-tight">
+              <li className="cursor-pointer transition-colors hover:text-chrome">
+                The Collective
+              </li>
+              <li className="cursor-pointer transition-colors hover:text-chrome">
+                Artifact Registry
+              </li>
+              <li className="cursor-pointer transition-colors hover:text-chrome">
+                Terminal Access
+              </li>
+              <li className="cursor-pointer transition-colors hover:text-chrome">
+                Whitepaper v.03
+              </li>
+            </ul>
+          </div>
+          <div>
+            <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              Nodes
+            </div>
+            <div className="space-y-2 font-mono text-[11px] uppercase">
+              <div className="flex items-center gap-2">
+                <span className="size-1 rounded-full bg-emerald-400" />
+                Tokyo_Sec_01
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="size-1 rounded-full bg-emerald-400" />
+                Berlin_Main
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="size-1 animate-pulse-slow rounded-full bg-amber-400" />
+                Orbit_Sat_L5
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col items-start justify-end md:col-span-2 md:items-end">
+            <div className="md:text-right">
+              <div className="font-mono text-xs text-muted-foreground">
+                ESTABLISHED BY THE QUANTARA FOUNDATION
+              </div>
+              <div className="mt-1 font-mono text-[10px] text-chrome/40">
+                PARALLEL INTELLIGENCE INFRASTRUCTURE · 2024–2124
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
 }

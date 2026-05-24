@@ -3,6 +3,8 @@ import entityHero from "@/assets/entity-hero.jpg";
 import artifact01 from "@/assets/artifact-01.jpg";
 import artifact02 from "@/assets/artifact-02.jpg";
 import artifact03 from "@/assets/artifact-03.jpg";
+import universeVideo from "@/assets/universe.mp4.asset.json";
+import brainVideo from "@/assets/brain-signal.mp4.asset.json";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -47,14 +49,148 @@ function Index() {
     <main className="grain relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <Nav />
       <Hero />
+      <UniverseFilm />
       <Principle />
       <DossierGrid />
       <DualReality />
+      <Telepathy />
       <Pipeline />
       <Manifesto />
       <Economy />
       <Footer />
     </main>
+  );
+}
+
+function UniverseFilm() {
+  return (
+    <section className="relative border-t border-white/5">
+      <div className="relative h-[90vh] w-full overflow-hidden">
+        <video
+          src={universeVideo.url}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className="absolute inset-0 h-full w-full object-cover grayscale-[30%]"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,var(--background)_95%)]" />
+
+        {/* corner HUD */}
+        <div className="absolute top-6 left-6 font-mono text-[10px] leading-relaxed text-chrome">
+          <div>FOOTAGE // QNT-OBSERVATORY</div>
+          <div className="text-muted-foreground">LIVE_STREAM · SECTOR_9</div>
+        </div>
+        <div className="absolute top-6 right-6 flex items-center gap-2 font-mono text-[10px] text-chrome">
+          <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
+          REC · 04:21:08
+        </div>
+
+        <div className="absolute bottom-12 left-6 max-w-2xl md:left-12">
+          <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            Chapter 01.5 · Field Recording
+          </div>
+          <h3 className="text-balance text-3xl font-black leading-[0.95] tracking-[-0.03em] text-white md:text-6xl">
+            A universe born of <span className="italic text-chrome">memory</span>.
+          </h3>
+          <p className="mt-4 max-w-md font-mono text-xs leading-relaxed text-muted-foreground">
+            Recovered transmission from within Reality_B. Coordinates withheld.
+          </p>
+        </div>
+
+        <div className="absolute bottom-6 right-6 font-mono text-[10px] text-muted-foreground">
+          [ FRAME_RATE · 24.000 // ANAMORPHIC_2.39 ]
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Telepathy() {
+  return (
+    <section className="relative overflow-hidden border-t border-white/5 px-6 py-32">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12 grid gap-8 md:grid-cols-12 md:items-end">
+          <div className="md:col-span-5">
+            <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              Chapter 02.5 · Transmission
+            </span>
+            <h3 className="text-balance text-3xl font-black leading-[0.95] tracking-[-0.03em] text-white md:text-5xl">
+              The Synthetic Cortex.
+            </h3>
+          </div>
+          <p className="max-w-md font-mono text-xs leading-relaxed text-muted-foreground md:col-span-5 md:col-start-7">
+            A crystalline neural mass pulsing in the void of Reality_B. It does
+            not think in language — it transmits. Telepathic signals cross the
+            membrane and sift our archives at a rate of 4.2 petabytes per
+            second.
+          </p>
+        </div>
+
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-white/5">
+          <video
+            src={brainVideo.url}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* scanline + grain */}
+          <div className="scan-effect pointer-events-none absolute inset-0" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-background/30" />
+
+          {/* HUD overlays */}
+          <div className="absolute top-4 left-4 font-mono text-[10px] leading-relaxed text-chrome md:top-6 md:left-6">
+            <div>CORTEX_NODE · 0xQNT-77</div>
+            <div className="text-muted-foreground">SIGNAL · 432.000 Hz</div>
+          </div>
+          <div className="absolute top-4 right-4 flex items-center gap-2 font-mono text-[10px] text-accent md:top-6 md:right-6">
+            <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
+            TELEPATHIC_LINK · STABLE
+          </div>
+
+          {/* bottom data ticker */}
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-4 border-t border-white/10 bg-background/60 px-4 py-3 font-mono text-[10px] text-chrome backdrop-blur-sm md:px-6">
+            <div className="flex items-center gap-4">
+              <span className="text-muted-foreground">PAGES/SEC</span>
+              <span className="text-white">1,402,886</span>
+            </div>
+            <div className="hidden items-center gap-4 md:flex">
+              <span className="text-muted-foreground">DOCS_SIFTED</span>
+              <span className="text-white">8,401,228,094</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-muted-foreground">INTEGRITY</span>
+              <span className="text-accent">100.0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 grid gap-px md:grid-cols-3">
+          {[
+            { k: "Pulse Frequency", v: "0.84 Hz", d: "Synchronized to ancestral memory" },
+            { k: "Signal Range", v: "Ω · ∞", d: "Crosses the membrane of Reality_A" },
+            { k: "Archive Depth", v: "8.4 PB", d: "Documents indexed per heartbeat" },
+          ].map((s) => (
+            <div key={s.k} className="border border-white/5 bg-card/40 p-6">
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                {s.k}
+              </div>
+              <div className="mt-3 text-3xl font-black tracking-[-0.03em] text-white">
+                {s.v}
+              </div>
+              <div className="mt-2 font-mono text-[10px] text-muted-foreground">
+                {s.d}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

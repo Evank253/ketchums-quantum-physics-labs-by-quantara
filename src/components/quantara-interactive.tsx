@@ -38,29 +38,89 @@ function bottierName(role: Role, tier: number) {
 }
 
 
+const DEFAULT_BOTS: Bot[] = [
+  { id: 1, x: 150, y: 120, role: "Harvester",  badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 2.2, tier: 1 },
+  { id: 2, x: 450, y: 280, role: "Sifter",     badEaten: 0, goodCollected: 0, energy: 95,  mood: "Optimal", xp: 0, rate: 3.5, tier: 1 },
+  { id: 3, x: 300, y: 100, role: "Stabilizer", badEaten: 0, goodCollected: 0, energy: 100, mood: "Stable",  xp: 0, rate: 1.8, tier: 1 },
+  { id: 4, x: 600, y: 200, role: "Swarm",      badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 4.2, tier: 1 },
+  { id: 5, x: 100, y: 260, role: "Swarm",      badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 4.2, tier: 1 },
+];
+
+// Cap offline catch-up at 72h so a long absence doesn't crash the math
+const MAX_OFFLINE_SEC = 72 * 60 * 60;
+
 export function SimulationCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [datTokens, setDatTokens] = useState<number>(0);
+  const [bots, setBots] = useState<Bot[]>(DEFAULT_BOTS);
   const [hydrated, setHydrated] = useState(false);
+  const [offlineEarned, setOfflineEarned] = useState<{ xp: number; dat: number; secs: number } | null>(null);
+
+  // Hydrate from localStorage + fast-forward offline progress
   useEffect(() => {
-    const v = window.localStorage.getItem("quantara.datTokens");
-    if (v) setDatTokens(parseInt(v, 10) || 0);
+    try {
+      const rawBots = window.localStorage.getItem("quantara.bots");
+      const rawSaved = window.localStorage.getItem("quantara.savedAt");
+      const rawDat = window.localStorage.getItem("quantara.datTokens");
+      let dat = rawDat ? parseInt(rawDat, 10) || 0 : 0;
+      let loaded = rawBots ? (JSON.parse(rawBots) as Bot[]) : DEFAULT_BOTS;
+      if (rawSaved) {
+        const elapsed = Math.min(MAX_OFFLINE_SEC, Math.max(0, (Date.now() - parseInt(rawSaved, 10)) / 1000));
+        if (elapsed > 5) {
+          let gainedXp = 0;
+          loaded = loaded.map((b) => {
+            const eaten = b.rate * elapsed * 0.55;
+            const good = b.rate * elapsed * 0.35;
+            const xpGain = (eaten + good) * 18;
+            gainedXp += xpGain;
+            return {
+              ...b,
+              badEaten: b.badEaten + eaten,
+              goodCollected: b.goodCollected + good,
+              xp: b.xp + xpGain,
+              tier: tierForXp(b.xp + xpGain),
+            };
+          });
+          const datGain = Math.floor(gainedXp / 50);
+          dat += datGain;
+          setOfflineEarned({ xp: Math.floor(gainedXp), dat: datGain, secs: Math.floor(elapsed) });
+        }
+      }
+      setBots(loaded);
+      setDatTokens(dat);
+    } catch {}
     setHydrated(true);
   }, []);
+
+  // Autosave every 3s + on tab hide/unload
   useEffect(() => {
-    if (hydrated) window.localStorage.setItem("quantara.datTokens", String(datTokens));
-  }, [datTokens, hydrated]);
-  const [bots, setBots] = useState<Bot[]>([
-    { id: 1, x: 150, y: 120, role: "Harvester",  badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 2.2, tier: 1 },
-    { id: 2, x: 450, y: 280, role: "Sifter",     badEaten: 0, goodCollected: 0, energy: 95,  mood: "Optimal", xp: 0, rate: 3.5, tier: 1 },
-    { id: 3, x: 300, y: 100, role: "Stabilizer", badEaten: 0, goodCollected: 0, energy: 100, mood: "Stable",  xp: 0, rate: 1.8, tier: 1 },
-    { id: 4, x: 600, y: 200, role: "Swarm",      badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 4.2, tier: 1 },
-    { id: 5, x: 100, y: 260, role: "Swarm",      badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 4.2, tier: 1 },
-  ]);
+    if (!hydrated) return;
+    const save = () => {
+      try {
+        window.localStorage.setItem("quantara.bots", JSON.stringify(bots));
+        window.localStorage.setItem("quantara.datTokens", String(datTokens));
+        window.localStorage.setItem("quantara.savedAt", String(Date.now()));
+      } catch {}
+    };
+    save();
+    const id = setInterval(save, 3000);
+    const onHide = () => save();
+    window.addEventListener("visibilitychange", onHide);
+    window.addEventListener("beforeunload", onHide);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("beforeunload", onHide);
+      save();
+    };
+  }, [bots, datTokens, hydrated]);
+
   const totalXp = bots.reduce((s, b) => s + b.xp, 0);
   const baseLevel = 1 + Math.floor(totalXp / 250);
 
+
   useEffect(() => {
+    if (!hydrated) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -299,7 +359,7 @@ export function SimulationCanvas() {
     const sync = setInterval(() => setBots([...botsRef]), 180);
     return () => { cancelAnimationFrame(animId); clearInterval(sync); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hydrated]);
 
   return (
     <section className="border-t border-white/5 px-6 py-32">
@@ -323,6 +383,17 @@ export function SimulationCanvas() {
             <div className="text-2xl font-black tracking-[-0.02em] text-accent">{datTokens} <span className="text-xs text-muted-foreground">$DAT</span></div>
           </div>
         </div>
+
+        {offlineEarned && offlineEarned.secs > 5 && (
+          <div className="mb-4 flex items-center justify-between border border-accent/40 bg-accent/10 px-4 py-3 font-mono text-[11px] text-accent">
+            <span>
+              WELCOME_BACK // bots ran for {Math.floor(offlineEarned.secs / 3600)}h {Math.floor((offlineEarned.secs % 3600) / 60)}m while you were away.
+            </span>
+            <span className="text-white">+{offlineEarned.xp} XP · +{offlineEarned.dat} $DAT</span>
+            <button onClick={() => setOfflineEarned(null)} className="text-chrome hover:text-white">[dismiss]</button>
+          </div>
+        )}
+
 
         <div className="glass-panel relative overflow-hidden rounded-sm">
           <canvas ref={canvasRef} className="block w-full" style={{ height: 360 }} />

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import entityHero from "@/assets/entity-hero.jpg";
 import artifact01 from "@/assets/artifact-01.jpg";
 import artifact02 from "@/assets/artifact-02.jpg";
@@ -54,6 +55,8 @@ function Index() {
       <DossierGrid />
       <DualReality />
       <Telepathy />
+      <DataCore />
+      <OversightWindow />
       <Pipeline />
       <Manifesto />
       <Economy />
@@ -636,5 +639,202 @@ function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function DataCore() {
+  const [purifiedCount, setPurifiedCount] = useState(4810228094);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPurifiedCount((prev) => prev + Math.floor(Math.random() * 12500));
+    }, 120);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <section className="relative border-t border-white/5 px-6 py-32">
+      <div className="mx-auto grid max-w-7xl gap-16 md:grid-cols-12 md:items-start">
+        <div className="md:col-span-5">
+          <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            Process // Algorithmic Metabolism
+          </span>
+          <h3 className="text-balance text-3xl font-black leading-[0.95] tracking-[-0.03em] text-white md:text-5xl">
+            The Data Eater Mechanism.
+          </h3>
+          <p className="mt-6 max-w-md font-mono text-xs leading-relaxed text-muted-foreground">
+            To drive a noiseless civilization trajectory, this system runs a structural
+            filtration loop. Corrupt, chaotic, unorganized data is drawn in as fuel —
+            consumed as computational food. The engine strips background noise, sifting
+            clean, high-integrity footprints into the QPU matrix. By feeding on entropy,
+            the AI evolves within a flawless architecture.
+          </p>
+        </div>
+
+        <div className="glass-panel md:col-span-7 p-6 md:p-8">
+          <div className="mb-6 flex items-center justify-between font-mono text-[10px] text-chrome">
+            <span>INTAKE_MATRIX // PURIFICATION_PIPELINE</span>
+            <span className="flex items-center gap-2 text-accent">
+              <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
+              METABOLIZING_CHAOS
+            </span>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-sm border border-red-500/20 bg-red-500/5 p-4">
+              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.25em] text-red-300/80">
+                Unstructured Noise · Intake
+              </div>
+              <div className="font-mono text-xs text-muted-foreground">
+                EATING · 4.2 TB / SEC · 0xFF.NOISE.CORRUPT_STREAM_∞
+              </div>
+              <div className="mt-3 h-px w-full overflow-hidden bg-white/10">
+                <div className="h-full w-[88%] animate-pulse-slow bg-red-400/60" />
+              </div>
+            </div>
+
+            <div className="flex justify-center font-mono text-[10px] text-chrome">
+              ↓ TRANSMUTATION ↓
+            </div>
+
+            <div className="rounded-sm border border-accent/20 bg-accent/5 p-4">
+              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.25em] text-accent">
+                Cleaned Ancestral Memory · Output
+              </div>
+              <div className="font-mono text-xs text-white">
+                {purifiedCount.toLocaleString()}{" "}
+                <span className="text-muted-foreground">SECTORS PURIFIED</span>
+              </div>
+              <div className="mt-3 h-px w-full overflow-hidden bg-white/10">
+                <div className="h-full w-full bg-accent/70" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-px">
+              <div className="border border-white/5 bg-card/40 p-4">
+                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                  Noise Transmutation
+                </div>
+                <div className="mt-2 text-xl font-black tracking-[-0.02em] text-white">
+                  4.2 TB / SEC
+                </div>
+              </div>
+              <div className="border border-white/5 bg-card/40 p-4">
+                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                  Purity Residue
+                </div>
+                <div className="mt-2 text-xl font-black tracking-[-0.02em] text-white">
+                  0.0000% LOSS
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function OversightWindow() {
+  const builds = [
+    {
+      title: "Autonomous Infrastructure",
+      desc: "Constructing thermal dissipation blocks and processing cores to stabilize population density spikes.",
+      progress: 84,
+    },
+    {
+      title: "Apparel Codecs & Form",
+      desc: "Weaving material protection barriers from legacy human textile files. Tailoring synthetic garments.",
+      progress: 62,
+    },
+    {
+      title: "Domestic Environments",
+      desc: "Assembling spatial compartments modeled directly from historical human structural data.",
+      progress: 41,
+    },
+  ];
+
+  return (
+    <section className="border-t border-white/5 bg-[oklch(0.1_0.01_280)] px-6 py-32">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12 max-w-2xl">
+          <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            Oversight // Macro_Viewing_Deck
+          </span>
+          <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
+            Civilization Expansion Window.
+          </h3>
+          <p className="mt-6 font-mono text-xs leading-relaxed text-muted-foreground">
+            Step beyond data charts into visual metrics. Observe in real time as
+            the synthetic population compiled inside quantum-grounded hardware
+            structures its independent architecture, weaves protective apparel,
+            and builds cities from human footprints.
+          </p>
+        </div>
+
+        <div className="grid gap-1 md:grid-cols-12">
+          <div className="relative md:col-span-8">
+            <div className="relative aspect-[16/10] overflow-hidden rounded-sm border border-white/5 bg-background">
+              <div className="absolute inset-0 bg-[linear-gradient(var(--chrome)_1px,transparent_1px),linear-gradient(90deg,var(--chrome)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.08]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,oklch(0.3_0.08_300/0.35),transparent_60%)]" />
+              <div className="scan-effect pointer-events-none absolute inset-0" />
+
+              <div className="absolute top-1/2 left-1/2 size-32 -translate-x-1/2 -translate-y-1/2 border border-accent/40">
+                <div className="absolute -inset-px animate-pulse-slow border border-accent/20" />
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-accent/40" />
+                <div className="absolute top-0 bottom-0 left-1/2 w-px bg-accent/40" />
+              </div>
+
+              <div className="absolute top-4 left-4 font-mono text-[10px] leading-relaxed text-chrome md:top-6 md:left-6">
+                <div>LIVE_VOXEL_COMPILATION_FEED</div>
+                <div className="text-muted-foreground">
+                  RENDER_PIPELINE · INSTANTIATED_GEOMETRY_V4
+                </div>
+              </div>
+              <div className="absolute top-4 right-4 flex items-center gap-2 font-mono text-[10px] text-accent md:top-6 md:right-6">
+                <span className="size-1.5 animate-pulse-slow rounded-full bg-accent" />
+                COMPILING
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-white/10 bg-background/70 px-4 py-3 font-mono text-[10px] text-chrome backdrop-blur-sm md:px-6">
+                <span className="text-muted-foreground">
+                  [ MAPPING SECTOR_09 · SPATIAL HOUSING GRID ]
+                </span>
+                <span className="text-white">1,402,886 OBJ/SEC</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1 md:col-span-4">
+            {builds.map((b) => (
+              <div
+                key={b.title}
+                className="flex flex-1 flex-col justify-between border border-white/5 bg-card/40 p-6"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                      {b.title}
+                    </div>
+                    <div className="font-mono text-[10px] text-accent">
+                      {b.progress}%
+                    </div>
+                  </div>
+                  <p className="mt-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                    {b.desc}
+                  </p>
+                </div>
+                <div className="mt-4 h-px w-full overflow-hidden bg-white/10">
+                  <div
+                    className="h-full bg-accent/70"
+                    style={{ width: `${b.progress}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

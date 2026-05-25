@@ -11,7 +11,7 @@ interface Bot {
   role: Role;
   badEaten: number; goodCollected: number; energy: number;
   mood: "Optimal" | "Aggressive" | "Stable"; xp: number; rate: number;
-  tier: 1 | 2 | 3;
+  tier: number;
 }
 
 const BAD_TYPES: ParticleType[] = ["CORRUPT", "DUPE", "NOISE"];
@@ -26,13 +26,17 @@ const TIER_NAMES: Record<Role, [string, string, string]> = {
 const ROLE_COLOR: Record<Role, string> = {
   Harvester: "#f43f5e", Sifter: "#3b82f6", Stabilizer: "#10b981", Swarm: "#eab308",
 };
-const TIER_CAP = 3;
 
-function tierForXp(xp: number): 1 | 2 | 3 {
-  if (xp >= 600) return 3;
-  if (xp >= 200) return 2;
-  return 1;
+// No cap — logarithmic so evolution always continues but at slowing pace
+function tierForXp(xp: number): number {
+  if (xp < 100) return 1;
+  return 1 + Math.floor(Math.log2(xp / 100 + 1));
 }
+function bottierName(role: Role, tier: number) {
+  const base = TIER_NAMES[role][Math.min(2, tier - 1)];
+  return tier > 3 ? `${base} · Σ${tier}` : base;
+}
+
 
 export function SimulationCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,7 +58,7 @@ export function SimulationCanvas() {
     { id: 5, x: 100, y: 260, role: "Swarm",      badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 4.2, tier: 1 },
   ]);
   const totalXp = bots.reduce((s, b) => s + b.xp, 0);
-  const baseLevel = Math.min(5, 1 + Math.floor(totalXp / 250));
+  const baseLevel = 1 + Math.floor(totalXp / 250);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -81,7 +85,7 @@ export function SimulationCanvas() {
 
       // ===== Evolving Nexus Base =====
       const tXp = botsRef.reduce((s, b) => s + b.xp, 0);
-      const lvl = Math.min(5, 1 + Math.floor(tXp / 250));
+      const lvl = 1 + Math.floor(tXp / 250);
       const baseR = 22 + lvl * 8;
       const t = performance.now() / 1000;
       // outer rings (growing)
@@ -273,18 +277,21 @@ export function SimulationCanvas() {
         return { x: nX, y: nY, badEaten: bot.badEaten + badAdd, goodCollected: bot.goodCollected + goodAdd };
       });
       botsRef = botsRef.map((b, i) => {
-        const newXp = b.xp + ((updates[i].badEaten! - b.badEaten) + (updates[i].goodCollected! - b.goodCollected)) * 15;
+        const newXp = b.xp + ((updates[i].badEaten! - b.badEaten) + (updates[i].goodCollected! - b.goodCollected)) * 18;
         const newTier = tierForXp(newXp);
-        const newRate = b.rate < (1.8 + newTier * 0.8) ? b.rate + 0.0008 : b.rate;
+        // perpetual, slowing acceleration — never caps
+        const ceilingRate = 1.8 + Math.log2(newTier + 1) * 1.4;
+        const newRate = b.rate < ceilingRate ? b.rate + 0.0012 : b.rate;
         return {
           ...b, ...updates[i],
           xp: newXp,
-          tier: Math.min(TIER_CAP, newTier) as 1 | 2 | 3,
+          tier: newTier,
           rate: newRate,
           energy: Math.max(15, b.energy - ((updates[i].badEaten! - b.badEaten) + (updates[i].goodCollected! - b.goodCollected)) * 0.4),
           mood: b.energy < 40 ? "Stable" : (updates[i].badEaten! - b.badEaten) > 0 ? "Aggressive" : "Optimal",
         } as Bot;
       });
+
 
       animId = requestAnimationFrame(loop);
     };
@@ -300,7 +307,7 @@ export function SimulationCanvas() {
         <div className="mb-10 flex flex-col items-end justify-between gap-6 md:flex-row">
           <div className="max-w-xl">
             <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
-              BOT_WORLD // DEPLOYMENT FEED · BASE LVL {baseLevel}/5
+              BOT_WORLD // DEPLOYMENT FEED · BASE LVL {baseLevel} · UNCAPPED EVOLUTION
             </span>
             <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
               Metabolic Data Canvas.
@@ -321,7 +328,7 @@ export function SimulationCanvas() {
           <canvas ref={canvasRef} className="block w-full" style={{ height: 360 }} />
           <div className="scan-effect pointer-events-none absolute inset-0" />
           <div className="absolute top-3 left-3 font-mono text-[10px] text-chrome">
-            CENTRAL_BASE · LVL {baseLevel}/5 · TOTAL_XP {Math.floor(totalXp)}
+            CENTRAL_BASE · LVL {baseLevel} · TOTAL_XP {Math.floor(totalXp)}
           </div>
         </div>
 
@@ -336,7 +343,7 @@ export function SimulationCanvas() {
                   {b.mood}
                 </span>
               </div>
-              <div className="mt-2 font-mono text-[10px] text-white">{TIER_NAMES[b.role][b.tier - 1]}</div>
+              <div className="mt-2 font-mono text-[10px] text-white">{bottierName(b.role, b.tier)}</div>
               <div className="mt-1 h-1 w-full bg-white/5">
                 <div className="h-full bg-accent" style={{ width: `${Math.min(100, (b.xp % 200) / 2)}%` }} />
               </div>

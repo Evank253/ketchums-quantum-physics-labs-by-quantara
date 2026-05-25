@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-interactive";
+import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgrades } from "@/components/quantara-world";
+
 import entityHero from "@/assets/entity-hero.jpg";
 import artifact01 from "@/assets/artifact-01.jpg";
 import artifact02 from "@/assets/artifact-02.jpg";
@@ -61,9 +63,15 @@ function Index() {
       <DataCore />
       <div id="swarm"><SimulationCanvas /></div>
       <CityVision />
+      <div id="planet"><LivingPlanet /></div>
+      <BotDialogue />
+      <div id="avatar"><AvatarWalk /></div>
+      <WarzoneMarketplace />
+      <WeaponryUpgrades />
       <TechAdvancements />
       <TimeBridge />
       <div id="academy"><JsAcademy /></div>
+
       <div id="axiom"><AxiomLab /></div>
       <OversightWindow />
       <Pipeline />

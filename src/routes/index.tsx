@@ -74,6 +74,8 @@ function Index() {
       <WeaponryUpgrades />
       <QedSolver />
       <QedComputer />
+      <QedEngineOverview />
+
 
       <TechAdvancements />
       <TimeBridge />

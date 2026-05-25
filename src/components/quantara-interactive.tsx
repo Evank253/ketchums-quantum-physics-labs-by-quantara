@@ -85,7 +85,7 @@ export function SimulationCanvas() {
 
       // ===== Evolving Nexus Base =====
       const tXp = botsRef.reduce((s, b) => s + b.xp, 0);
-      const lvl = Math.min(5, 1 + Math.floor(tXp / 250));
+      const lvl = 1 + Math.floor(tXp / 250);
       const baseR = 22 + lvl * 8;
       const t = performance.now() / 1000;
       // outer rings (growing)

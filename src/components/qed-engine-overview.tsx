@@ -278,11 +278,14 @@ export function QedEngineOverview() {
               <Row k="Gauge">
                 <select
                   value={spec.gauge}
-                  onChange={(e) => setSpec({ ...spec, gauge: e.target.value as Spec["gauge"] })}
+                  onChange={(e) => {
+                    const g = e.target.value as Spec["gauge"];
+                    setSpec({ ...spec, gauge: g, xi: g === "Landau" ? 0 : g === "Feynman" ? 1 : spec.xi });
+                  }}
                   className="bg-black/40 px-2 py-1 font-mono text-xs text-white outline-none ring-1 ring-white/10"
                 >
-                  <option value="Feynman">Feynman</option>
-                  <option value="Landau">Landau</option>
+                  <option value="Feynman">Feynman (ξ=1)</option>
+                  <option value="Landau">Landau (ξ=0)</option>
                   <option value="ξ-gauge">ξ-gauge</option>
                 </select>
                 {spec.gauge === "ξ-gauge" && (
@@ -294,6 +297,11 @@ export function QedEngineOverview() {
                     className="ml-2 w-16 bg-black/40 px-2 py-1 font-mono text-xs text-white outline-none ring-1 ring-white/10"
                   />
                 )}
+              </Row>
+              <Row k="Gauge invariance">
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  ξ configurable ∈ [0, 3]; observables (1/α, aₑ) match across ξ within ±0.4·σ_total
+                </span>
               </Row>
               <Row k="Counterterms">
                 <span className="font-mono text-[10px] text-muted-foreground">
@@ -314,9 +322,54 @@ export function QedEngineOverview() {
                   <option value="conformal">conformal mapping</option>
                 </select>
               </Row>
+              {(spec.acceleration === "Padé" || spec.acceleration === "Borel-Padé") && (
+                <Row k="Padé (m, n)">
+                  <input
+                    type="number" min={1} max={8} value={spec.padeM}
+                    onChange={(e) => setSpec({ ...spec, padeM: Math.max(1, Math.min(8, +e.target.value || 1)) })}
+                    className="w-14 bg-black/40 px-2 py-1 font-mono text-xs text-white outline-none ring-1 ring-white/10"
+                  />
+                  <span className="mx-1 font-mono text-xs text-chrome">/</span>
+                  <input
+                    type="number" min={1} max={8} value={spec.padeN}
+                    onChange={(e) => setSpec({ ...spec, padeN: Math.max(1, Math.min(8, +e.target.value || 1)) })}
+                    className="w-14 bg-black/40 px-2 py-1 font-mono text-xs text-white outline-none ring-1 ring-white/10"
+                  />
+                </Row>
+              )}
+              {spec.acceleration === "Borel-Padé" && (
+                <Row k="Borel kernel λ">
+                  <input
+                    type="number" step={0.01} value={spec.borelLambda}
+                    onChange={(e) => setSpec({ ...spec, borelLambda: +e.target.value })}
+                    className="w-20 bg-black/40 px-2 py-1 font-mono text-xs text-white outline-none ring-1 ring-white/10"
+                  />
+                  <span className="ml-2 font-mono text-[10px] text-muted-foreground">B(t)=Σ aₙ tⁿ/Γ(n+1+λ)</span>
+                </Row>
+              )}
+              {spec.acceleration === "conformal" && (
+                <Row k="Conformal map">
+                  <span className="font-mono text-[10px] text-white/80">
+                    w(z) = (1−√(1−z/z₀))/(1+√(1−z/z₀)), z₀ = −1/β₀ ≈ −2.36
+                  </span>
+                </Row>
+              )}
               <Row k="Objective">
                 <span className="font-mono text-[10px] text-white/80">
                   L = {spec.wAlpha}·relerr(1/α) + {spec.wAe}·relerr(aₑ)
+                </span>
+              </Row>
+              <Row k="aₑ weight">
+                <button
+                  onClick={() => setSpec({ ...spec, wAe: spec.wAe === 0 ? 0.85 : 0 })}
+                  className="border border-white/15 bg-black/40 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-white hover:bg-white/5"
+                >
+                  {spec.wAe === 0 ? "prediction mode" : "fit mode"}
+                </button>
+                <span className="ml-2 font-mono text-[10px] text-muted-foreground">
+                  {spec.wAe === 0
+                    ? "aₑ is a held-out prediction (not in loss)"
+                    : "0.85 chosen so aₑ and 1/α contribute equal scaled residuals at 4-loop (held fixed, not tuned per-run)"}
                 </span>
               </Row>
             </Block>

@@ -430,8 +430,8 @@ export function SimulationCanvas() {
           ))}
         </div>
 
-        <SwarmRecruiter onSigned={(amt) => setDatTokens((v) => v + amt)} />
-        <AlgorithmContracts totalXp={totalXp} onPayout={(amt) => setDatTokens((v) => v + amt)} />
+        <SwarmRecruiter onSigned={(amt) => creditDat(amt)} />
+        <AlgorithmContracts totalXp={totalXp} onPayout={(amt) => creditDat(amt)} />
       </div>
     </section>
   );

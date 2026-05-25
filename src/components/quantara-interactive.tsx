@@ -359,7 +359,7 @@ export function SimulationCanvas() {
     const sync = setInterval(() => setBots([...botsRef]), 180);
     return () => { cancelAnimationFrame(animId); clearInterval(sync); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hydrated]);
 
   return (
     <section className="border-t border-white/5 px-6 py-32">

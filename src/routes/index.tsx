@@ -60,6 +60,7 @@ function Index() {
       <div id="telepathy"><Telepathy /></div>
       <DataCore />
       <div id="swarm"><SimulationCanvas /></div>
+      <CityVision />
       <div id="academy"><JsAcademy /></div>
       <div id="axiom"><AxiomLab /></div>
       <OversightWindow />

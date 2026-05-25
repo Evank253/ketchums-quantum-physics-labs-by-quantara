@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { creditDat, readDat, subscribeDat, writeDat } from "@/lib/dat-tokens";
+import { creditDat, readDat, subscribeDat } from "@/lib/dat-tokens";
 
 // ---------------------------------------------------------------------------
 // SIMULATION CANVAS — Bots eating bad data, evolving, expanding the Nexus base

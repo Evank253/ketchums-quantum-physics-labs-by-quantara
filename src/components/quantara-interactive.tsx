@@ -328,7 +328,7 @@ export function SimulationCanvas() {
           <canvas ref={canvasRef} className="block w-full" style={{ height: 360 }} />
           <div className="scan-effect pointer-events-none absolute inset-0" />
           <div className="absolute top-3 left-3 font-mono text-[10px] text-chrome">
-            CENTRAL_BASE · LVL {baseLevel}/5 · TOTAL_XP {Math.floor(totalXp)}
+            CENTRAL_BASE · LVL {baseLevel} · TOTAL_XP {Math.floor(totalXp)}
           </div>
         </div>
 

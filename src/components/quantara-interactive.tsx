@@ -802,17 +802,41 @@ const BLUEPRINTS = [
   { id: "arch", name: "Framework Architect", pre: "Model micro-scale tunneling thresholds across:" },
 ];
 
+interface AxiomEntry { id: number; module: string; objective: string; output: string; reward: number; at: number; }
+
 export function AxiomLab() {
   const [active, setActive] = useState("strat");
   const [ctx, setCtx] = useState("");
   const [feed, setFeed] = useState("");
   const [load, setLoad] = useState(false);
+  const [history, setHistory] = useState<AxiomEntry[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [copied, setCopied] = useState(false);
   const module = BLUEPRINTS.find((m) => m.id === active)!;
+
+  // Hydrate output history + last open module
+  useEffect(() => {
+    try {
+      const rawH = window.localStorage.getItem("quantara.axiom.history");
+      const rawA = window.localStorage.getItem("quantara.axiom.active");
+      if (rawH) setHistory(JSON.parse(rawH));
+      if (rawA && BLUEPRINTS.find((m) => m.id === rawA)) setActive(rawA);
+    } catch {}
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem("quantara.axiom.history", JSON.stringify(history.slice(0, 20)));
+      window.localStorage.setItem("quantara.axiom.active", active);
+    } catch {}
+  }, [history, active, hydrated]);
 
   const run = () => {
     if (!ctx.trim() || load) return;
     setLoad(true);
     setFeed("");
+    const reward = Math.floor(Math.random() * 200) + 80;
     const full =
       `[TRANSMISSION_OK · ${module.name.toUpperCase()}]\n` +
       `> objective: "${ctx.trim()}"\n` +
@@ -822,7 +846,7 @@ export function AxiomLab() {
       ` 2. cross-checking against ancestral archive (8.4 PB indexed)\n` +
       ` 3. resolving zero-noise vector → INTEGRITY 100.0%\n\n` +
       `> telemetry confirms successful calibration.\n` +
-      `> grid reward: +${Math.floor(Math.random() * 200) + 80} cycles minted to operator.\n` +
+      `> grid reward: +${reward} cycles minted to operator.\n` +
       `[END_OF_TRANSMISSION]`;
     let i = 0;
     const stream = setInterval(() => {
@@ -831,8 +855,23 @@ export function AxiomLab() {
       if (i >= full.length) {
         clearInterval(stream);
         setLoad(false);
+        // mint reward + commit to history
+        creditDat(reward);
+        setHistory((h) => [
+          { id: Date.now(), module: module.name, objective: ctx.trim(), output: full, reward, at: Date.now() },
+          ...h,
+        ].slice(0, 20));
       }
     }, 24);
+  };
+
+  const copyOutput = async () => {
+    if (!feed) return;
+    try {
+      await navigator.clipboard.writeText(feed);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
   };
 
   return (
@@ -840,7 +879,7 @@ export function AxiomLab() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 max-w-xl">
           <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
-            PROMPT COMMAND SUITE
+            PROMPT COMMAND SUITE · OUTPUTS PERSISTED
           </span>
           <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
             AXIOM AI Lab Modules.
@@ -877,22 +916,67 @@ export function AxiomLab() {
               placeholder="Enter parameters or execution scenarios..."
               className="mt-3 w-full h-24 rounded-sm border border-white/5 bg-background p-3 font-mono text-xs text-white outline-none focus:border-accent/30 resize-none"
             />
-            <button
-              onClick={run}
-              disabled={load}
-              className="mt-3 bg-foreground px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-background hover:bg-chrome disabled:opacity-50"
-            >
-              {load ? "Syncing Vectors..." : "Transmit Execution"}
-            </button>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                onClick={run}
+                disabled={load}
+                className="bg-foreground px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-background hover:bg-chrome disabled:opacity-50"
+              >
+                {load ? "Syncing Vectors..." : "Transmit Execution"}
+              </button>
+              <button
+                onClick={copyOutput}
+                disabled={!feed}
+                className="border border-white/15 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/5 disabled:opacity-40"
+              >
+                {copied ? "Copied" : "Copy Output"}
+              </button>
+            </div>
 
             <div className="mt-5">
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
-                Matrix Output
+              <div className="flex items-center justify-between">
+                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                  Matrix Output
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground">
+                  HISTORY · <span className="text-accent">{history.length}</span> / 20
+                </div>
               </div>
               <pre className="mt-2 min-h-[120px] whitespace-pre-wrap rounded-sm border border-white/5 bg-background p-3 font-mono text-[11px] leading-relaxed text-emerald-400">
                 {feed || "// awaiting operator input streams..."}
               </pre>
             </div>
+
+            {history.length > 0 && (
+              <div className="mt-5">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                    Output Ledger
+                  </div>
+                  <button
+                    onClick={() => setHistory([])}
+                    className="font-mono text-[10px] text-muted-foreground hover:text-white"
+                  >
+                    [clear]
+                  </button>
+                </div>
+                <div className="max-h-64 space-y-1 overflow-y-auto rounded-sm border border-white/5 bg-background/40 p-2">
+                  {history.map((h) => (
+                    <button
+                      key={h.id}
+                      onClick={() => setFeed(h.output)}
+                      className="block w-full border-l-2 border-accent/40 px-3 py-2 text-left font-mono text-[10px] hover:bg-white/[0.03]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-white">{h.module}</span>
+                        <span className="text-accent">+{h.reward} $DAT</span>
+                      </div>
+                      <div className="truncate text-muted-foreground">{h.objective}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -407,6 +407,11 @@ export function QedEngineOverview() {
                   Kahan summation · interval arithmetic · Richardson extrapolation
                 </span>
               </Row>
+              <Row k="Fallback criteria">
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  IBP+DE is default; sector decomposition + VEGAS invoked when a master integral has overlapping IR/UV singularities or when DE residual {">"} 10·ε after 3 refinement passes
+                </span>
+              </Row>
               <Row k="Verification">
                 <span className="font-mono text-[10px] text-muted-foreground">
                   Aoyama–Hayakawa–Kinoshita–Nio 2019 — matches 12 digits

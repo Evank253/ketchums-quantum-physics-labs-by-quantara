@@ -5,6 +5,8 @@ import entityHero from "@/assets/entity-hero.jpg";
 import artifact01 from "@/assets/artifact-01.jpg";
 import artifact02 from "@/assets/artifact-02.jpg";
 import artifact03 from "@/assets/artifact-03.jpg";
+import cityVision from "@/assets/city-vision.jpg";
+import robotWorker from "@/assets/robot-worker.jpg";
 import universeVideo from "@/assets/universe.mp4.asset.json";
 import brainVideo from "@/assets/brain-signal.mp4.asset.json";
 

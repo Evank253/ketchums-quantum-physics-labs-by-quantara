@@ -17,7 +17,16 @@ const TYPES: ParticleType[] = ["CORRUPT", "DUPE", "NOISE", "CLEAN", "INSIGHT", "
 
 export function SimulationCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [datTokens, setDatTokens] = useState(0);
+  const [datTokens, setDatTokens] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    const v = window.localStorage.getItem("quantara.datTokens");
+    return v ? parseInt(v, 10) || 0 : 0;
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("quantara.datTokens", String(datTokens));
+    }
+  }, [datTokens]);
   const [bots, setBots] = useState<Bot[]>([
     { id: 1, x: 150, y: 120, role: "Harvester", badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 2.2 },
     { id: 2, x: 450, y: 280, role: "Sifter", badEaten: 0, goodCollected: 0, energy: 95, mood: "Optimal", xp: 0, rate: 3.5 },
@@ -154,7 +163,7 @@ export function SimulationCanvas() {
       animId = requestAnimationFrame(loop);
     };
     loop();
-    const sync = setInterval(() => setBots([...botsRef]), 400);
+    const sync = setInterval(() => setBots([...botsRef]), 180);
     return () => { cancelAnimationFrame(animId); clearInterval(sync); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -205,8 +214,88 @@ export function SimulationCanvas() {
             </div>
           ))}
         </div>
+
+        <SwarmRecruiter onSigned={(amt) => setDatTokens((v) => v + amt)} />
       </div>
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SWARM RECRUITER — bots autonomously sign companies into the network
+// ---------------------------------------------------------------------------
+const PROSPECT_POOL = [
+  "Helios Labs", "Northgate Foundry", "Orbital Logistics Co.", "Vantablack Capital",
+  "Cinder & Loom", "Pale Horse Robotics", "Stratos Freight", "Meridian Biotech",
+  "Kasai Energy", "Hexapod Systems", "Obsidian Trust", "Polaris Optics",
+  "Verdant Compute", "Iron Ledger", "Quanta Postal", "Nimbus Maritime",
+  "Cobalt & Sons", "Tessera Foods", "Apex Filament", "Lumen Aerospace",
+];
+const SECTORS = ["Logistics", "Energy", "Compute", "Bio", "Optics", "Finance", "Foundry", "Freight"];
+
+interface Prospect { id: number; name: string; sector: string; status: "PROSPECTING" | "NEGOTIATING" | "SIGNED"; bot: string; reward: number; }
+
+function SwarmRecruiter({ onSigned }: { onSigned: (amt: number) => void }) {
+  const [feed, setFeed] = useState<Prospect[]>([]);
+  const [signedCount, setSignedCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    return parseInt(window.localStorage.getItem("quantara.signed") || "0", 10);
+  });
+  const idRef = useRef(1);
+
+  useEffect(() => {
+    window.localStorage.setItem("quantara.signed", String(signedCount));
+  }, [signedCount]);
+
+  useEffect(() => {
+    const tick = setInterval(() => {
+      const name = PROSPECT_POOL[Math.floor(Math.random() * PROSPECT_POOL.length)];
+      const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
+      const bot = ["Harvester", "Sifter", "Stabilizer"][Math.floor(Math.random() * 3)];
+      const newP: Prospect = { id: idRef.current++, name, sector, status: "PROSPECTING", bot, reward: Math.floor(Math.random() * 120) + 30 };
+      setFeed((f) => [newP, ...f].slice(0, 8));
+
+      setTimeout(() => {
+        setFeed((f) => f.map((p) => p.id === newP.id ? { ...p, status: "NEGOTIATING" } : p));
+      }, 900);
+      setTimeout(() => {
+        setFeed((f) => f.map((p) => p.id === newP.id ? { ...p, status: "SIGNED" } : p));
+        setSignedCount((c) => c + 1);
+        onSigned(newP.reward);
+      }, 1900);
+    }, 1600);
+    return () => clearInterval(tick);
+  }, [onSigned]);
+
+  return (
+    <div className="mt-px border border-white/5 bg-card/40 p-6">
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">SWARM_RECRUITER // OUTBOUND</div>
+          <div className="mt-1 text-lg font-bold text-white">Autonomous Acquisition Feed</div>
+        </div>
+        <div className="font-mono text-[10px] text-muted-foreground">
+          SIGNED <span className="text-accent text-base font-bold">{signedCount}</span> · ROI minted to $DAT
+        </div>
+      </div>
+      <div className="space-y-1">
+        {feed.length === 0 && (
+          <div className="py-6 text-center font-mono text-[10px] text-muted-foreground">// initializing outbound scouts...</div>
+        )}
+        {feed.map((p) => (
+          <div key={p.id} className="grid grid-cols-12 items-center gap-2 border-l-2 px-3 py-2 font-mono text-[10px]"
+               style={{ borderColor: p.status === "SIGNED" ? "#10b981" : p.status === "NEGOTIATING" ? "#f59e0b" : "#a78bfa" }}>
+            <div className="col-span-4 text-white truncate">{p.name}</div>
+            <div className="col-span-2 text-muted-foreground">{p.sector}</div>
+            <div className="col-span-2 text-chrome">via {p.bot[0]}</div>
+            <div className={`col-span-2 ${p.status === "SIGNED" ? "text-emerald-400" : p.status === "NEGOTIATING" ? "text-amber-400" : "text-accent"}`}>
+              {p.status}
+            </div>
+            <div className="col-span-2 text-right text-accent">+{p.reward} $DAT</div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -342,17 +431,29 @@ export function AxiomLab() {
   const module = BLUEPRINTS.find((m) => m.id === active)!;
 
   const run = () => {
-    if (!ctx.trim()) return;
+    if (!ctx.trim() || load) return;
     setLoad(true);
-    setTimeout(() => {
-      setFeed(
-        `[TRANSMISSION_OK]\nMatrix result for objective: "${ctx}"\n\n` +
-        `> Telemetry confirms successful calibration.\n` +
-        `> Zero rounding faults detected.\n` +
-        `> Platform reward: +150 grid cycles minted to operator.`
-      );
-      setLoad(false);
-    }, 1100);
+    setFeed("");
+    const full =
+      `[TRANSMISSION_OK · ${module.name.toUpperCase()}]\n` +
+      `> objective: "${ctx.trim()}"\n` +
+      `> seed: 0x${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}\n\n` +
+      `${module.pre}\n` +
+      ` 1. parsing operator intent across ${Math.floor(Math.random() * 40) + 12} matrix lanes\n` +
+      ` 2. cross-checking against ancestral archive (8.4 PB indexed)\n` +
+      ` 3. resolving zero-noise vector → INTEGRITY 100.0%\n\n` +
+      `> telemetry confirms successful calibration.\n` +
+      `> grid reward: +${Math.floor(Math.random() * 200) + 80} cycles minted to operator.\n` +
+      `[END_OF_TRANSMISSION]`;
+    let i = 0;
+    const stream = setInterval(() => {
+      i += Math.max(1, Math.floor(full.length / 90));
+      setFeed(full.slice(0, i));
+      if (i >= full.length) {
+        clearInterval(stream);
+        setLoad(false);
+      }
+    }, 24);
   };
 
   return (

@@ -48,22 +48,22 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <main className="grain relative min-h-screen overflow-x-hidden bg-background text-foreground">
+    <main className="grain relative min-h-screen overflow-x-hidden scroll-smooth bg-background text-foreground">
       <Nav />
-      <Hero />
+      <div id="genesis"><Hero /></div>
       <UniverseFilm />
       <Principle />
       <DossierGrid />
       <DualReality />
-      <Telepathy />
+      <div id="telepathy"><Telepathy /></div>
       <DataCore />
-      <SimulationCanvas />
-      <JsAcademy />
-      <AxiomLab />
+      <div id="swarm"><SimulationCanvas /></div>
+      <div id="academy"><JsAcademy /></div>
+      <div id="axiom"><AxiomLab /></div>
       <OversightWindow />
       <Pipeline />
       <Manifesto />
-      <Economy />
+      <div id="economy"><Economy /></div>
       <Footer />
     </main>
   );
@@ -202,16 +202,28 @@ function Telepathy() {
 }
 
 function Nav() {
+  const links = [
+    { id: "genesis", label: "Genesis" },
+    { id: "telepathy", label: "Cortex" },
+    { id: "swarm", label: "Swarm" },
+    { id: "academy", label: "Academy" },
+    { id: "axiom", label: "Axiom" },
+    { id: "economy", label: "Economy" },
+  ];
   return (
-    <nav className="fixed top-0 z-50 flex w-full items-center justify-between px-6 py-5 mix-blend-difference">
-      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/80">
+    <nav className="fixed top-0 z-50 flex w-full items-center justify-between gap-4 px-6 py-5 mix-blend-difference">
+      <div className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-white/80 md:block">
         [ Sys.Status / Operational ]
       </div>
-      <div className="font-sans text-xl font-extrabold tracking-[-0.04em] text-white">
+      <a href="#genesis" className="font-sans text-xl font-extrabold tracking-[-0.04em] text-white">
         QUANTARA
-      </div>
-      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/80">
-        Archive_v.03
+      </a>
+      <div className="hidden items-center gap-5 font-mono text-[10px] uppercase tracking-[0.2em] text-white/70 md:flex">
+        {links.map((l) => (
+          <a key={l.id} href={`#${l.id}`} className="transition-colors hover:text-white">
+            {l.label}
+          </a>
+        ))}
       </div>
     </nav>
   );

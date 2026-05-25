@@ -307,7 +307,7 @@ export function SimulationCanvas() {
         <div className="mb-10 flex flex-col items-end justify-between gap-6 md:flex-row">
           <div className="max-w-xl">
             <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
-              BOT_WORLD // DEPLOYMENT FEED · BASE LVL {baseLevel}/5
+              BOT_WORLD // DEPLOYMENT FEED · BASE LVL {baseLevel} · UNCAPPED EVOLUTION
             </span>
             <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
               Metabolic Data Canvas.

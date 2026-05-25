@@ -70,6 +70,8 @@ function Index() {
       <div id="avatar"><AvatarWalk /></div>
       <WarzoneMarketplace />
       <WeaponryUpgrades />
+      <QedSolver />
+
       <TechAdvancements />
       <TimeBridge />
       <div id="academy"><JsAcademy /></div>

@@ -163,7 +163,7 @@ export function SimulationCanvas() {
       animId = requestAnimationFrame(loop);
     };
     loop();
-    const sync = setInterval(() => setBots([...botsRef]), 400);
+    const sync = setInterval(() => setBots([...botsRef]), 180);
     return () => { cancelAnimationFrame(animId); clearInterval(sync); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

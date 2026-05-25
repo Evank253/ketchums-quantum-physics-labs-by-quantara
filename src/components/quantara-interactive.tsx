@@ -141,15 +141,56 @@ export function SimulationCanvas() {
         nX = Math.max(10, Math.min(canvas.width - 10, nX));
         nY = Math.max(10, Math.min(canvas.height - 10, nY));
 
+        // Little robot rendering: treads, body, head, eye glow, antenna
+        const color = bot.role === "Harvester" ? "#f43f5e" : bot.role === "Sifter" ? "#3b82f6" : "#10b981";
+        const bob = Math.sin(performance.now() / 180 + bot.id) * 0.8;
+        const cx = nX;
+        const cy = nY + bob;
+        // shadow
+        ctx.fillStyle = "rgba(0,0,0,0.4)";
         ctx.beginPath();
-        ctx.arc(nX, nY, 7, 0, Math.PI * 2);
-        ctx.fillStyle = bot.role === "Harvester" ? "#f43f5e" : bot.role === "Sifter" ? "#3b82f6" : "#10b981";
+        ctx.ellipse(cx, cy + 11, 10, 2.5, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        // treads
+        ctx.fillStyle = "#1f2937";
+        ctx.fillRect(cx - 11, cy + 5, 22, 5);
+        ctx.fillStyle = "#0b0f17";
+        for (let t = 0; t < 4; t++) ctx.fillRect(cx - 10 + t * 6, cy + 6, 3, 3);
+        // body
+        ctx.fillStyle = "#cbd5e1";
+        ctx.fillRect(cx - 8, cy - 2, 16, 8);
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.fillRect(cx - 8, cy + 4, 16, 1);
+        // chest light
+        ctx.fillStyle = color;
+        ctx.fillRect(cx - 2, cy + 1, 4, 2);
+        // head
+        ctx.fillStyle = "#e5e7eb";
+        ctx.fillRect(cx - 6, cy - 9, 12, 7);
+        // eye visor (glowing)
+        ctx.fillStyle = "#000";
+        ctx.fillRect(cx - 5, cy - 7, 10, 3);
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 6;
+        ctx.fillRect(cx - 4, cy - 6, 3, 1.5);
+        ctx.fillRect(cx + 1, cy - 6, 3, 1.5);
+        ctx.shadowBlur = 0;
+        // antenna
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx + 4, cy - 9);
+        ctx.lineTo(cx + 7, cy - 14);
         ctx.stroke();
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(cx + 7, cy - 14, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+        // role label
+        ctx.fillStyle = "rgba(255,255,255,0.55)";
         ctx.font = "7px monospace";
-        ctx.fillText(bot.role[0], nX - 2, nY + 2.5);
+        ctx.fillText(bot.role.slice(0, 4).toUpperCase(), cx - 10, cy + 18);
 
         return { x: nX, y: nY, badEaten: bot.badEaten + badAdd, goodCollected: bot.goodCollected + goodAdd };
       });

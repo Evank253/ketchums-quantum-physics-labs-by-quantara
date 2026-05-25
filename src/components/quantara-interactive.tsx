@@ -96,13 +96,12 @@ export function SimulationCanvas() {
     setHydrated(true);
   }, []);
 
-  // Autosave every 3s + on tab hide/unload
+  // Autosave bots every 3s + on tab hide/unload (DAT is handled by shared store)
   useEffect(() => {
     if (!hydrated) return;
     const save = () => {
       try {
         window.localStorage.setItem("quantara.bots", JSON.stringify(bots));
-        window.localStorage.setItem("quantara.datTokens", String(datTokens));
         window.localStorage.setItem("quantara.savedAt", String(Date.now()));
       } catch {}
     };
@@ -117,7 +116,7 @@ export function SimulationCanvas() {
       window.removeEventListener("beforeunload", onHide);
       save();
     };
-  }, [bots, datTokens, hydrated]);
+  }, [bots, hydrated]);
 
   const totalXp = bots.reduce((s, b) => s + b.xp, 0);
   const baseLevel = 1 + Math.floor(totalXp / 250);

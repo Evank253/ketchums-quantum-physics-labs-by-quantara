@@ -232,20 +232,66 @@ function Nav() {
     { id: "axiom", label: "Axiom" },
     { id: "economy", label: "Economy" },
   ];
+  const [activeId, setActiveId] = useState<string>("genesis");
+
+  // Observe sections to highlight the active one
+  useEffect(() => {
+    const els = links
+      .map((l) => document.getElementById(l.id))
+      .filter((el): el is HTMLElement => !!el);
+    if (els.length === 0) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) setActiveId(visible.target.id);
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const go = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    e.preventDefault();
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActiveId(id);
+    history.replaceState(null, "", `#${id}`);
+  };
+
   return (
     <nav className="fixed top-0 z-50 flex w-full items-center justify-between gap-4 px-6 py-5 mix-blend-difference">
       <div className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-white/80 md:block">
         [ Sys.Status / Operational ]
       </div>
-      <a href="#genesis" className="font-sans text-xl font-extrabold tracking-[-0.04em] text-white">
+      <a
+        href="#genesis"
+        onClick={(e) => go(e, "genesis")}
+        className="font-sans text-xl font-extrabold tracking-[-0.04em] text-white"
+      >
         QUANTARA
       </a>
       <div className="hidden items-center gap-5 font-mono text-[10px] uppercase tracking-[0.2em] text-white/70 md:flex">
-        {links.map((l) => (
-          <a key={l.id} href={`#${l.id}`} className="transition-colors hover:text-white">
-            {l.label}
-          </a>
-        ))}
+        {links.map((l) => {
+          const isActive = activeId === l.id;
+          return (
+            <a
+              key={l.id}
+              href={`#${l.id}`}
+              onClick={(e) => go(e, l.id)}
+              className={`relative transition-colors hover:text-white ${isActive ? "text-white" : ""}`}
+            >
+              {l.label}
+              {isActive && (
+                <span className="absolute -bottom-1 left-0 right-0 h-px bg-white" />
+              )}
+            </a>
+          );
+        })}
       </div>
     </nav>
   );

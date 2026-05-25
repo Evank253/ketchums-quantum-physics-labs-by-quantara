@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { creditDat, readDat, subscribeDat } from "@/lib/dat-tokens";
 
 // ---------------------------------------------------------------------------
 // SIMULATION CANVAS — Bots eating bad data, evolving, expanding the Nexus base
@@ -56,13 +57,17 @@ export function SimulationCanvas() {
   const [hydrated, setHydrated] = useState(false);
   const [offlineEarned, setOfflineEarned] = useState<{ xp: number; dat: number; secs: number } | null>(null);
 
-  // Hydrate from localStorage + fast-forward offline progress
+  // Subscribe to the shared $DAT store so credits from Academy/Axiom/contracts all stay in sync
+  useEffect(() => {
+    setDatTokens(readDat());
+    return subscribeDat(setDatTokens);
+  }, []);
+
+  // Hydrate bots from localStorage + fast-forward offline progress (DAT goes through shared store)
   useEffect(() => {
     try {
       const rawBots = window.localStorage.getItem("quantara.bots");
       const rawSaved = window.localStorage.getItem("quantara.savedAt");
-      const rawDat = window.localStorage.getItem("quantara.datTokens");
-      let dat = rawDat ? parseInt(rawDat, 10) || 0 : 0;
       let loaded = rawBots ? (JSON.parse(rawBots) as Bot[]) : DEFAULT_BOTS;
       if (rawSaved) {
         const elapsed = Math.min(MAX_OFFLINE_SEC, Math.max(0, (Date.now() - parseInt(rawSaved, 10)) / 1000));
@@ -82,23 +87,21 @@ export function SimulationCanvas() {
             };
           });
           const datGain = Math.floor(gainedXp / 50);
-          dat += datGain;
+          if (datGain > 0) creditDat(datGain);
           setOfflineEarned({ xp: Math.floor(gainedXp), dat: datGain, secs: Math.floor(elapsed) });
         }
       }
       setBots(loaded);
-      setDatTokens(dat);
     } catch {}
     setHydrated(true);
   }, []);
 
-  // Autosave every 3s + on tab hide/unload
+  // Autosave bots every 3s + on tab hide/unload (DAT is handled by shared store)
   useEffect(() => {
     if (!hydrated) return;
     const save = () => {
       try {
         window.localStorage.setItem("quantara.bots", JSON.stringify(bots));
-        window.localStorage.setItem("quantara.datTokens", String(datTokens));
         window.localStorage.setItem("quantara.savedAt", String(Date.now()));
       } catch {}
     };
@@ -113,7 +116,7 @@ export function SimulationCanvas() {
       window.removeEventListener("beforeunload", onHide);
       save();
     };
-  }, [bots, datTokens, hydrated]);
+  }, [bots, hydrated]);
 
   const totalXp = bots.reduce((s, b) => s + b.xp, 0);
   const baseLevel = 1 + Math.floor(totalXp / 250);
@@ -197,7 +200,7 @@ export function SimulationCanvas() {
           const dist = Math.hypot(dx, dy);
           if (dist < 8) {
             toRemove.add(p.id);
-            setDatTokens((v) => v + 1);
+            creditDat(1);
             return;
           }
           p.x += (dx / dist) * 4;
@@ -260,7 +263,7 @@ export function SimulationCanvas() {
               particles.push({ id: nextId++, x: bot.x, y: bot.y, vx: 0, vy: 0, type: "PURIFIED_BEAM" });
             } else {
               goodAdd = 1;
-              setDatTokens((v) => v + 5 + bot.tier * 2);
+              creditDat(5 + bot.tier * 2);
             }
             particles.push({
               id: nextId++, x: Math.random() * canvas.width, y: Math.random() * canvas.height,
@@ -427,8 +430,8 @@ export function SimulationCanvas() {
           ))}
         </div>
 
-        <SwarmRecruiter onSigned={(amt) => setDatTokens((v) => v + amt)} />
-        <AlgorithmContracts totalXp={totalXp} onPayout={(amt) => setDatTokens((v) => v + amt)} />
+        <SwarmRecruiter onSigned={(amt) => creditDat(amt)} />
+        <AlgorithmContracts totalXp={totalXp} onPayout={(amt) => creditDat(amt)} />
       </div>
     </section>
   );
@@ -647,26 +650,87 @@ export function JsAcademy() {
   const [skill, setSkill] = useState(0);
   const [code, setCode] = useState("");
   const [out, setOut] = useState<{ state: "idle" | "success" | "fail"; text: string }>({ state: "idle", text: "" });
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [hydrated, setHydrated] = useState(false);
   const active = ACADEMY[tier].skills[skill];
+  const skillKey = `${tier}:${skill}`;
 
-  const test = () => {
-    if (active.regex.test(code)) {
-      setOut({ state: "success", text: "SUCCESS // MATRIX VALIDATED. SYSTEM LEVEL UP." });
-    } else {
-      setOut({ state: "fail", text: "ERROR · Code structure mismatch. Check exact naming and assignment syntax." });
+  // Persist completed skills
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("quantara.academy.completed");
+      if (raw) setCompleted(new Set(JSON.parse(raw)));
+    } catch {}
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem("quantara.academy.completed", JSON.stringify([...completed]));
+    } catch {}
+  }, [completed, hydrated]);
+
+  const markPass = (key: string, autoAdvance: boolean) => {
+    setOut({ state: "success", text: "SUCCESS // MATRIX VALIDATED. +25 $DAT minted." });
+    if (!completed.has(key)) {
+      creditDat(25);
+      setCompleted((s) => new Set(s).add(key));
+    }
+    if (autoAdvance) {
+      // jump to the next uncompleted skill after a short beat
+      setTimeout(() => {
+        const flat: Array<[number, number]> = [];
+        ACADEMY.forEach((t, ti) => t.skills.forEach((_, si) => flat.push([ti, si])));
+        const idx = flat.findIndex(([ti, si]) => ti === tier && si === skill);
+        for (let i = 1; i <= flat.length; i++) {
+          const [ti, si] = flat[(idx + i) % flat.length];
+          const k = `${ti}:${si}`;
+          if (!completed.has(k) && k !== key) {
+            setTier(ti); setSkill(si); setCode(""); setOut({ state: "idle", text: "" });
+            return;
+          }
+        }
+      }, 900);
     }
   };
+
+  // Auto-grader: debounced check while typing — no manual compile needed
+  useEffect(() => {
+    if (!code.trim()) { setOut({ state: "idle", text: "" }); return; }
+    const t = setTimeout(() => {
+      if (active.regex.test(code)) {
+        markPass(skillKey, true);
+      } else {
+        setOut({ state: "fail", text: "// auto-grader: structure mismatch — keep typing..." });
+      }
+    }, 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, skillKey]);
+
+  const test = () => {
+    if (active.regex.test(code)) markPass(skillKey, true);
+    else setOut({ state: "fail", text: "ERROR · Code structure mismatch. Check exact naming and assignment syntax." });
+  };
+
+  const totalSkills = ACADEMY.reduce((n, t) => n + t.skills.length, 0);
 
   return (
     <section className="border-t border-white/5 bg-[oklch(0.1_0.01_280)] px-6 py-32">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-10 max-w-xl">
-          <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
-            COGNITIVE DEVELOPMENT LAB
-          </span>
-          <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
-            JS Academy Terminal.
-          </h3>
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+          <div className="max-w-xl">
+            <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              COGNITIVE DEVELOPMENT LAB · AUTO-GRADER ONLINE
+            </span>
+            <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
+              JS Academy Terminal.
+            </h3>
+          </div>
+          <div className="border border-accent/30 bg-accent/5 px-4 py-3 font-mono">
+            <div className="text-[10px] uppercase tracking-[0.25em] text-chrome">PROGRESS</div>
+            <div className="text-lg font-black text-accent">{completed.size}<span className="text-xs text-muted-foreground"> / {totalSkills}</span></div>
+          </div>
         </div>
 
         <div className="grid gap-px md:grid-cols-12">
@@ -677,13 +741,15 @@ export function JsAcademy() {
                 <div className="space-y-1">
                   {t.skills.map((s, sIdx) => {
                     const isActive = tier === tIdx && skill === sIdx;
+                    const isDone = completed.has(`${tIdx}:${sIdx}`);
                     return (
                       <button
                         key={s.name}
                         onClick={() => { setTier(tIdx); setSkill(sIdx); setCode(""); setOut({ state: "idle", text: "" }); }}
-                        className={`block w-full text-left font-mono text-[10px] py-1 ${isActive ? "text-accent font-bold" : "text-muted-foreground hover:text-white"}`}
+                        className={`flex w-full items-center justify-between text-left font-mono text-[10px] py-1 ${isActive ? "text-accent font-bold" : isDone ? "text-emerald-400" : "text-muted-foreground hover:text-white"}`}
                       >
-                        ■ {s.name}
+                        <span>{isDone ? "✓" : "■"} {s.name}</span>
+                        {isDone && <span className="text-[9px] text-emerald-400/70">PASS</span>}
                       </button>
                     );
                   })}
@@ -701,7 +767,7 @@ export function JsAcademy() {
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="// enter execution script..."
+              placeholder="// type — the grader checks every keystroke..."
               spellCheck={false}
               className="mt-3 w-full h-28 rounded-sm border border-white/5 bg-background p-3 font-mono text-xs text-emerald-400 outline-none focus:border-accent/30 resize-none"
             />
@@ -710,7 +776,7 @@ export function JsAcademy() {
                 Compile Script
               </button>
               {out.text && (
-                <span className={`font-mono text-[10px] ${out.state === "success" ? "text-emerald-400" : "text-red-400"}`}>
+                <span className={`font-mono text-[10px] ${out.state === "success" ? "text-emerald-400" : out.state === "fail" ? "text-amber-400" : "text-muted-foreground"}`}>
                   {out.text}
                 </span>
               )}
@@ -736,17 +802,41 @@ const BLUEPRINTS = [
   { id: "arch", name: "Framework Architect", pre: "Model micro-scale tunneling thresholds across:" },
 ];
 
+interface AxiomEntry { id: number; module: string; objective: string; output: string; reward: number; at: number; }
+
 export function AxiomLab() {
   const [active, setActive] = useState("strat");
   const [ctx, setCtx] = useState("");
   const [feed, setFeed] = useState("");
   const [load, setLoad] = useState(false);
+  const [history, setHistory] = useState<AxiomEntry[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [copied, setCopied] = useState(false);
   const module = BLUEPRINTS.find((m) => m.id === active)!;
+
+  // Hydrate output history + last open module
+  useEffect(() => {
+    try {
+      const rawH = window.localStorage.getItem("quantara.axiom.history");
+      const rawA = window.localStorage.getItem("quantara.axiom.active");
+      if (rawH) setHistory(JSON.parse(rawH));
+      if (rawA && BLUEPRINTS.find((m) => m.id === rawA)) setActive(rawA);
+    } catch {}
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem("quantara.axiom.history", JSON.stringify(history.slice(0, 20)));
+      window.localStorage.setItem("quantara.axiom.active", active);
+    } catch {}
+  }, [history, active, hydrated]);
 
   const run = () => {
     if (!ctx.trim() || load) return;
     setLoad(true);
     setFeed("");
+    const reward = Math.floor(Math.random() * 200) + 80;
     const full =
       `[TRANSMISSION_OK · ${module.name.toUpperCase()}]\n` +
       `> objective: "${ctx.trim()}"\n` +
@@ -756,7 +846,7 @@ export function AxiomLab() {
       ` 2. cross-checking against ancestral archive (8.4 PB indexed)\n` +
       ` 3. resolving zero-noise vector → INTEGRITY 100.0%\n\n` +
       `> telemetry confirms successful calibration.\n` +
-      `> grid reward: +${Math.floor(Math.random() * 200) + 80} cycles minted to operator.\n` +
+      `> grid reward: +${reward} cycles minted to operator.\n` +
       `[END_OF_TRANSMISSION]`;
     let i = 0;
     const stream = setInterval(() => {
@@ -765,8 +855,23 @@ export function AxiomLab() {
       if (i >= full.length) {
         clearInterval(stream);
         setLoad(false);
+        // mint reward + commit to history
+        creditDat(reward);
+        setHistory((h) => [
+          { id: Date.now(), module: module.name, objective: ctx.trim(), output: full, reward, at: Date.now() },
+          ...h,
+        ].slice(0, 20));
       }
     }, 24);
+  };
+
+  const copyOutput = async () => {
+    if (!feed) return;
+    try {
+      await navigator.clipboard.writeText(feed);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
   };
 
   return (
@@ -774,7 +879,7 @@ export function AxiomLab() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 max-w-xl">
           <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
-            PROMPT COMMAND SUITE
+            PROMPT COMMAND SUITE · OUTPUTS PERSISTED
           </span>
           <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
             AXIOM AI Lab Modules.
@@ -811,22 +916,67 @@ export function AxiomLab() {
               placeholder="Enter parameters or execution scenarios..."
               className="mt-3 w-full h-24 rounded-sm border border-white/5 bg-background p-3 font-mono text-xs text-white outline-none focus:border-accent/30 resize-none"
             />
-            <button
-              onClick={run}
-              disabled={load}
-              className="mt-3 bg-foreground px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-background hover:bg-chrome disabled:opacity-50"
-            >
-              {load ? "Syncing Vectors..." : "Transmit Execution"}
-            </button>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                onClick={run}
+                disabled={load}
+                className="bg-foreground px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-background hover:bg-chrome disabled:opacity-50"
+              >
+                {load ? "Syncing Vectors..." : "Transmit Execution"}
+              </button>
+              <button
+                onClick={copyOutput}
+                disabled={!feed}
+                className="border border-white/15 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/5 disabled:opacity-40"
+              >
+                {copied ? "Copied" : "Copy Output"}
+              </button>
+            </div>
 
             <div className="mt-5">
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
-                Matrix Output
+              <div className="flex items-center justify-between">
+                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                  Matrix Output
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground">
+                  HISTORY · <span className="text-accent">{history.length}</span> / 20
+                </div>
               </div>
               <pre className="mt-2 min-h-[120px] whitespace-pre-wrap rounded-sm border border-white/5 bg-background p-3 font-mono text-[11px] leading-relaxed text-emerald-400">
                 {feed || "// awaiting operator input streams..."}
               </pre>
             </div>
+
+            {history.length > 0 && (
+              <div className="mt-5">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+                    Output Ledger
+                  </div>
+                  <button
+                    onClick={() => setHistory([])}
+                    className="font-mono text-[10px] text-muted-foreground hover:text-white"
+                  >
+                    [clear]
+                  </button>
+                </div>
+                <div className="max-h-64 space-y-1 overflow-y-auto rounded-sm border border-white/5 bg-background/40 p-2">
+                  {history.map((h) => (
+                    <button
+                      key={h.id}
+                      onClick={() => setFeed(h.output)}
+                      className="block w-full border-l-2 border-accent/40 px-3 py-2 text-left font-mono text-[10px] hover:bg-white/[0.03]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-white">{h.module}</span>
+                        <span className="text-accent">+{h.reward} $DAT</span>
+                      </div>
+                      <div className="truncate text-muted-foreground">{h.objective}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

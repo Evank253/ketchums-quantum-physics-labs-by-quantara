@@ -87,20 +87,30 @@ export function SimulationCanvas() {
         p.x += p.vx; p.y += p.vy;
         if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
         if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-        ctx.beginPath();
         if (BAD_TYPES.includes(p.type)) {
-          ctx.moveTo(p.x, p.y - 4);
-          ctx.lineTo(p.x + 3, p.y - 1);
-          ctx.lineTo(p.x + 5, p.y + 2);
-          ctx.lineTo(p.x, p.y + 5);
-          ctx.lineTo(p.x - 3, p.y + 1);
-          ctx.closePath();
-          ctx.fillStyle = "#ef4444";
+          // glitching red data shard
+          const flick = Math.random() > 0.85;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((performance.now() / 400 + p.id) % (Math.PI * 2));
+          ctx.fillStyle = flick ? "#fca5a5" : "#ef4444";
+          ctx.shadowColor = "#ef4444";
+          ctx.shadowBlur = 8;
+          ctx.fillRect(-3, -3, 6, 6);
+          ctx.fillStyle = "#000";
+          ctx.fillRect(-2, -0.5, 4, 1);
+          ctx.restore();
+          ctx.shadowBlur = 0;
         } else {
+          // clean signal orb
+          ctx.beginPath();
           ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
           ctx.fillStyle = "#a78bfa";
+          ctx.shadowColor = "#a78bfa";
+          ctx.shadowBlur = 6;
+          ctx.fill();
+          ctx.shadowBlur = 0;
         }
-        ctx.fill();
       });
       particles = particles.filter((p) => !toRemove.has(p.id));
 

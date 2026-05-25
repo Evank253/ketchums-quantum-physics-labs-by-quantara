@@ -48,22 +48,22 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <main className="grain relative min-h-screen overflow-x-hidden bg-background text-foreground">
+    <main className="grain relative min-h-screen overflow-x-hidden scroll-smooth bg-background text-foreground">
       <Nav />
-      <Hero />
+      <div id="genesis"><Hero /></div>
       <UniverseFilm />
       <Principle />
       <DossierGrid />
       <DualReality />
-      <Telepathy />
+      <div id="telepathy"><Telepathy /></div>
       <DataCore />
-      <SimulationCanvas />
-      <JsAcademy />
-      <AxiomLab />
+      <div id="swarm"><SimulationCanvas /></div>
+      <div id="academy"><JsAcademy /></div>
+      <div id="axiom"><AxiomLab /></div>
       <OversightWindow />
       <Pipeline />
       <Manifesto />
-      <Economy />
+      <div id="economy"><Economy /></div>
       <Footer />
     </main>
   );

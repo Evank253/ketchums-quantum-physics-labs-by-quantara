@@ -37,12 +37,15 @@ const CONSTS: Record<string, number> = {
 function safeEval(expr: string): number {
   // strip everything not in a safe set; map constants to JS values
   let e = expr.replace(/\s+/g, "");
-  // replace named constants
+  // replace named constants (longest first to avoid partial matches)
   for (const k of Object.keys(CONSTS).sort((a, b) => b.length - a.length)) {
     e = e.replace(new RegExp(`\\b${k}\\b`, "gi"), `(${CONSTS[k]})`);
   }
-  // allowed math functions
-  e = e.replace(/\b(sin|cos|tan|asin|acos|atan|sqrt|log|log10|log2|exp|abs|pow|floor|ceil|round|sinh|cosh|tanh)\b/g, "Math.$1");
+  // allowed math functions — avoid double Math. prefix
+  e = e.replace(/\b(sin|cos|tan|asin|acos|atan|sqrt|log|log10|log2|exp|abs|pow|floor|ceil|round|sinh|cosh|tanh)\b/g, (m, _g1, offset, str) => {
+    if (offset >= 5 && str.slice(offset - 5, offset) === "Math.") return m;
+    return `Math.${m}`;
+  });
   // ^ → **
   e = e.replace(/\^/g, "**");
   if (!/^[0-9+\-*/().,%eE \t\nMath.a-zA-Z_*]+$/.test(e)) throw new Error("rejected characters in expression");

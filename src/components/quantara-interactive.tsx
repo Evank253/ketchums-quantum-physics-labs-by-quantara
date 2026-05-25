@@ -343,7 +343,7 @@ export function SimulationCanvas() {
                   {b.mood}
                 </span>
               </div>
-              <div className="mt-2 font-mono text-[10px] text-white">{TIER_NAMES[b.role][b.tier - 1]}</div>
+              <div className="mt-2 font-mono text-[10px] text-white">{bottierName(b.role, b.tier)}</div>
               <div className="mt-1 h-1 w-full bg-white/5">
                 <div className="h-full bg-accent" style={{ width: `${Math.min(100, (b.xp % 200) / 2)}%` }} />
               </div>

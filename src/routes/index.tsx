@@ -4,6 +4,7 @@ import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-int
 import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgrades } from "@/components/quantara-world";
 import { QedSolver } from "@/components/qed-solver";
 import { QedComputer } from "@/components/qed-computer";
+import { QedEngineOverview } from "@/components/qed-engine-overview";
 
 
 import entityHero from "@/assets/entity-hero.jpg";
@@ -73,6 +74,8 @@ function Index() {
       <WeaponryUpgrades />
       <QedSolver />
       <QedComputer />
+      <QedEngineOverview />
+
 
       <TechAdvancements />
       <TimeBridge />

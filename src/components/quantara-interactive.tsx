@@ -58,7 +58,7 @@ export function SimulationCanvas() {
     { id: 5, x: 100, y: 260, role: "Swarm",      badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 4.2, tier: 1 },
   ]);
   const totalXp = bots.reduce((s, b) => s + b.xp, 0);
-  const baseLevel = Math.min(5, 1 + Math.floor(totalXp / 250));
+  const baseLevel = 1 + Math.floor(totalXp / 250);
 
   useEffect(() => {
     const canvas = canvasRef.current;

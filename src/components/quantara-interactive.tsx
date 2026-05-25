@@ -277,18 +277,21 @@ export function SimulationCanvas() {
         return { x: nX, y: nY, badEaten: bot.badEaten + badAdd, goodCollected: bot.goodCollected + goodAdd };
       });
       botsRef = botsRef.map((b, i) => {
-        const newXp = b.xp + ((updates[i].badEaten! - b.badEaten) + (updates[i].goodCollected! - b.goodCollected)) * 15;
+        const newXp = b.xp + ((updates[i].badEaten! - b.badEaten) + (updates[i].goodCollected! - b.goodCollected)) * 18;
         const newTier = tierForXp(newXp);
-        const newRate = b.rate < (1.8 + newTier * 0.8) ? b.rate + 0.0008 : b.rate;
+        // perpetual, slowing acceleration — never caps
+        const ceilingRate = 1.8 + Math.log2(newTier + 1) * 1.4;
+        const newRate = b.rate < ceilingRate ? b.rate + 0.0012 : b.rate;
         return {
           ...b, ...updates[i],
           xp: newXp,
-          tier: Math.min(TIER_CAP, newTier) as 1 | 2 | 3,
+          tier: newTier,
           rate: newRate,
           energy: Math.max(15, b.energy - ((updates[i].badEaten! - b.badEaten) + (updates[i].goodCollected! - b.goodCollected)) * 0.4),
           mood: b.energy < 40 ? "Stable" : (updates[i].badEaten! - b.badEaten) > 0 ? "Aggressive" : "Optimal",
         } as Bot;
       });
+
 
       animId = requestAnimationFrame(loop);
     };

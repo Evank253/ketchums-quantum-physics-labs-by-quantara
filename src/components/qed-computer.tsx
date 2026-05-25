@@ -243,6 +243,7 @@ interface Line {
 export function QedComputer() {
   const [paste, setPaste] = useState("");
   const [chatInput, setChatInput] = useState("");
+  const [copied, setCopied] = useState(false);
   const [lines, setLines] = useState<Line[]>(() => [
     { id: 1, kind: "sys", text: "QED_COMPUTER // v1.0 · operator terminal" },
     { id: 2, kind: "sys", text: "type 'help' or paste expressions into the work-pad ▼" },

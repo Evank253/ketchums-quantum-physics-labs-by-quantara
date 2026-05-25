@@ -200,7 +200,7 @@ export function SimulationCanvas() {
           const dist = Math.hypot(dx, dy);
           if (dist < 8) {
             toRemove.add(p.id);
-            setDatTokens((v) => v + 1);
+            creditDat(1);
             return;
           }
           p.x += (dx / dist) * 4;

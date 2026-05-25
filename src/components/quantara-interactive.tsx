@@ -17,16 +17,16 @@ const TYPES: ParticleType[] = ["CORRUPT", "DUPE", "NOISE", "CLEAN", "INSIGHT", "
 
 export function SimulationCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [datTokens, setDatTokens] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    const v = window.localStorage.getItem("quantara.datTokens");
-    return v ? parseInt(v, 10) || 0 : 0;
-  });
+  const [datTokens, setDatTokens] = useState<number>(0);
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("quantara.datTokens", String(datTokens));
-    }
-  }, [datTokens]);
+    const v = window.localStorage.getItem("quantara.datTokens");
+    if (v) setDatTokens(parseInt(v, 10) || 0);
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (hydrated) window.localStorage.setItem("quantara.datTokens", String(datTokens));
+  }, [datTokens, hydrated]);
   const [bots, setBots] = useState<Bot[]>([
     { id: 1, x: 150, y: 120, role: "Harvester", badEaten: 0, goodCollected: 0, energy: 100, mood: "Optimal", xp: 0, rate: 2.2 },
     { id: 2, x: 450, y: 280, role: "Sifter", badEaten: 0, goodCollected: 0, energy: 95, mood: "Optimal", xp: 0, rate: 3.5 },
@@ -288,15 +288,18 @@ interface Prospect { id: number; name: string; sector: string; status: "PROSPECT
 
 function SwarmRecruiter({ onSigned }: { onSigned: (amt: number) => void }) {
   const [feed, setFeed] = useState<Prospect[]>([]);
-  const [signedCount, setSignedCount] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    return parseInt(window.localStorage.getItem("quantara.signed") || "0", 10);
-  });
+  const [signedCount, setSignedCount] = useState<number>(0);
+  const [hydrated, setHydrated] = useState(false);
   const idRef = useRef(1);
 
   useEffect(() => {
-    window.localStorage.setItem("quantara.signed", String(signedCount));
-  }, [signedCount]);
+    const v = window.localStorage.getItem("quantara.signed");
+    if (v) setSignedCount(parseInt(v, 10) || 0);
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (hydrated) window.localStorage.setItem("quantara.signed", String(signedCount));
+  }, [signedCount, hydrated]);
 
   useEffect(() => {
     const tick = setInterval(() => {

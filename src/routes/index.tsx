@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-interactive";
 import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgrades } from "@/components/quantara-world";
 import { QedSolver } from "@/components/qed-solver";
+import { QedComputer } from "@/components/qed-computer";
 
 
 import entityHero from "@/assets/entity-hero.jpg";
@@ -71,6 +72,7 @@ function Index() {
       <WarzoneMarketplace />
       <WeaponryUpgrades />
       <QedSolver />
+      <QedComputer />
 
       <TechAdvancements />
       <TimeBridge />

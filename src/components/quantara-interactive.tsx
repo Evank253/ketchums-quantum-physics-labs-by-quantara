@@ -288,15 +288,18 @@ interface Prospect { id: number; name: string; sector: string; status: "PROSPECT
 
 function SwarmRecruiter({ onSigned }: { onSigned: (amt: number) => void }) {
   const [feed, setFeed] = useState<Prospect[]>([]);
-  const [signedCount, setSignedCount] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    return parseInt(window.localStorage.getItem("quantara.signed") || "0", 10);
-  });
+  const [signedCount, setSignedCount] = useState<number>(0);
+  const [hydrated, setHydrated] = useState(false);
   const idRef = useRef(1);
 
   useEffect(() => {
-    window.localStorage.setItem("quantara.signed", String(signedCount));
-  }, [signedCount]);
+    const v = window.localStorage.getItem("quantara.signed");
+    if (v) setSignedCount(parseInt(v, 10) || 0);
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (hydrated) window.localStorage.setItem("quantara.signed", String(signedCount));
+  }, [signedCount, hydrated]);
 
   useEffect(() => {
     const tick = setInterval(() => {

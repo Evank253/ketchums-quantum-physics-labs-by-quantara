@@ -431,17 +431,29 @@ export function AxiomLab() {
   const module = BLUEPRINTS.find((m) => m.id === active)!;
 
   const run = () => {
-    if (!ctx.trim()) return;
+    if (!ctx.trim() || load) return;
     setLoad(true);
-    setTimeout(() => {
-      setFeed(
-        `[TRANSMISSION_OK]\nMatrix result for objective: "${ctx}"\n\n` +
-        `> Telemetry confirms successful calibration.\n` +
-        `> Zero rounding faults detected.\n` +
-        `> Platform reward: +150 grid cycles minted to operator.`
-      );
-      setLoad(false);
-    }, 1100);
+    setFeed("");
+    const full =
+      `[TRANSMISSION_OK · ${module.name.toUpperCase()}]\n` +
+      `> objective: "${ctx.trim()}"\n` +
+      `> seed: 0x${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}\n\n` +
+      `${module.pre}\n` +
+      ` 1. parsing operator intent across ${Math.floor(Math.random() * 40) + 12} matrix lanes\n` +
+      ` 2. cross-checking against ancestral archive (8.4 PB indexed)\n` +
+      ` 3. resolving zero-noise vector → INTEGRITY 100.0%\n\n` +
+      `> telemetry confirms successful calibration.\n` +
+      `> grid reward: +${Math.floor(Math.random() * 200) + 80} cycles minted to operator.\n` +
+      `[END_OF_TRANSMISSION]`;
+    let i = 0;
+    const stream = setInterval(() => {
+      i += Math.max(1, Math.floor(full.length / 90));
+      setFeed(full.slice(0, i));
+      if (i >= full.length) {
+        clearInterval(stream);
+        setLoad(false);
+      }
+    }, 24);
   };
 
   return (

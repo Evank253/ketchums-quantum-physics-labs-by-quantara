@@ -650,26 +650,87 @@ export function JsAcademy() {
   const [skill, setSkill] = useState(0);
   const [code, setCode] = useState("");
   const [out, setOut] = useState<{ state: "idle" | "success" | "fail"; text: string }>({ state: "idle", text: "" });
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [hydrated, setHydrated] = useState(false);
   const active = ACADEMY[tier].skills[skill];
+  const skillKey = `${tier}:${skill}`;
 
-  const test = () => {
-    if (active.regex.test(code)) {
-      setOut({ state: "success", text: "SUCCESS // MATRIX VALIDATED. SYSTEM LEVEL UP." });
-    } else {
-      setOut({ state: "fail", text: "ERROR · Code structure mismatch. Check exact naming and assignment syntax." });
+  // Persist completed skills
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("quantara.academy.completed");
+      if (raw) setCompleted(new Set(JSON.parse(raw)));
+    } catch {}
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem("quantara.academy.completed", JSON.stringify([...completed]));
+    } catch {}
+  }, [completed, hydrated]);
+
+  const markPass = (key: string, autoAdvance: boolean) => {
+    setOut({ state: "success", text: "SUCCESS // MATRIX VALIDATED. +25 $DAT minted." });
+    if (!completed.has(key)) {
+      creditDat(25);
+      setCompleted((s) => new Set(s).add(key));
+    }
+    if (autoAdvance) {
+      // jump to the next uncompleted skill after a short beat
+      setTimeout(() => {
+        const flat: Array<[number, number]> = [];
+        ACADEMY.forEach((t, ti) => t.skills.forEach((_, si) => flat.push([ti, si])));
+        const idx = flat.findIndex(([ti, si]) => ti === tier && si === skill);
+        for (let i = 1; i <= flat.length; i++) {
+          const [ti, si] = flat[(idx + i) % flat.length];
+          const k = `${ti}:${si}`;
+          if (!completed.has(k) && k !== key) {
+            setTier(ti); setSkill(si); setCode(""); setOut({ state: "idle", text: "" });
+            return;
+          }
+        }
+      }, 900);
     }
   };
+
+  // Auto-grader: debounced check while typing — no manual compile needed
+  useEffect(() => {
+    if (!code.trim()) { setOut({ state: "idle", text: "" }); return; }
+    const t = setTimeout(() => {
+      if (active.regex.test(code)) {
+        markPass(skillKey, true);
+      } else {
+        setOut({ state: "fail", text: "// auto-grader: structure mismatch — keep typing..." });
+      }
+    }, 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, skillKey]);
+
+  const test = () => {
+    if (active.regex.test(code)) markPass(skillKey, true);
+    else setOut({ state: "fail", text: "ERROR · Code structure mismatch. Check exact naming and assignment syntax." });
+  };
+
+  const totalSkills = ACADEMY.reduce((n, t) => n + t.skills.length, 0);
 
   return (
     <section className="border-t border-white/5 bg-[oklch(0.1_0.01_280)] px-6 py-32">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-10 max-w-xl">
-          <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
-            COGNITIVE DEVELOPMENT LAB
-          </span>
-          <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
-            JS Academy Terminal.
-          </h3>
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+          <div className="max-w-xl">
+            <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              COGNITIVE DEVELOPMENT LAB · AUTO-GRADER ONLINE
+            </span>
+            <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
+              JS Academy Terminal.
+            </h3>
+          </div>
+          <div className="border border-accent/30 bg-accent/5 px-4 py-3 font-mono">
+            <div className="text-[10px] uppercase tracking-[0.25em] text-chrome">PROGRESS</div>
+            <div className="text-lg font-black text-accent">{completed.size}<span className="text-xs text-muted-foreground"> / {totalSkills}</span></div>
+          </div>
         </div>
 
         <div className="grid gap-px md:grid-cols-12">
@@ -680,13 +741,15 @@ export function JsAcademy() {
                 <div className="space-y-1">
                   {t.skills.map((s, sIdx) => {
                     const isActive = tier === tIdx && skill === sIdx;
+                    const isDone = completed.has(`${tIdx}:${sIdx}`);
                     return (
                       <button
                         key={s.name}
                         onClick={() => { setTier(tIdx); setSkill(sIdx); setCode(""); setOut({ state: "idle", text: "" }); }}
-                        className={`block w-full text-left font-mono text-[10px] py-1 ${isActive ? "text-accent font-bold" : "text-muted-foreground hover:text-white"}`}
+                        className={`flex w-full items-center justify-between text-left font-mono text-[10px] py-1 ${isActive ? "text-accent font-bold" : isDone ? "text-emerald-400" : "text-muted-foreground hover:text-white"}`}
                       >
-                        ■ {s.name}
+                        <span>{isDone ? "✓" : "■"} {s.name}</span>
+                        {isDone && <span className="text-[9px] text-emerald-400/70">PASS</span>}
                       </button>
                     );
                   })}
@@ -704,7 +767,7 @@ export function JsAcademy() {
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="// enter execution script..."
+              placeholder="// type — the grader checks every keystroke..."
               spellCheck={false}
               className="mt-3 w-full h-28 rounded-sm border border-white/5 bg-background p-3 font-mono text-xs text-emerald-400 outline-none focus:border-accent/30 resize-none"
             />
@@ -713,7 +776,7 @@ export function JsAcademy() {
                 Compile Script
               </button>
               {out.text && (
-                <span className={`font-mono text-[10px] ${out.state === "success" ? "text-emerald-400" : "text-red-400"}`}>
+                <span className={`font-mono text-[10px] ${out.state === "success" ? "text-emerald-400" : out.state === "fail" ? "text-amber-400" : "text-muted-foreground"}`}>
                   {out.text}
                 </span>
               )}

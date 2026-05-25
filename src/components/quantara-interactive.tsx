@@ -263,7 +263,7 @@ export function SimulationCanvas() {
               particles.push({ id: nextId++, x: bot.x, y: bot.y, vx: 0, vy: 0, type: "PURIFIED_BEAM" });
             } else {
               goodAdd = 1;
-              setDatTokens((v) => v + 5 + bot.tier * 2);
+              creditDat(5 + bot.tier * 2);
             }
             particles.push({
               id: nextId++, x: Math.random() * canvas.width, y: Math.random() * canvas.height,

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-interactive";
 import entityHero from "@/assets/entity-hero.jpg";
 import artifact01 from "@/assets/artifact-01.jpg";
 import artifact02 from "@/assets/artifact-02.jpg";

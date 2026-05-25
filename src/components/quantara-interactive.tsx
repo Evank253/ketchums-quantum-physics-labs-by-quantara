@@ -11,7 +11,7 @@ interface Bot {
   role: Role;
   badEaten: number; goodCollected: number; energy: number;
   mood: "Optimal" | "Aggressive" | "Stable"; xp: number; rate: number;
-  tier: 1 | 2 | 3;
+  tier: number;
 }
 
 const BAD_TYPES: ParticleType[] = ["CORRUPT", "DUPE", "NOISE"];
@@ -26,13 +26,17 @@ const TIER_NAMES: Record<Role, [string, string, string]> = {
 const ROLE_COLOR: Record<Role, string> = {
   Harvester: "#f43f5e", Sifter: "#3b82f6", Stabilizer: "#10b981", Swarm: "#eab308",
 };
-const TIER_CAP = 3;
 
-function tierForXp(xp: number): 1 | 2 | 3 {
-  if (xp >= 600) return 3;
-  if (xp >= 200) return 2;
-  return 1;
+// No cap — logarithmic so evolution always continues but at slowing pace
+function tierForXp(xp: number): number {
+  if (xp < 100) return 1;
+  return 1 + Math.floor(Math.log2(xp / 100 + 1));
 }
+function bottierName(role: Role, tier: number) {
+  const base = TIER_NAMES[role][Math.min(2, tier - 1)];
+  return tier > 3 ? `${base} · Σ${tier}` : base;
+}
+
 
 export function SimulationCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);

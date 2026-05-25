@@ -383,6 +383,17 @@ export function SimulationCanvas() {
           </div>
         </div>
 
+        {offlineEarned && offlineEarned.secs > 5 && (
+          <div className="mb-4 flex items-center justify-between border border-accent/40 bg-accent/10 px-4 py-3 font-mono text-[11px] text-accent">
+            <span>
+              WELCOME_BACK // bots ran for {Math.floor(offlineEarned.secs / 3600)}h {Math.floor((offlineEarned.secs % 3600) / 60)}m while you were away.
+            </span>
+            <span className="text-white">+{offlineEarned.xp} XP · +{offlineEarned.dat} $DAT</span>
+            <button onClick={() => setOfflineEarned(null)} className="text-chrome hover:text-white">[dismiss]</button>
+          </div>
+        )}
+
+
         <div className="glass-panel relative overflow-hidden rounded-sm">
           <canvas ref={canvasRef} className="block w-full" style={{ height: 360 }} />
           <div className="scan-effect pointer-events-none absolute inset-0" />

@@ -61,6 +61,8 @@ function Index() {
       <DataCore />
       <div id="swarm"><SimulationCanvas /></div>
       <CityVision />
+      <TechAdvancements />
+      <TimeBridge />
       <div id="academy"><JsAcademy /></div>
       <div id="axiom"><AxiomLab /></div>
       <OversightWindow />

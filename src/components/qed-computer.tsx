@@ -515,6 +515,10 @@ END OF DERIVATION — ${new Date().toISOString()}
           </div>
           <div className="flex gap-2">
             <button
+              onClick={copyFullSolution}
+              className="border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-fuchsia-200 hover:bg-fuchsia-500/20"
+            >{solved ? "Solution copied" : "Solve QED · Copy"}</button>
+            <button
               onClick={copyAll}
               className="border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300 hover:bg-emerald-500/20"
             >{copied ? "Copied!" : "Copy All"}</button>

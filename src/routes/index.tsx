@@ -57,6 +57,9 @@ function Index() {
       <DualReality />
       <Telepathy />
       <DataCore />
+      <SimulationCanvas />
+      <JsAcademy />
+      <AxiomLab />
       <OversightWindow />
       <Pipeline />
       <Manifesto />

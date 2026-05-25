@@ -354,6 +354,10 @@ export function QedComputer() {
           </div>
           <div className="flex gap-2">
             <button
+              onClick={copyAll}
+              className="border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300 hover:bg-emerald-500/20"
+            >{copied ? "Copied!" : "Copy All"}</button>
+            <button
               onClick={() => { setLines([{ id: 1, kind: "sys", text: "// transcript cleared" }]); idRef.current = 2; }}
               className="border border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-white hover:border-accent/40"
             >Clear</button>

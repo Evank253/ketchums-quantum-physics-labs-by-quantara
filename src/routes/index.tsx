@@ -55,6 +55,8 @@ function Index() {
       <DossierGrid />
       <DualReality />
       <Telepathy />
+      <DataCore />
+      <OversightWindow />
       <Pipeline />
       <Manifesto />
       <Economy />

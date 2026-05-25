@@ -57,13 +57,17 @@ export function SimulationCanvas() {
   const [hydrated, setHydrated] = useState(false);
   const [offlineEarned, setOfflineEarned] = useState<{ xp: number; dat: number; secs: number } | null>(null);
 
-  // Hydrate from localStorage + fast-forward offline progress
+  // Subscribe to the shared $DAT store so credits from Academy/Axiom/contracts all stay in sync
+  useEffect(() => {
+    setDatTokens(readDat());
+    return subscribeDat(setDatTokens);
+  }, []);
+
+  // Hydrate bots from localStorage + fast-forward offline progress (DAT goes through shared store)
   useEffect(() => {
     try {
       const rawBots = window.localStorage.getItem("quantara.bots");
       const rawSaved = window.localStorage.getItem("quantara.savedAt");
-      const rawDat = window.localStorage.getItem("quantara.datTokens");
-      let dat = rawDat ? parseInt(rawDat, 10) || 0 : 0;
       let loaded = rawBots ? (JSON.parse(rawBots) as Bot[]) : DEFAULT_BOTS;
       if (rawSaved) {
         const elapsed = Math.min(MAX_OFFLINE_SEC, Math.max(0, (Date.now() - parseInt(rawSaved, 10)) / 1000));
@@ -83,12 +87,11 @@ export function SimulationCanvas() {
             };
           });
           const datGain = Math.floor(gainedXp / 50);
-          dat += datGain;
+          if (datGain > 0) creditDat(datGain);
           setOfflineEarned({ xp: Math.floor(gainedXp), dat: datGain, secs: Math.floor(elapsed) });
         }
       }
       setBots(loaded);
-      setDatTokens(dat);
     } catch {}
     setHydrated(true);
   }, []);

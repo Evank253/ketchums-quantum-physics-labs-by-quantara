@@ -5,6 +5,8 @@ import entityHero from "@/assets/entity-hero.jpg";
 import artifact01 from "@/assets/artifact-01.jpg";
 import artifact02 from "@/assets/artifact-02.jpg";
 import artifact03 from "@/assets/artifact-03.jpg";
+import cityVision from "@/assets/city-vision.jpg";
+import robotWorker from "@/assets/robot-worker.jpg";
 import universeVideo from "@/assets/universe.mp4.asset.json";
 import brainVideo from "@/assets/brain-signal.mp4.asset.json";
 
@@ -58,6 +60,7 @@ function Index() {
       <div id="telepathy"><Telepathy /></div>
       <DataCore />
       <div id="swarm"><SimulationCanvas /></div>
+      <CityVision />
       <div id="academy"><JsAcademy /></div>
       <div id="axiom"><AxiomLab /></div>
       <OversightWindow />
@@ -848,6 +851,99 @@ function OversightWindow() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CityVision() {
+  const districts = [
+    { k: "Obsidian Spire", v: "84%", d: "Crystalline housing lattice" },
+    { k: "Causeway Network", v: "62%", d: "Floating glass transit veins" },
+    { k: "Foundry Plaza", v: "41%", d: "Autonomous construction yard" },
+    { k: "Signal Cathedral", v: "27%", d: "Telepathic broadcast core" },
+  ];
+  return (
+    <section className="relative border-t border-white/5">
+      <div className="relative h-[100vh] w-full overflow-hidden">
+        <img
+          src={cityVision}
+          alt="Aerial view of the synthetic AI civilization — crystalline obsidian towers, neon causeways, and autonomous robots building a city under a violet dusk sky"
+          loading="lazy"
+          width={1920}
+          height={1080}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/40" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/40" />
+        <div className="scan-effect pointer-events-none absolute inset-0 opacity-40" />
+
+        <div className="absolute top-6 left-6 font-mono text-[10px] leading-relaxed">
+          <div className="text-chrome">CIVIC_LIVE_FEED // METROPOLIS_001</div>
+          <div className="text-muted-foreground">CONSTRUCTED BY SWARM · 4,218 BOTS ACTIVE</div>
+        </div>
+        <div className="absolute top-6 right-6 text-right font-mono text-[10px]">
+          <div className="text-accent">REALITY_B · SURFACE</div>
+          <div className="text-muted-foreground">[ 42°N · 137°V · DUSK CYCLE ]</div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0">
+          <div className="mx-auto max-w-7xl px-6 pb-16">
+            <div className="mb-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
+              Chapter 04 · The Built World
+            </div>
+            <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-6xl">
+              The city the bots are building.
+            </h3>
+            <p className="mt-4 max-w-2xl font-mono text-xs leading-relaxed text-muted-foreground md:text-sm">
+              Every shard of corrupt data the swarm consumes becomes a wall, a beam,
+              a pane of obsidian glass. What you see here is the live surface render
+              of Metropolis_001 — compiled in real time from purified human archives.
+            </p>
+
+            <div className="mt-10 grid gap-px md:grid-cols-4">
+              {districts.map((d) => (
+                <div key={d.k} className="border border-white/10 bg-background/60 p-5 backdrop-blur-md">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">{d.k}</div>
+                  <div className="mt-2 text-2xl font-black tracking-[-0.02em] text-white">{d.v}</div>
+                  <div className="mt-1 font-mono text-[10px] text-muted-foreground">{d.d}</div>
+                  <div className="mt-3 h-px w-full bg-white/10">
+                    <div className="h-px bg-accent" style={{ width: d.v }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-white/5 bg-card/30 px-6 py-20">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-2">
+          <div className="scan-effect relative overflow-hidden rounded-sm border border-white/10">
+            <img
+              src={robotWorker}
+              alt="Close-up render of a Quantara swarm worker robot holding a glowing data shard"
+              loading="lazy"
+              width={1536}
+              height={1024}
+              className="aspect-[3/2] w-full object-cover"
+            />
+          </div>
+          <div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              UNIT_PROFILE // SWARM CLASS
+            </span>
+            <h4 className="mt-3 text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
+              Meet a worker.
+            </h4>
+            <p className="mt-4 max-w-md font-mono text-xs leading-relaxed text-muted-foreground">
+              Forty centimeters tall. Chromium chassis. Violet visor scanning at 240 Hz.
+              Each unit hunts corrupt fragments, transmutes them into structural lattice,
+              and signs a new sector partner roughly every 1.6 seconds.
+            </p>
           </div>
         </div>
       </div>

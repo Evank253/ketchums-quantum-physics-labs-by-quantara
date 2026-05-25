@@ -298,6 +298,32 @@ export function QedComputer() {
     setChatInput("");
   };
 
+  const copyAll = async () => {
+    const text = lines
+      .map((l) => {
+        const prefix =
+          l.kind === "in" ? "> " : "";
+        const detail = l.detail ? l.detail.map((d) => `  · ${d}`).join("\n") : "";
+        return `${prefix}${l.text}${detail ? "\n" + detail : ""}`;
+      })
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const examples = [
     "alpha",
     "ae",

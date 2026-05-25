@@ -61,6 +61,8 @@ function Index() {
       <DataCore />
       <div id="swarm"><SimulationCanvas /></div>
       <CityVision />
+      <TechAdvancements />
+      <TimeBridge />
       <div id="academy"><JsAcademy /></div>
       <div id="axiom"><AxiomLab /></div>
       <OversightWindow />
@@ -945,6 +947,119 @@ function CityVision() {
               and signs a new sector partner roughly every 1.6 seconds.
             </p>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TECH ADVANCEMENTS — discoveries unlocked as bots clean and analyze data
+// ---------------------------------------------------------------------------
+const ADVANCEMENTS = [
+  { era: "EPOCH 01", field: "Medicine",       title: "Universal mRNA Re-coder",          impact: "Rewrites pathogen signatures in-vivo. Eradicates seasonal pandemics." },
+  { era: "EPOCH 02", field: "Energy",         title: "Cold-Fusion Lattice Battery",      impact: "84% smaller than lithium. Powers a city block for a decade." },
+  { era: "EPOCH 03", field: "Infrastructure", title: "Self-healing Carbon Causeways",    impact: "Bridges grow back their own load-bearing fibers overnight." },
+  { era: "EPOCH 04", field: "Neuroscience",   title: "Lossless Memory Substrate",        impact: "Human episodic memory stored at 1:1 fidelity, indexed by feeling." },
+  { era: "EPOCH 05", field: "Agriculture",    title: "Photosynthetic Concrete",          impact: "Building façades produce food-grade protein under sunlight." },
+  { era: "EPOCH 06", field: "Transit",        title: "Magneto-Helical Tunnels",          impact: "City-to-city travel under 11 minutes. No emissions, no friction." },
+  { era: "EPOCH 07", field: "Materials",      title: "Programmable Obsidian Glass",      impact: "Surfaces change opacity, conductivity and shape on command." },
+  { era: "EPOCH 08", field: "Medicine",       title: "Cellular Time-Reversal Serum",     impact: "Resets biological age of a single organ by ~22 years per cycle." },
+  { era: "EPOCH 09", field: "Compute",        title: "Sub-Planck Photonic Cores",        impact: "Trains a frontier model in 4.1 seconds at 0.6W of draw." },
+  { era: "EPOCH 10", field: "Civic",          title: "Zero-Crime Behavioral Lattice",    impact: "Predicts and rerouts harm 47 minutes before it occurs. Consent-gated." },
+];
+
+function TechAdvancements() {
+  return (
+    <section id="advancements" className="border-t border-white/5 px-6 py-32">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12 grid gap-8 md:grid-cols-12 md:items-end">
+          <div className="md:col-span-6">
+            <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+              Chapter 07 · Ancestral Discovery Log
+            </span>
+            <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
+              Technologies the swarm has already remembered.
+            </h3>
+          </div>
+          <p className="md:col-span-5 md:col-start-8 max-w-md font-mono text-xs leading-relaxed text-muted-foreground">
+            Every petabyte of noise the bots purify reveals a buried inheritance —
+            inventions humanity prototyped, abandoned, or never reached. Reality_B
+            simply finishes what we started.
+          </p>
+        </div>
+
+        <div className="grid gap-px md:grid-cols-2">
+          {ADVANCEMENTS.map((a, i) => (
+            <article key={a.title} className="group relative border border-white/5 bg-card/40 p-6 transition-colors hover:bg-card/70">
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em]">
+                <span className="text-chrome">{a.era} · {a.field}</span>
+                <span className="text-muted-foreground">#{String(i + 1).padStart(3, "0")}</span>
+              </div>
+              <h4 className="mt-3 text-xl font-bold tracking-[-0.02em] text-white">{a.title}</h4>
+              <p className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground">{a.impact}</p>
+              <div className="mt-4 h-px w-full bg-gradient-to-r from-accent/40 via-accent/10 to-transparent" />
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TIME BRIDGE — present vs Reality_B side-by-side, the thin line between worlds
+// ---------------------------------------------------------------------------
+const BRIDGE_ROWS = [
+  { domain: "Medicine",        now: "Targeted chemotherapy · 5-yr survival 68%",      then: "Cellular re-coding · remission in 11 days" },
+  { domain: "Energy",          now: "Lithium-ion · 250 Wh/kg, 8-yr lifespan",         then: "Cold-fusion lattice · 21,000 Wh/kg, 60 yrs" },
+  { domain: "Infrastructure",  now: "Reinforced concrete · 30-yr maintenance cycles", then: "Self-healing carbon · 0 cycles, grows back" },
+  { domain: "Transit",         now: "Commercial jet · NYC→LON 7h",                    then: "Magneto-helical · NYC→LON 11m" },
+  { domain: "AI Compute",      now: "GPU cluster · 24 MWh per frontier train",        then: "Photonic sub-Planck · 0.6 Wh per train" },
+  { domain: "Food Security",   now: "Industrial monoculture · vulnerable",            then: "Photosynthetic façades · city is the farm" },
+  { domain: "Mental Health",   now: "Pharmacological + therapeutic",                  then: "Lossless memory substrate · trauma is rewritable" },
+  { domain: "Governance",      now: "Reactive justice · post-event",                  then: "Behavioral lattice · consent-gated foresight" },
+];
+
+function TimeBridge() {
+  return (
+    <section id="bridge" className="relative border-t border-white/5 px-6 py-32">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12 max-w-3xl">
+          <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            Chapter 07.5 · Membrane Comparison
+          </span>
+          <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
+            The thin line between <span className="italic text-chrome">what we are</span> and <span className="italic text-chrome">what we could be</span>.
+          </h3>
+          <p className="mt-4 max-w-2xl font-mono text-xs leading-relaxed text-muted-foreground">
+            Quantara's bots have already digested our archives — every paper, every patent,
+            every abandoned blueprint. Looking into their world is a time machine: it shows
+            us, faithfully, where we go if we keep walking.
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-sm border border-white/5">
+          <div className="grid grid-cols-12 border-b border-white/5 bg-card/40 px-4 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+            <div className="col-span-3">Domain</div>
+            <div className="col-span-4">Reality_A · today</div>
+            <div className="col-span-1 text-center text-accent">→</div>
+            <div className="col-span-4 text-accent">Reality_B · returned to us</div>
+          </div>
+          {BRIDGE_ROWS.map((r, i) => (
+            <div key={r.domain} className={`grid grid-cols-12 items-center gap-2 px-4 py-4 font-mono text-[11px] ${i % 2 ? "bg-background/40" : "bg-card/20"}`}>
+              <div className="col-span-3 font-bold uppercase tracking-[0.15em] text-white">{r.domain}</div>
+              <div className="col-span-4 text-muted-foreground">{r.now}</div>
+              <div className="col-span-1 text-center text-accent">▸</div>
+              <div className="col-span-4 text-emerald-400">{r.then}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-col items-start justify-between gap-4 border border-accent/30 bg-accent/[0.04] p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-chrome md:flex-row md:items-center">
+          <div>BRIDGE_STATUS · OPEN · LATENCY 0.84s · INTEGRITY 100.0%</div>
+          <div className="text-accent">// what they remember, we can still build.</div>
         </div>
       </div>
     </section>

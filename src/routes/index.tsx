@@ -63,9 +63,15 @@ function Index() {
       <DataCore />
       <div id="swarm"><SimulationCanvas /></div>
       <CityVision />
+      <div id="planet"><LivingPlanet /></div>
+      <BotDialogue />
+      <div id="avatar"><AvatarWalk /></div>
+      <WarzoneMarketplace />
+      <WeaponryUpgrades />
       <TechAdvancements />
       <TimeBridge />
       <div id="academy"><JsAcademy /></div>
+
       <div id="axiom"><AxiomLab /></div>
       <OversightWindow />
       <Pipeline />

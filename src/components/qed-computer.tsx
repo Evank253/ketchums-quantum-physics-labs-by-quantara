@@ -37,12 +37,15 @@ const CONSTS: Record<string, number> = {
 function safeEval(expr: string): number {
   // strip everything not in a safe set; map constants to JS values
   let e = expr.replace(/\s+/g, "");
-  // replace named constants
+  // replace named constants (longest first to avoid partial matches)
   for (const k of Object.keys(CONSTS).sort((a, b) => b.length - a.length)) {
     e = e.replace(new RegExp(`\\b${k}\\b`, "gi"), `(${CONSTS[k]})`);
   }
-  // allowed math functions
-  e = e.replace(/\b(sin|cos|tan|asin|acos|atan|sqrt|log|log10|log2|exp|abs|pow|floor|ceil|round|sinh|cosh|tanh)\b/g, "Math.$1");
+  // allowed math functions — avoid double Math. prefix
+  e = e.replace(/\b(sin|cos|tan|asin|acos|atan|sqrt|log|log10|log2|exp|abs|pow|floor|ceil|round|sinh|cosh|tanh)\b/g, (m, _g1, offset, str) => {
+    if (offset >= 5 && str.slice(offset - 5, offset) === "Math.") return m;
+    return `Math.${m}`;
+  });
   // ^ → **
   e = e.replace(/\^/g, "**");
   if (!/^[0-9+\-*/().,%eE \t\nMath.a-zA-Z_*]+$/.test(e)) throw new Error("rejected characters in expression");
@@ -240,6 +243,7 @@ interface Line {
 export function QedComputer() {
   const [paste, setPaste] = useState("");
   const [chatInput, setChatInput] = useState("");
+  const [copied, setCopied] = useState(false);
   const [lines, setLines] = useState<Line[]>(() => [
     { id: 1, kind: "sys", text: "QED_COMPUTER // v1.0 · operator terminal" },
     { id: 2, kind: "sys", text: "type 'help' or paste expressions into the work-pad ▼" },
@@ -294,6 +298,32 @@ export function QedComputer() {
     setChatInput("");
   };
 
+  const copyAll = async () => {
+    const text = lines
+      .map((l) => {
+        const prefix =
+          l.kind === "in" ? "> " : "";
+        const detail = l.detail ? l.detail.map((d) => `  · ${d}`).join("\n") : "";
+        return `${prefix}${l.text}${detail ? "\n" + detail : ""}`;
+      })
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const examples = [
     "alpha",
     "ae",
@@ -323,6 +353,10 @@ export function QedComputer() {
             </p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={copyAll}
+              className="border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300 hover:bg-emerald-500/20"
+            >{copied ? "Copied!" : "Copy All"}</button>
             <button
               onClick={() => { setLines([{ id: 1, kind: "sys", text: "// transcript cleared" }]); idRef.current = 2; }}
               className="border border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-white hover:border-accent/40"

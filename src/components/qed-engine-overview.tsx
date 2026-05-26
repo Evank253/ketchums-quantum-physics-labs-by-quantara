@@ -280,7 +280,25 @@ export function QedEngineOverview() {
               remain statistically consistent with CODATA — to machine precision.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              onChange={(e) => { if (e.target.value) { applyPreset(e.target.value); e.target.value = ""; } }}
+              defaultValue=""
+              className="border border-white/15 bg-black/40 px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white outline-none"
+            >
+              <option value="">Load preset…</option>
+              <option value="fast-draft">fast-draft</option>
+              <option value="publication">publication</option>
+              <option value="stress-test">stress-test</option>
+              <option value="prediction-only">prediction-only</option>
+              <option value="landau-gauge-check">landau-gauge-check</option>
+            </select>
+            <button
+              onClick={resetDefaults}
+              className="border border-white/15 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/5"
+            >
+              Reset
+            </button>
             <button
               onClick={() => setAuto((v) => !v)}
               className="border border-white/15 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/5"

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-interactive";
 import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgrades } from "@/components/quantara-world";
@@ -292,6 +292,12 @@ function Nav() {
             </a>
           );
         })}
+        <Link
+          to="/world"
+          className="border border-accent/40 px-2.5 py-1 text-white hover:bg-accent/15"
+        >
+          Enter World →
+        </Link>
       </div>
     </nav>
   );

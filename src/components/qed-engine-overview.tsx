@@ -227,6 +227,76 @@ export function QedEngineOverview() {
     setSpec(DEFAULT_SPEC);
     setRuns([]);
   }
+  function clearSaved() {
+    try {
+      localStorage.removeItem("qed.engine.spec");
+      localStorage.removeItem("qed.engine.runs");
+    } catch {}
+    setSpec(DEFAULT_SPEC);
+    setRuns([]);
+  }
+  function buildSummary(): string {
+    const ts = new Date().toISOString();
+    const lines: string[] = [];
+    lines.push(`# QED Engine — Results Summary`);
+    lines.push(`Generated: ${ts}\n`);
+    lines.push(`## Spec`);
+    Object.entries(spec).forEach(([k, v]) =>
+      lines.push(`- **${k}**: ${Array.isArray(v) ? `[${v.join(", ")}]` : v}`),
+    );
+    const lastRun = runs[runs.length - 1];
+    if (lastRun) {
+      lines.push(`\n## Last Run (${lastRun.pass_id})`);
+      lines.push(`- 1/α = ${lastRun.invAlpha.toFixed(9)}  (CODATA ${CODATA_INV_ALPHA})`);
+      lines.push(`- aₑ  = ${lastRun.ae.toExponential(6)}  (CODATA ${CODATA_AE.toExponential(6)})`);
+      lines.push(`- residual = ${fmtSci(lastRun.residual)}`);
+      lines.push(
+        `- σ_trunc = ${fmtSci(lastRun.sigma_trunc)},  σ_num = ${fmtSci(lastRun.sigma_num)},  σ_hw = ${fmtSci(lastRun.sigma_hw)},  σ_total = ${fmtSci(lastRun.sigma_total)}`,
+      );
+      lines.push(
+        `- T-gates ${lastRun.tGates.toLocaleString()} · depth ${lastRun.depth.toLocaleString()} · wall-clock ${lastRun.wallclock}s · energy ${lastRun.energy} J`,
+      );
+      lines.push(
+        `- seeds: rng=${lastRun.seeds.rng}, ordering=${lastRun.seeds.ordering}, optimizer=${lastRun.seeds.optimizer}`,
+      );
+    }
+    if (runs.length) {
+      const inv = runs.map((r) => r.invAlpha);
+      const mean = inv.reduce((a, b) => a + b, 0) / inv.length;
+      const std = Math.sqrt(inv.reduce((a, b) => a + (b - mean) ** 2, 0) / inv.length);
+      const minRes = Math.min(...runs.map((r) => r.residual));
+      lines.push(`\n## Aggregate over ${runs.length} runs`);
+      lines.push(`- mean 1/α = ${mean.toFixed(9)}`);
+      lines.push(`- std  1/α = ${fmtSci(std)}`);
+      lines.push(`- min residual = ${fmtSci(minRes)}`);
+    }
+    lines.push(`\n## Presets available`);
+    Object.keys(PRESETS).forEach((p) => lines.push(`- ${p}`));
+    lines.push(`\n## Scope`);
+    lines.push(
+      `Perturbative QED, CODATA-locked. Does not claim closed-form interacting solutions, nonperturbative completeness, beyond-SM predictions, or experimentally verified new physics.`,
+    );
+    return lines.join("\n");
+  }
+  function copySummary() {
+    try {
+      navigator.clipboard.writeText(buildSummary());
+    } catch {}
+  }
+  function exportSummary() {
+    const txt = buildSummary();
+    const blob = new Blob([txt], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    a.href = url;
+    a.download = `qed-summary-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
 
   // persist
   useEffect(() => {
@@ -298,6 +368,24 @@ export function QedEngineOverview() {
               className="border border-white/15 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/5"
             >
               Reset
+            </button>
+            <button
+              onClick={clearSaved}
+              className="border border-white/15 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/5"
+            >
+              Clear Saved
+            </button>
+            <button
+              onClick={copySummary}
+              className="border border-white/15 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/5"
+            >
+              Copy Summary
+            </button>
+            <button
+              onClick={exportSummary}
+              className="border border-accent/40 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-accent/10"
+            >
+              Export Summary
             </button>
             <button
               onClick={() => setAuto((v) => !v)}

@@ -9,38 +9,64 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WorldRouteImport } from './routes/world'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WorldLedgerRouteImport } from './routes/world.ledger'
 
+const WorldRoute = WorldRouteImport.update({
+  id: '/world',
+  path: '/world',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorldLedgerRoute = WorldLedgerRouteImport.update({
+  id: '/ledger',
+  path: '/ledger',
+  getParentRoute: () => WorldRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/world': typeof WorldRouteWithChildren
+  '/world/ledger': typeof WorldLedgerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/world': typeof WorldRouteWithChildren
+  '/world/ledger': typeof WorldLedgerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/world': typeof WorldRouteWithChildren
+  '/world/ledger': typeof WorldLedgerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/world' | '/world/ledger'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/world' | '/world/ledger'
+  id: '__root__' | '/' | '/world' | '/world/ledger'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  WorldRoute: typeof WorldRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/world': {
+      id: '/world'
+      path: '/world'
+      fullPath: '/world'
+      preLoaderRoute: typeof WorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +74,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/world/ledger': {
+      id: '/world/ledger'
+      path: '/ledger'
+      fullPath: '/world/ledger'
+      preLoaderRoute: typeof WorldLedgerRouteImport
+      parentRoute: typeof WorldRoute
+    }
   }
 }
 
+interface WorldRouteChildren {
+  WorldLedgerRoute: typeof WorldLedgerRoute
+}
+
+const WorldRouteChildren: WorldRouteChildren = {
+  WorldLedgerRoute: WorldLedgerRoute,
+}
+
+const WorldRouteWithChildren = WorldRoute._addFileChildren(WorldRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  WorldRoute: WorldRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

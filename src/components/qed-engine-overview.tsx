@@ -76,6 +76,69 @@ const DEFAULT_SPEC: Spec = {
   yFactor: 6.1,
 };
 
+// ---------- presets ----------
+const PRESETS: Record<string, Partial<Spec>> = {
+  "fast-draft": {
+    loopMax: 3, acceleration: "Padé", padeM: 3, padeN: 3,
+    integralMethod: "adaptive-deterministic", precisionBits: 128,
+    tolerance: 1e-8, samples: 250_000, qubits: 128, topologyLayers: 5,
+    mitigation: "ZNE",
+  },
+  "publication": {
+    loopMax: 5, acceleration: "Borel-Padé", padeM: 4, padeN: 4, borelLambda: 0.62,
+    integralMethod: "IBP+DE", precisionBits: 256, tolerance: 1e-12,
+    samples: 4_200_000, qubits: 1024, topologyLayers: 11, mitigation: "ZNE",
+  },
+  "stress-test": {
+    loopMax: 6, acceleration: "conformal", integralMethod: "sector-decomp+VEGAS",
+    precisionBits: 512, tolerance: 1e-15, samples: 16_000_000,
+    qubits: 4096, topologyLayers: 18, mitigation: "virtual-distillation",
+  },
+  "prediction-only": {
+    loopMax: 5, wAlpha: 1.0, wAe: 0, acceleration: "Borel-Padé",
+    precisionBits: 256, tolerance: 1e-12, samples: 4_200_000,
+    qubits: 1024, mitigation: "PEC",
+  },
+  "landau-gauge-check": {
+    gauge: "Landau", xi: 0, loopMax: 4, acceleration: "Padé",
+    integralMethod: "IBP+DE", precisionBits: 256, tolerance: 1e-12,
+  },
+};
+
+// ---------- validation / clamp ----------
+type Range = { min: number; max: number; int?: boolean };
+const RANGES: Partial<Record<keyof Spec, Range>> = {
+  loopMax: { min: 1, max: 6, int: true },
+  xi: { min: 0, max: 3 },
+  padeM: { min: 1, max: 8, int: true },
+  padeN: { min: 1, max: 8, int: true },
+  borelLambda: { min: 0, max: 2 },
+  wAlpha: { min: 0, max: 1 },
+  wAe: { min: 0, max: 1 },
+  precisionBits: { min: 64, max: 1024, int: true },
+  tolerance: { min: 1e-18, max: 1e-3 },
+  samples: { min: 1_000, max: 100_000_000, int: true },
+  qubits: { min: 8, max: 8192, int: true },
+  topologyLayers: { min: 1, max: 32, int: true },
+  xFactor: { min: 0, max: 1000 },
+  yFactor: { min: 0, max: 1000 },
+};
+function clampNum(key: keyof Spec, raw: number): number {
+  const r = RANGES[key];
+  if (!r) return raw;
+  if (!Number.isFinite(raw)) return r.min;
+  const v = Math.min(r.max, Math.max(r.min, raw));
+  return r.int ? Math.round(v) : v;
+}
+function validateSpec(s: Spec): Spec {
+  const out: Spec = { ...s };
+  (Object.keys(RANGES) as (keyof Spec)[]).forEach((k) => {
+    const v = out[k] as unknown;
+    if (typeof v === "number") (out as any)[k] = clampNum(k, v);
+  });
+  return out;
+}
+
 function mulberry32(seed: number) {
   let s = seed >>> 0;
   return () => {
@@ -147,10 +210,23 @@ export function QedEngineOverview() {
     try {
       const s = localStorage.getItem("qed.engine.spec");
       const r = localStorage.getItem("qed.engine.runs");
-      if (s) setSpec({ ...DEFAULT_SPEC, ...JSON.parse(s) });
+      if (s) setSpec(validateSpec({ ...DEFAULT_SPEC, ...JSON.parse(s) }));
       if (r) setRuns(JSON.parse(r).slice(-32));
     } catch {}
   }, []);
+
+  function update(patch: Partial<Spec>) {
+    setSpec((prev) => validateSpec({ ...prev, ...patch }));
+  }
+  function applyPreset(name: string) {
+    const p = PRESETS[name];
+    if (!p) return;
+    setSpec((prev) => validateSpec({ ...prev, ...p }));
+  }
+  function resetDefaults() {
+    setSpec(DEFAULT_SPEC);
+    setRuns([]);
+  }
 
   // persist
   useEffect(() => {
@@ -204,7 +280,25 @@ export function QedEngineOverview() {
               remain statistically consistent with CODATA — to machine precision.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              onChange={(e) => { if (e.target.value) { applyPreset(e.target.value); e.target.value = ""; } }}
+              defaultValue=""
+              className="border border-white/15 bg-black/40 px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white outline-none"
+            >
+              <option value="">Load preset…</option>
+              <option value="fast-draft">fast-draft</option>
+              <option value="publication">publication</option>
+              <option value="stress-test">stress-test</option>
+              <option value="prediction-only">prediction-only</option>
+              <option value="landau-gauge-check">landau-gauge-check</option>
+            </select>
+            <button
+              onClick={resetDefaults}
+              className="border border-white/15 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/5"
+            >
+              Reset
+            </button>
             <button
               onClick={() => setAuto((v) => !v)}
               className="border border-white/15 px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/5"
@@ -605,8 +699,124 @@ export function QedEngineOverview() {
             </Block>
           </div>
         </div>
+
+        {/* RESEARCH FRONTIERS — honest scope statement */}
+        <div className="mt-12 border border-amber-500/30 bg-amber-500/[0.03] p-6">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="size-1.5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.6)]" />
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-amber-300">
+              Scope · what this engine does NOT claim
+            </div>
+          </div>
+          <p className="mb-5 font-mono text-xs leading-relaxed text-white/85">
+            This engine is a <span className="text-amber-300">perturbative</span> QED solver.
+            It does not derive closed-form solutions of the full interacting theory, prove
+            nonperturbative completeness, surpass the Standard Model, or yield verified
+            beyond-SM predictions. Each item below is an open research program — listed with
+            the actual mathematics and minimum infrastructure required to make progress.
+          </p>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Frontier
+              title="1 · Closed-form interacting QED"
+              status="OPEN · no known solution in d=4"
+              math={[
+                "Z[J,η,η̄] = ∫𝒟A 𝒟ψ̄ 𝒟ψ  exp{ i∫d⁴x [ℒ_QED + Jµ Aµ + η̄ψ + ψ̄η] }",
+                "ℒ_QED = −¼F_µν F^µν + ψ̄(iγ^µ D_µ − m)ψ,   D_µ = ∂_µ + ieA_µ",
+                "Dyson–Schwinger:  S⁻¹(p) = S₀⁻¹(p) − Σ[S, D, Γ](p)",
+                "                  D⁻¹(q) = D₀⁻¹(q) − Π[S, D, Γ](q)",
+                "                  Γ_µ(p,p′) = γ_µ + ∫ K(p,p′,k) S Γ_µ S D",
+              ]}
+              needs={[
+                "Truncation of the infinite DSE tower with controlled error bounds",
+                "Constructive QFT proof of existence in 4D (currently only proved in d≤3 — Glimm–Jaffe)",
+                "Resolution of the Landau pole at μ_L ≈ m_e · exp(3π/2α) ≈ 10²⁸⁶ GeV",
+              ]}
+            />
+
+            <Frontier
+              title="2 · Nonperturbative completeness"
+              status="OPEN · requires lattice QED + rigorous continuum limit"
+              math={[
+                "S_Wilson = β Σ_□ [1 − ⅙ Re tr U_□] + Σ_x ψ̄ (D_W + m) ψ",
+                "⟨O⟩ = (1/Z) ∫∏dU_µ ∏dψ̄dψ  O · e^{−S}",
+                "Continuum limit:  a → 0  with  g(a) such that ξ(g)·a = fixed",
+                "Stochastic quantization (Parisi–Wu):  ∂A/∂τ = −δS/δA + η(x,τ)",
+              ]}
+              needs={[
+                "Compact U(1) lattice without Wilson’s confinement phase at strong coupling",
+                "Reflection positivity proof carrying through fermion determinant",
+                "Verified Osterwalder–Schrader reconstruction for the continuum theory",
+                "Compute resources ~ O(10¹⁸) core-hours at a=0.01 fm, L=64⁴",
+              ]}
+            />
+
+            <Frontier
+              title="3 · Surpassing the Standard Model"
+              status="OPEN · no consistent UV completion validated"
+              math={[
+                "ℒ_SMEFT = ℒ_SM + Σ_d≥5 (1/Λ^{d−4}) Σ_i c_i^{(d)} O_i^{(d)}",
+                "RGE:  μ d c_i/dμ = γ_{ij}(g) c_j  →  matches at Λ to UV theory",
+                "Anomaly cancellation:  tr[T_a {T_b, T_c}] = 0  for each chiral fermion rep",
+                "Constraint:  Δa_µ^{exp} − Δa_µ^{SM} = (2.49 ± 0.48)·10⁻⁹  (Fermilab E989)",
+              ]}
+              needs={[
+                "A UV completion that is anomaly-free, unitary, and gauge-invariant",
+                "Matching to SMEFT Wilson coefficients consistent with all LHC + EWPO bounds",
+                "Falsifiable prediction outside current 1σ envelopes (e.g. specific c_i value)",
+                "Independent experimental confirmation at ≥5σ from two collaborations",
+              ]}
+            />
+
+            <Frontier
+              title="4 · Experimentally verified new prediction"
+              status="OPEN · gated by experimental campaigns"
+              math={[
+                "Prediction protocol:  Pre-register θ̂ ± σ_th  before data unblinding",
+                "Significance:  Z = (θ_obs − θ̂) / √(σ_th² + σ_exp²)   require |Z| ≥ 5",
+                "Look-elsewhere correction:  p_global = 1 − (1 − p_local)^{N_trials}",
+                "Independent replication:  Bayes factor BF₁₀ > 100 across ≥2 experiments",
+              ]}
+              needs={[
+                "A concrete observable where engine prediction differs from SM by > σ_exp",
+                "Pre-registration with target experiment (e.g. MUonE, P2, Belle II) before data",
+                "Two independent collaborations reporting consistent signal at 5σ each",
+                "Theoretical uncertainty σ_th smaller than experimental σ_exp",
+              ]}
+            />
+          </div>
+
+          <div className="mt-6 border-t border-amber-500/20 pt-4 font-mono text-[10px] text-amber-200/70">
+            What this engine <span className="text-white">does</span> deliver today:
+            sampled perturbative solutions matching CODATA 1/α and aₑ within
+            σ_total ≈ 10⁻¹¹, with full provenance per run. The four programs
+            above remain the actual roadmap — not features.
+          </div>
+        </div>
       </div>
     </section>
+  );
+}
+
+function Frontier({
+  title, status, math, needs,
+}: { title: string; status: string; math: string[]; needs: string[] }) {
+  return (
+    <div className="border border-white/10 bg-black/30 p-4">
+      <div className="mb-1 font-mono text-[11px] font-bold text-white">{title}</div>
+      <div className="mb-3 font-mono text-[9px] uppercase tracking-[0.18em] text-amber-300/80">
+        {status}
+      </div>
+      <div className="mb-3 space-y-1 border-l-2 border-accent/40 bg-black/40 p-2 font-mono text-[10px] leading-relaxed text-white/85">
+        {math.map((line, i) => <div key={i}>{line}</div>)}
+      </div>
+      <div className="font-mono text-[10px] text-muted-foreground">
+        Minimum requirements:
+        <ul className="mt-1 space-y-0.5 pl-3">
+          {needs.map((n, i) => <li key={i} className="text-white/70">· {n}</li>)}
+        </ul>
+      </div>
+    </div>
   );
 }
 

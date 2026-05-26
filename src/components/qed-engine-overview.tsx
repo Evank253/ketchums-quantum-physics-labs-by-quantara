@@ -227,6 +227,9 @@ export function QedEngineOverview() {
     setSpec(DEFAULT_SPEC);
     setRuns([]);
   }
+
+  // persist
+  useEffect(() => {
     try {
       localStorage.setItem("qed.engine.spec", JSON.stringify(spec));
       localStorage.setItem("qed.engine.runs", JSON.stringify(runs.slice(-32)));

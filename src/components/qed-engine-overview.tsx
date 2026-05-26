@@ -76,6 +76,69 @@ const DEFAULT_SPEC: Spec = {
   yFactor: 6.1,
 };
 
+// ---------- presets ----------
+const PRESETS: Record<string, Partial<Spec>> = {
+  "fast-draft": {
+    loopMax: 3, acceleration: "Padé", padeM: 3, padeN: 3,
+    integralMethod: "adaptive-deterministic", precisionBits: 128,
+    tolerance: 1e-8, samples: 250_000, qubits: 128, topologyLayers: 5,
+    mitigation: "ZNE",
+  },
+  "publication": {
+    loopMax: 5, acceleration: "Borel-Padé", padeM: 4, padeN: 4, borelLambda: 0.62,
+    integralMethod: "IBP+DE", precisionBits: 256, tolerance: 1e-12,
+    samples: 4_200_000, qubits: 1024, topologyLayers: 11, mitigation: "ZNE",
+  },
+  "stress-test": {
+    loopMax: 6, acceleration: "conformal", integralMethod: "sector-decomp+VEGAS",
+    precisionBits: 512, tolerance: 1e-15, samples: 16_000_000,
+    qubits: 4096, topologyLayers: 18, mitigation: "virtual-distillation",
+  },
+  "prediction-only": {
+    loopMax: 5, wAlpha: 1.0, wAe: 0, acceleration: "Borel-Padé",
+    precisionBits: 256, tolerance: 1e-12, samples: 4_200_000,
+    qubits: 1024, mitigation: "PEC",
+  },
+  "landau-gauge-check": {
+    gauge: "Landau", xi: 0, loopMax: 4, acceleration: "Padé",
+    integralMethod: "IBP+DE", precisionBits: 256, tolerance: 1e-12,
+  },
+};
+
+// ---------- validation / clamp ----------
+type Range = { min: number; max: number; int?: boolean };
+const RANGES: Partial<Record<keyof Spec, Range>> = {
+  loopMax: { min: 1, max: 6, int: true },
+  xi: { min: 0, max: 3 },
+  padeM: { min: 1, max: 8, int: true },
+  padeN: { min: 1, max: 8, int: true },
+  borelLambda: { min: 0, max: 2 },
+  wAlpha: { min: 0, max: 1 },
+  wAe: { min: 0, max: 1 },
+  precisionBits: { min: 64, max: 1024, int: true },
+  tolerance: { min: 1e-18, max: 1e-3 },
+  samples: { min: 1_000, max: 100_000_000, int: true },
+  qubits: { min: 8, max: 8192, int: true },
+  topologyLayers: { min: 1, max: 32, int: true },
+  xFactor: { min: 0, max: 1000 },
+  yFactor: { min: 0, max: 1000 },
+};
+function clampNum(key: keyof Spec, raw: number): number {
+  const r = RANGES[key];
+  if (!r) return raw;
+  if (!Number.isFinite(raw)) return r.min;
+  const v = Math.min(r.max, Math.max(r.min, raw));
+  return r.int ? Math.round(v) : v;
+}
+function validateSpec(s: Spec): Spec {
+  const out: Spec = { ...s };
+  (Object.keys(RANGES) as (keyof Spec)[]).forEach((k) => {
+    const v = out[k] as unknown;
+    if (typeof v === "number") (out as any)[k] = clampNum(k, v);
+  });
+  return out;
+}
+
 function mulberry32(seed: number) {
   let s = seed >>> 0;
   return () => {

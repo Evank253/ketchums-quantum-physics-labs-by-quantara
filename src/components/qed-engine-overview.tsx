@@ -210,13 +210,23 @@ export function QedEngineOverview() {
     try {
       const s = localStorage.getItem("qed.engine.spec");
       const r = localStorage.getItem("qed.engine.runs");
-      if (s) setSpec({ ...DEFAULT_SPEC, ...JSON.parse(s) });
+      if (s) setSpec(validateSpec({ ...DEFAULT_SPEC, ...JSON.parse(s) }));
       if (r) setRuns(JSON.parse(r).slice(-32));
     } catch {}
   }, []);
 
-  // persist
-  useEffect(() => {
+  function update(patch: Partial<Spec>) {
+    setSpec((prev) => validateSpec({ ...prev, ...patch }));
+  }
+  function applyPreset(name: string) {
+    const p = PRESETS[name];
+    if (!p) return;
+    setSpec((prev) => validateSpec({ ...prev, ...p }));
+  }
+  function resetDefaults() {
+    setSpec(DEFAULT_SPEC);
+    setRuns([]);
+  }
     try {
       localStorage.setItem("qed.engine.spec", JSON.stringify(spec));
       localStorage.setItem("qed.engine.runs", JSON.stringify(runs.slice(-32)));

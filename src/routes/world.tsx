@@ -308,3 +308,12 @@ function WorldPage() {
     </main>
   );
 }
+
+function Stat({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="border border-white/10 bg-black/50 p-2">
+      <div className="text-[9px] uppercase tracking-[0.2em] text-chrome">{k}</div>
+      <div className="text-sm font-bold text-white">{v}</div>
+    </div>
+  );
+}

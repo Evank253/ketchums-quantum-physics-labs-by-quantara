@@ -232,3 +232,15 @@ export function nextCost(unlockedCount: number) {
 export function getBreakthrough(id: string): Breakthrough | undefined {
   return BREAKTHROUGHS.find((b) => b.id === id);
 }
+
+export function getOfflineCapHours(): number {
+  return readOfflineCapHours();
+}
+
+export function setOfflineCapHours(hours: number): number {
+  const clamped = Math.min(720, Math.max(0.25, hours));
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(OFFLINE_CAP_KEY, String(clamped));
+  }
+  return clamped;
+}

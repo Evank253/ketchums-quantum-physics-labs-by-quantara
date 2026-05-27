@@ -117,6 +117,81 @@ function LedgerPage() {
     URL.revokeObjectURL(url);
   }
 
+  function exportPdf() {
+    const visible = rows.map((r) => r.bt);
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const unlockedMap = new Map(unlocked.map((u) => [u.id, u]));
+    const body = visible
+      .map((b) => {
+        const u = unlockedMap.get(b.id);
+        return `
+          <section class="card">
+            <header>
+              <span class="tag tag-${b.realityTag}">${b.realityTag}</span>
+              <span class="tier">T${b.tier}</span>
+              <h2>${esc(b.name)}</h2>
+              <span class="cat">${esc(b.category)}</span>
+              <span class="status">${u ? `unlocked · ${esc(u.discoveredBy)} · ${new Date(u.unlockedAt).toLocaleString()}` : "locked"}</span>
+            </header>
+            <p>${esc(b.summary)}</p>
+            <h3>Formula</h3>
+            <pre>${esc(b.formula.expr)}</pre>
+            <ul>${b.formula.variables.map((v) => `<li><b>${esc(v.sym)}</b> — ${esc(v.meaning)}${v.units ? ` (${esc(v.units)})` : ""}</li>`).join("")}</ul>
+            <h3>Components</h3>
+            <ul>${b.blueprint.components.map((c) => `<li>${esc(c.name)} × ${esc(c.qty)} — ${esc(c.spec)}</li>`).join("")}</ul>
+            <h3>Assembly</h3>
+            <ol>${b.blueprint.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+            <h3>Schematic</h3>
+            <pre class="schematic">${esc(b.blueprint.schematic)}</pre>
+            <div class="meta">
+              <div><b>Power:</b> ${esc(b.blueprint.power)}</div>
+              <div><b>Footprint:</b> ${esc(b.blueprint.footprint)}</div>
+              <div><b>Risks:</b> ${esc(b.blueprint.risks.join("; "))}</div>
+            </div>
+          </section>`;
+      })
+      .join("");
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Quantara Ledger</title>
+      <style>
+        @page { size: A4; margin: 18mm; }
+        body { font: 11px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111; }
+        h1 { font-size: 22px; margin: 0 0 4px; }
+        h2 { font-size: 14px; margin: 6px 0; display: inline; }
+        h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .15em; margin: 10px 0 4px; color: #555; }
+        .card { border: 1px solid #ddd; border-radius: 4px; padding: 12px; margin: 0 0 10px; page-break-inside: avoid; }
+        header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 6px; }
+        .tag { font: 9px monospace; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+        .tag-established { background: #d1fae5; color: #065f46; }
+        .tag-frontier { background: #fef3c7; color: #92400e; }
+        .tag-speculative { background: #fce7f3; color: #9d174d; }
+        .tier, .cat, .status { font: 9px monospace; color: #666; }
+        pre { background: #f5f5f7; padding: 8px; border-radius: 3px; white-space: pre-wrap; font: 10px ui-monospace, monospace; }
+        pre.schematic { font-size: 9px; }
+        ul, ol { margin: 4px 0 4px 18px; padding: 0; }
+        li { margin: 2px 0; }
+        .meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 10px; }
+        .head { display: flex; justify-content: space-between; align-items: end; border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 14px; }
+      </style></head><body>
+      <div class="head">
+        <div>
+          <h1>Quantara World — Breakthrough Ledger</h1>
+          <div style="font:10px monospace;color:#666">Generated ${new Date().toLocaleString()} · ${visible.length} entries · ${unlocked.length}/${BREAKTHROUGHS.length} unlocked</div>
+        </div>
+      </div>
+      ${body}
+      </body></html>`;
+    const w = window.open("", "_blank", "noopener,noreferrer,width=900,height=1000");
+    if (!w) {
+      alert("Allow pop-ups to export PDF.");
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.onload = () => setTimeout(() => w.print(), 250);
+  }
+
   return (
     <main className="min-h-screen bg-background px-6 py-12 text-white">
       <div className="mx-auto max-w-6xl">

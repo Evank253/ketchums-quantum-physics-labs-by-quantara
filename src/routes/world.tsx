@@ -3,7 +3,8 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PointerLockControls, Sky, Text } from "@react-three/drei";
 import * as THREE from "three";
-import { useWorld, nextCost, getBreakthrough } from "@/lib/world-store";
+import { useWorld, nextCost, getBreakthrough, getOfflineCapHours, setOfflineCapHours } from "@/lib/world-store";
+import { readDat, subscribeDat } from "@/lib/dat-tokens";
 
 export const Route = createFileRoute("/world")({
   component: WorldPage,

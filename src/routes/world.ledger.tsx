@@ -57,23 +57,46 @@ function LedgerPage() {
   }, [init, startLoop]);
 
   const [filter, setFilter] = useState<"all" | "established" | "frontier" | "speculative">("all");
+  const [category, setCategory] = useState<string>("all");
+  const [tier, setTier] = useState<string>("all");
+  const [query, setQuery] = useState("");
+  const [onlyUnlocked, setOnlyUnlocked] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+
+  const categories = useMemo(
+    () => Array.from(new Set(BREAKTHROUGHS.map((b) => b.category))).sort(),
+    [],
+  );
+  const tiers = useMemo(
+    () => Array.from(new Set(BREAKTHROUGHS.map((b) => b.tier))).sort((a, b) => a - b),
+    [],
+  );
 
   const rows = useMemo(() => {
     const unlockedMap = new Map(unlocked.map((u) => [u.id, u]));
+    const q = query.trim().toLowerCase();
     return BREAKTHROUGHS.map((b) => ({
       bt: b,
       u: unlockedMap.get(b.id) || null,
     }))
       .filter((r) => (filter === "all" ? true : r.bt.realityTag === filter))
+      .filter((r) => (category === "all" ? true : r.bt.category === category))
+      .filter((r) => (tier === "all" ? true : String(r.bt.tier) === tier))
+      .filter((r) => (onlyUnlocked ? !!r.u : true))
+      .filter((r) =>
+        q
+          ? r.bt.name.toLowerCase().includes(q) ||
+            r.bt.summary.toLowerCase().includes(q) ||
+            r.bt.id.toLowerCase().includes(q)
+          : true,
+      )
       .sort((a, b) => {
-        // unlocked first by unlock time desc, then locked
         if (a.u && b.u) return b.u.unlockedAt - a.u.unlockedAt;
         if (a.u) return -1;
         if (b.u) return 1;
         return a.bt.tier - b.bt.tier;
       });
-  }, [unlocked, filter]);
+  }, [unlocked, filter, category, tier, query, onlyUnlocked]);
 
   function exportAll() {
     const blocks = unlocked

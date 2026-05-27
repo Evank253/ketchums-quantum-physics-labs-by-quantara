@@ -195,12 +195,23 @@ function WorldPage() {
             <div className="mt-1 text-[10px] text-amber-300/80">Simulation — bots, "discoveries" and growth are procedural, not real research.</div>
           </div>
           <div className="pointer-events-auto flex flex-col gap-2">
+            <div className="rounded-sm border border-emerald-400/30 bg-black/55 px-3 py-2 text-right">
+              <div className="text-[9px] uppercase tracking-[0.25em] text-emerald-300/80">$DAT balance</div>
+              <div className="text-base font-bold text-emerald-200">{dat.toLocaleString()}</div>
+              <div className="text-[9px] text-muted-foreground">+15 per unlock (sim credits)</div>
+            </div>
             <Link
               to="/world/ledger"
               className="rounded-sm border border-accent/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-white hover:bg-accent/15"
             >
               Open Ledger ({unlocked.length})
             </Link>
+            <button
+              onClick={() => setPanelOpen((v) => !v)}
+              className="rounded-sm border border-white/15 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/10"
+            >
+              {panelOpen ? "Close panel" : "World panel"}
+            </button>
             <Link
               to="/"
               className="rounded-sm border border-white/15 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/10"
@@ -217,6 +228,51 @@ function WorldPage() {
             </button>
           </div>
         </div>
+
+        {panelOpen && (
+          <div className="pointer-events-auto absolute right-4 top-44 w-72 rounded-sm border border-white/15 bg-black/80 p-4 backdrop-blur-md">
+            <div className="text-[10px] uppercase tracking-[0.25em] text-chrome">World panel</div>
+            <div className="mt-3 space-y-3 text-[11px]">
+              <div className="grid grid-cols-2 gap-2">
+                <Stat k="Bots" v={String(useWorld.getState().bots.length)} />
+                <Stat k="Unlocked" v={String(unlocked.length)} />
+                <Stat k="Research" v={research.toFixed(0)} />
+                <Stat k="World" v={worldSize.toFixed(0)} />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-[0.25em] text-chrome">
+                  Offline replay cap: {capHours >= 1 ? `${capHours}h` : `${(capHours * 60).toFixed(0)}m`}
+                </label>
+                <input
+                  type="range"
+                  min={0.25}
+                  max={720}
+                  step={0.25}
+                  value={capHours}
+                  onChange={(e) => {
+                    const v = setOfflineCapHours(parseFloat(e.target.value));
+                    setCapHours(v);
+                  }}
+                  className="mt-2 w-full accent-emerald-400"
+                />
+                <div className="mt-1 flex gap-1">
+                  {[1, 24, 168, 720].map((h) => (
+                    <button
+                      key={h}
+                      onClick={() => setCapHours(setOfflineCapHours(h))}
+                      className="flex-1 border border-white/15 px-1 py-0.5 text-[9px] uppercase tracking-[0.15em] hover:bg-white/10"
+                    >
+                      {h < 24 ? `${h}h` : `${h / 24}d`}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] text-muted-foreground">
+                  When you return, bots replay up to this much wall-clock time. Hard ceiling 30 days.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {hint && (
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-white/20 bg-black/70 px-4 py-3 text-center backdrop-blur-sm">

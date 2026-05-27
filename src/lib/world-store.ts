@@ -124,7 +124,8 @@ export const useWorld = create<WorldState>((set, get) => ({
     const p = loadPersisted();
     const now = Date.now();
     if (p) {
-      const elapsed = Math.min(now - p.lastTick, MAX_OFFLINE_MS);
+      const capMs = Math.min(HARD_MAX_OFFLINE_MS, readOfflineCapHours() * 60 * 60 * 1000);
+      const elapsed = Math.min(now - p.lastTick, capMs);
       // Replay elapsed time as a single bulk tick.
       set({
         lastTick: now,

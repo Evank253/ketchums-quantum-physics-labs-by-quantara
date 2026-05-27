@@ -236,6 +236,46 @@ function LedgerPage() {
           </div>
         </div>
 
+        <div className="mb-4 flex flex-wrap items-center gap-2 font-mono text-[10px]">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="search name, summary, id…"
+            className="min-w-[180px] flex-1 border border-white/15 bg-black/40 px-3 py-2 text-xs text-white placeholder:text-white/30 focus:border-accent focus:outline-none"
+          />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="border border-white/15 bg-black/40 px-2 py-2 text-xs uppercase tracking-[0.15em] text-white"
+          >
+            <option value="all">all categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <select
+            value={tier}
+            onChange={(e) => setTier(e.target.value)}
+            className="border border-white/15 bg-black/40 px-2 py-2 text-xs uppercase tracking-[0.15em] text-white"
+          >
+            <option value="all">all tiers</option>
+            {tiers.map((t) => (
+              <option key={t} value={String(t)}>tier {t}</option>
+            ))}
+          </select>
+          <label className="flex cursor-pointer items-center gap-2 border border-white/15 px-3 py-2 uppercase tracking-[0.15em] hover:bg-white/5">
+            <input
+              type="checkbox"
+              checked={onlyUnlocked}
+              onChange={(e) => setOnlyUnlocked(e.target.checked)}
+              className="accent-accent"
+            />
+            unlocked only
+          </label>
+          <span className="ml-auto text-muted-foreground">{rows.length} shown</span>
+        </div>
+
+
         <div className="mb-6 grid grid-cols-3 gap-2 font-mono text-xs">
           <Stat label="Unlocked" v={`${unlocked.length} / ${BREAKTHROUGHS.length}`} />
           <Stat label="Established" v={String(unlocked.filter((u) => getBreakthrough(u.id)?.realityTag === "established").length)} />

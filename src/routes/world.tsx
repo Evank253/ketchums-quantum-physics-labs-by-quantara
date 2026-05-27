@@ -160,11 +160,18 @@ function WorldPage() {
   const unlocked = useWorld((s) => s.unlocked);
   const worldSize = useWorld((s) => s.worldSize);
   const [hint, setHint] = useState(true);
+  const [dat, setDat] = useState<number>(() => readDat());
+  const [capHours, setCapHours] = useState<number>(() => getOfflineCapHours());
+  const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
     init();
     const stop = startLoop();
-    return stop;
+    const unsub = subscribeDat(setDat);
+    return () => {
+      stop();
+      unsub();
+    };
   }, [init, startLoop]);
 
   const cost = nextCost(unlocked.length);

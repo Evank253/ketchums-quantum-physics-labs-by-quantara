@@ -11,11 +11,20 @@ import { BREAKTHROUGHS, type Breakthrough } from "./breakthroughs";
 import { creditDat } from "./dat-tokens";
 
 const STORAGE_KEY = "quantara.world.v1";
-const MAX_OFFLINE_MS = 7 * 24 * 60 * 60 * 1000;
+const HARD_MAX_OFFLINE_MS = 30 * 24 * 60 * 60 * 1000; // absolute ceiling 30d
+const DEFAULT_OFFLINE_CAP_HOURS = 168; // 7 days
 const TICK_MS = 1000;
 const POINTS_PER_TICK = 1.4; // baseline accrual per bot per real second
 const COST_BASE = 60;
 const COST_GROWTH = 1.18;
+const OFFLINE_CAP_KEY = "quantara.world.offlineCapHours";
+
+function readOfflineCapHours(): number {
+  if (typeof window === "undefined") return DEFAULT_OFFLINE_CAP_HOURS;
+  const raw = parseFloat(window.localStorage.getItem(OFFLINE_CAP_KEY) || "");
+  if (!isFinite(raw) || raw <= 0) return DEFAULT_OFFLINE_CAP_HOURS;
+  return Math.min(720, Math.max(0.25, raw));
+}
 
 export type BotState = {
   id: string;
@@ -115,7 +124,8 @@ export const useWorld = create<WorldState>((set, get) => ({
     const p = loadPersisted();
     const now = Date.now();
     if (p) {
-      const elapsed = Math.min(now - p.lastTick, MAX_OFFLINE_MS);
+      const capMs = Math.min(HARD_MAX_OFFLINE_MS, readOfflineCapHours() * 60 * 60 * 1000);
+      const elapsed = Math.min(now - p.lastTick, capMs);
       // Replay elapsed time as a single bulk tick.
       set({
         lastTick: now,
@@ -221,4 +231,16 @@ export function nextCost(unlockedCount: number) {
 
 export function getBreakthrough(id: string): Breakthrough | undefined {
   return BREAKTHROUGHS.find((b) => b.id === id);
+}
+
+export function getOfflineCapHours(): number {
+  return readOfflineCapHours();
+}
+
+export function setOfflineCapHours(hours: number): number {
+  const clamped = Math.min(720, Math.max(0.25, hours));
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(OFFLINE_CAP_KEY, String(clamped));
+  }
+  return clamped;
 }

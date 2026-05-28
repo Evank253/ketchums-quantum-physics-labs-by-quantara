@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useWorld, getBreakthrough } from "@/lib/world-store";
 import { BREAKTHROUGHS, type Breakthrough } from "@/lib/breakthroughs";
+import { downloadCreatorRecord } from "@/lib/creator-records";
 
 export const Route = createFileRoute("/world/ledger")({
   component: LedgerPage,
@@ -51,6 +52,7 @@ function LedgerPage() {
   const init = useWorld((s) => s.init);
   const startLoop = useWorld((s) => s.startLoop);
   const unlocked = useWorld((s) => s.unlocked);
+  const addExternalUnlock = useWorld((s) => s.addExternalUnlock);
   useEffect(() => {
     init();
     return startLoop();
@@ -59,9 +61,11 @@ function LedgerPage() {
   const [filter, setFilter] = useState<"all" | "established" | "frontier" | "speculative">("all");
   const [category, setCategory] = useState<string>("all");
   const [tier, setTier] = useState<string>("all");
+  const [source, setSource] = useState<"all" | "simulation" | "external_research">("all");
   const [query, setQuery] = useState("");
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [ingestOpen, setIngestOpen] = useState(false);
 
   const categories = useMemo(
     () => Array.from(new Set(BREAKTHROUGHS.map((b) => b.category))).sort(),

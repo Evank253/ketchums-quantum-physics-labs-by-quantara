@@ -281,6 +281,15 @@ function LedgerPage() {
               <option key={t} value={String(t)}>tier {t}</option>
             ))}
           </select>
+          <select
+            value={source}
+            onChange={(e) => setSource(e.target.value as typeof source)}
+            className="border border-white/15 bg-black/40 px-2 py-2 text-xs uppercase tracking-[0.15em] text-white"
+          >
+            <option value="all">all sources</option>
+            <option value="simulation">simulation</option>
+            <option value="external_research">external research</option>
+          </select>
           <label className="flex cursor-pointer items-center gap-2 border border-white/15 px-3 py-2 uppercase tracking-[0.15em] hover:bg-white/5">
             <input
               type="checkbox"
@@ -290,8 +299,29 @@ function LedgerPage() {
             />
             unlocked only
           </label>
+          <button
+            onClick={() => setIngestOpen((v) => !v)}
+            className="border border-emerald-400/40 px-3 py-2 uppercase tracking-[0.15em] text-emerald-200 hover:bg-emerald-400/10"
+          >
+            {ingestOpen ? "Close ingest" : "Log external result"}
+          </button>
           <span className="ml-auto text-muted-foreground">{rows.length} shown</span>
         </div>
+
+        <div className="mb-4 border border-amber-400/30 bg-amber-500/5 px-4 py-3 font-mono text-[10px] text-amber-200/90">
+          Per Creator Policy §5: every entry is labeled <b className="text-amber-100">SIMULATION</b> (bots / story engine) or <b className="text-emerald-200">EXTERNAL RESEARCH</b> (real computation, named authors). Simulation entries are not solved physics.
+        </div>
+
+        {ingestOpen && (
+          <IngestPanel
+            onSubmit={(payload) => {
+              const ev = addExternalUnlock(payload);
+              setIngestOpen(false);
+              downloadCreatorRecord(ev);
+            }}
+          />
+        )}
+
 
 
         <div className="mb-6 grid grid-cols-3 gap-2 font-mono text-xs">

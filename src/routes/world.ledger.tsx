@@ -77,16 +77,30 @@ function LedgerPage() {
   );
 
   const rows = useMemo(() => {
-    const unlockedMap = new Map(unlocked.map((u) => [u.id, u]));
+    // Collect ALL events per breakthrough id (multiple external entries possible).
+    const eventsById = new Map<string, typeof unlocked>();
+    unlocked.forEach((u) => {
+      const arr = eventsById.get(u.id) || [];
+      arr.push(u);
+      eventsById.set(u.id, arr);
+    });
     const q = query.trim().toLowerCase();
-    return BREAKTHROUGHS.map((b) => ({
-      bt: b,
-      u: unlockedMap.get(b.id) || null,
-    }))
+    return BREAKTHROUGHS.map((b) => {
+      const events = (eventsById.get(b.id) || []).slice().sort((a, c) => c.unlockedAt - a.unlockedAt);
+      const u = events[0] || null;
+      const hasSim = events.some((e) => e.source === "simulation");
+      const hasExt = events.some((e) => e.source === "external_research");
+      return { bt: b, u, events, hasSim, hasExt };
+    })
       .filter((r) => (filter === "all" ? true : r.bt.realityTag === filter))
       .filter((r) => (category === "all" ? true : r.bt.category === category))
       .filter((r) => (tier === "all" ? true : String(r.bt.tier) === tier))
       .filter((r) => (onlyUnlocked ? !!r.u : true))
+      .filter((r) => {
+        if (source === "all") return true;
+        if (source === "simulation") return r.hasSim || !r.u;
+        return r.hasExt;
+      })
       .filter((r) =>
         q
           ? r.bt.name.toLowerCase().includes(q) ||
@@ -100,7 +114,7 @@ function LedgerPage() {
         if (b.u) return 1;
         return a.bt.tier - b.bt.tier;
       });
-  }, [unlocked, filter, category, tier, query, onlyUnlocked]);
+  }, [unlocked, filter, category, tier, query, onlyUnlocked, source]);
 
   function exportAll() {
     const blocks = unlocked

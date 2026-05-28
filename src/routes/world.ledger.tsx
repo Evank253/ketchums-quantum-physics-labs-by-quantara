@@ -331,7 +331,7 @@ function LedgerPage() {
         </div>
 
         <div className="border border-white/10">
-          {rows.map(({ bt, u }) => {
+          {rows.map(({ bt, u, events, hasSim, hasExt }) => {
             const open = openId === bt.id;
             return (
               <div key={bt.id} className="border-b border-white/5 last:border-b-0">
@@ -339,10 +339,20 @@ function LedgerPage() {
                   onClick={() => setOpenId(open ? null : bt.id)}
                   className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-white/5"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className={`border px-2 py-0.5 font-mono text-[9px] uppercase ${TAG_STYLES[bt.realityTag]}`}>
                       {bt.realityTag}
                     </span>
+                    {hasSim && (
+                      <span className="border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] uppercase text-amber-300">
+                        sim
+                      </span>
+                    )}
+                    {hasExt && (
+                      <span className="border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] uppercase text-emerald-300">
+                        external
+                      </span>
+                    )}
                     <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-chrome">T{bt.tier}</span>
                     <span className="font-bold text-white">{bt.name}</span>
                     <span className="font-mono text-[10px] text-muted-foreground">{bt.category}</span>
@@ -358,6 +368,33 @@ function LedgerPage() {
                 {open && (
                   <div className="space-y-4 border-t border-white/5 bg-black/30 px-4 py-4 font-mono text-xs">
                     <p className="text-white/85">{bt.summary}</p>
+
+                    {events.length > 0 && (
+                      <div>
+                        <div className="mb-1 text-[10px] uppercase tracking-[0.2em] text-chrome">Unlock events ({events.length})</div>
+                        <ul className="space-y-1 text-[11px]">
+                          {events.map((e, i) => (
+                            <li key={i} className="flex flex-wrap items-center justify-between gap-2 border border-white/5 bg-black/40 px-2 py-1">
+                              <span>
+                                <span className={`mr-2 border px-1.5 py-0.5 text-[9px] uppercase ${e.source === "external_research" ? "border-emerald-400/40 text-emerald-300" : "border-amber-400/40 text-amber-300"}`}>
+                                  {e.source}
+                                </span>
+                                <span className="text-white">{e.authors?.join(", ") || e.discoveredBy}</span>
+                                <span className="ml-2 text-muted-foreground">{new Date(e.unlockedAt).toLocaleString()}</span>
+                                {e.runCardId && <span className="ml-2 text-muted-foreground">· {e.runCardId}</span>}
+                              </span>
+                              <button
+                                onClick={() => downloadCreatorRecord(e)}
+                                className="border border-white/15 px-2 py-0.5 text-[9px] uppercase tracking-[0.15em] hover:bg-white/5"
+                              >
+                                Creator record
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     <div>
                       <div className="mb-1 text-[10px] uppercase tracking-[0.2em] text-chrome">Formula</div>
                       <pre className="whitespace-pre-wrap border-l-2 border-accent/40 bg-black/40 px-3 py-2 text-white/90">{bt.formula.expr}</pre>
@@ -414,6 +451,85 @@ function LedgerPage() {
   );
 }
 
+type IngestPayload = { id: string; authors: string[]; references?: string[]; notes?: string };
+
+function IngestPanel({ onSubmit }: { onSubmit: (p: IngestPayload) => void }) {
+  const [id, setId] = useState(BREAKTHROUGHS[0]?.id ?? "");
+  const [authors, setAuthors] = useState("");
+  const [refs, setRefs] = useState("");
+  const [notes, setNotes] = useState("");
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const a = authors.split(",").map((s) => s.trim()).filter(Boolean);
+        if (!a.length) {
+          alert("At least one author is required (Creator Policy §2).");
+          return;
+        }
+        onSubmit({
+          id,
+          authors: a,
+          references: refs.split("\n").map((s) => s.trim()).filter(Boolean),
+          notes: notes.trim() || undefined,
+        });
+      }}
+      className="mb-6 space-y-3 border border-emerald-400/30 bg-emerald-500/5 p-4 font-mono text-[11px]"
+    >
+      <div className="text-[10px] uppercase tracking-[0.25em] text-emerald-300">Log external research result</div>
+      <p className="text-[10px] text-emerald-100/70">
+        Creates an <b>external_research</b> ledger entry with a Run Card ID and immediately downloads a
+        signed Creator Record attributing the result to its authors and the Platform to Evan Ketchum.
+      </p>
+      <label className="block">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-chrome">Breakthrough</span>
+        <select
+          value={id}
+          onChange={(e) => setId(e.target.value)}
+          className="mt-1 w-full border border-white/15 bg-black/40 px-2 py-2 text-white"
+        >
+          {BREAKTHROUGHS.map((b) => (
+            <option key={b.id} value={b.id}>{b.name} ({b.id})</option>
+          ))}
+        </select>
+      </label>
+      <label className="block">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-chrome">Authors (comma-separated)</span>
+        <input
+          value={authors}
+          onChange={(e) => setAuthors(e.target.value)}
+          placeholder="T. Aoyama, M. Hayakawa, …"
+          className="mt-1 w-full border border-white/15 bg-black/40 px-2 py-2 text-white"
+        />
+      </label>
+      <label className="block">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-chrome">References (one per line: DOI / arXiv / URL)</span>
+        <textarea
+          value={refs}
+          onChange={(e) => setRefs(e.target.value)}
+          rows={3}
+          className="mt-1 w-full border border-white/15 bg-black/40 px-2 py-2 text-white"
+        />
+      </label>
+      <label className="block">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-chrome">Notes (optional)</span>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={2}
+          className="mt-1 w-full border border-white/15 bg-black/40 px-2 py-2 text-white"
+        />
+      </label>
+      <button
+        type="submit"
+        className="border border-emerald-400/50 bg-emerald-500/15 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-emerald-100 hover:bg-emerald-500/25"
+      >
+        Ingest + download Creator Record
+      </button>
+    </form>
+  );
+}
+
 function Stat({ label, v }: { label: string; v: string }) {
   return (
     <div className="border border-white/10 bg-card/40 p-3">
@@ -431,3 +547,4 @@ function Cell({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
+

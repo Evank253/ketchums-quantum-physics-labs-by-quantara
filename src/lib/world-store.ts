@@ -36,10 +36,17 @@ export type BotState = {
   contribution: number;
 };
 
+export type UnlockSource = "simulation" | "external_research";
+
 export type UnlockEvent = {
   id: string;
   unlockedAt: number;
   discoveredBy: string;
+  source: UnlockSource;
+  authors?: string[];
+  references?: string[];
+  runCardId?: string;
+  notes?: string;
 };
 
 type WorldState = {

@@ -140,7 +140,7 @@ export const useWorld = create<WorldState>((set, get) => ({
         totalResearch: p.totalResearch,
         worldSize: p.worldSize,
         bots: p.bots.length ? p.bots : BOTS_INIT,
-        unlocked: p.unlocked || [],
+        unlocked: (p.unlocked || []).map((u) => ({ source: "simulation" as const, ...u })),
       });
       if (elapsed > 0) get().tick(elapsed);
     } else {
@@ -167,7 +167,7 @@ export const useWorld = create<WorldState>((set, get) => ({
       const who = pickDiscoverer(bots);
       bots = bots.map((b) => (b.id === who.id ? { ...b, contribution: b.contribution + cost } : b));
       worldSize = Math.min(400, worldSize + 4);
-      unlocked = [...unlocked, { id: item.id, unlockedAt: Date.now(), discoveredBy: who.name }];
+      unlocked = [...unlocked, { id: item.id, unlockedAt: Date.now(), discoveredBy: who.name, source: "simulation" }];
       try {
         creditDat(15);
       } catch {}

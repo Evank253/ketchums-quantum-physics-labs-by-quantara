@@ -293,6 +293,12 @@ function Nav() {
           );
         })}
         <Link
+          to="/legal"
+          className="border border-white/15 px-2.5 py-1 text-white/80 hover:bg-white/5"
+        >
+          Legal
+        </Link>
+        <Link
           to="/world"
           className="border border-accent/40 px-2.5 py-1 text-white hover:bg-accent/15"
         >

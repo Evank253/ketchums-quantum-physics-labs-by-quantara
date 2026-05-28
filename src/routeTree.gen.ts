@@ -10,12 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorldRouteImport } from './routes/world'
+import { Route as LegalRouteImport } from './routes/legal'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorldLedgerRouteImport } from './routes/world.ledger'
+import { Route as LegalTermsRouteImport } from './routes/legal.terms'
+import { Route as LegalResearchLicenseRouteImport } from './routes/legal.research-license'
+import { Route as LegalCreatorPolicyRouteImport } from './routes/legal.creator-policy'
+import { Route as LegalCommercialLicenseRouteImport } from './routes/legal.commercial-license'
+import { Route as LegalCollaboratorsRouteImport } from './routes/legal.collaborators'
+import { Route as LegalBlueprintRouteImport } from './routes/legal.blueprint'
 
 const WorldRoute = WorldRouteImport.update({
   id: '/world',
   path: '/world',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -28,33 +40,116 @@ const WorldLedgerRoute = WorldLedgerRouteImport.update({
   path: '/ledger',
   getParentRoute: () => WorldRoute,
 } as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => LegalRoute,
+} as any)
+const LegalResearchLicenseRoute = LegalResearchLicenseRouteImport.update({
+  id: '/research-license',
+  path: '/research-license',
+  getParentRoute: () => LegalRoute,
+} as any)
+const LegalCreatorPolicyRoute = LegalCreatorPolicyRouteImport.update({
+  id: '/creator-policy',
+  path: '/creator-policy',
+  getParentRoute: () => LegalRoute,
+} as any)
+const LegalCommercialLicenseRoute = LegalCommercialLicenseRouteImport.update({
+  id: '/commercial-license',
+  path: '/commercial-license',
+  getParentRoute: () => LegalRoute,
+} as any)
+const LegalCollaboratorsRoute = LegalCollaboratorsRouteImport.update({
+  id: '/collaborators',
+  path: '/collaborators',
+  getParentRoute: () => LegalRoute,
+} as any)
+const LegalBlueprintRoute = LegalBlueprintRouteImport.update({
+  id: '/blueprint',
+  path: '/blueprint',
+  getParentRoute: () => LegalRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/legal': typeof LegalRouteWithChildren
   '/world': typeof WorldRouteWithChildren
+  '/legal/blueprint': typeof LegalBlueprintRoute
+  '/legal/collaborators': typeof LegalCollaboratorsRoute
+  '/legal/commercial-license': typeof LegalCommercialLicenseRoute
+  '/legal/creator-policy': typeof LegalCreatorPolicyRoute
+  '/legal/research-license': typeof LegalResearchLicenseRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/legal': typeof LegalRouteWithChildren
   '/world': typeof WorldRouteWithChildren
+  '/legal/blueprint': typeof LegalBlueprintRoute
+  '/legal/collaborators': typeof LegalCollaboratorsRoute
+  '/legal/commercial-license': typeof LegalCommercialLicenseRoute
+  '/legal/creator-policy': typeof LegalCreatorPolicyRoute
+  '/legal/research-license': typeof LegalResearchLicenseRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/legal': typeof LegalRouteWithChildren
   '/world': typeof WorldRouteWithChildren
+  '/legal/blueprint': typeof LegalBlueprintRoute
+  '/legal/collaborators': typeof LegalCollaboratorsRoute
+  '/legal/commercial-license': typeof LegalCommercialLicenseRoute
+  '/legal/creator-policy': typeof LegalCreatorPolicyRoute
+  '/legal/research-license': typeof LegalResearchLicenseRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/world' | '/world/ledger'
+  fullPaths:
+    | '/'
+    | '/legal'
+    | '/world'
+    | '/legal/blueprint'
+    | '/legal/collaborators'
+    | '/legal/commercial-license'
+    | '/legal/creator-policy'
+    | '/legal/research-license'
+    | '/legal/terms'
+    | '/world/ledger'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/world' | '/world/ledger'
-  id: '__root__' | '/' | '/world' | '/world/ledger'
+  to:
+    | '/'
+    | '/legal'
+    | '/world'
+    | '/legal/blueprint'
+    | '/legal/collaborators'
+    | '/legal/commercial-license'
+    | '/legal/creator-policy'
+    | '/legal/research-license'
+    | '/legal/terms'
+    | '/world/ledger'
+  id:
+    | '__root__'
+    | '/'
+    | '/legal'
+    | '/world'
+    | '/legal/blueprint'
+    | '/legal/collaborators'
+    | '/legal/commercial-license'
+    | '/legal/creator-policy'
+    | '/legal/research-license'
+    | '/legal/terms'
+    | '/world/ledger'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LegalRoute: typeof LegalRouteWithChildren
   WorldRoute: typeof WorldRouteWithChildren
 }
 
@@ -65,6 +160,13 @@ declare module '@tanstack/react-router' {
       path: '/world'
       fullPath: '/world'
       preLoaderRoute: typeof WorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -81,8 +183,70 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorldLedgerRouteImport
       parentRoute: typeof WorldRoute
     }
+    '/legal/terms': {
+      id: '/legal/terms'
+      path: '/terms'
+      fullPath: '/legal/terms'
+      preLoaderRoute: typeof LegalTermsRouteImport
+      parentRoute: typeof LegalRoute
+    }
+    '/legal/research-license': {
+      id: '/legal/research-license'
+      path: '/research-license'
+      fullPath: '/legal/research-license'
+      preLoaderRoute: typeof LegalResearchLicenseRouteImport
+      parentRoute: typeof LegalRoute
+    }
+    '/legal/creator-policy': {
+      id: '/legal/creator-policy'
+      path: '/creator-policy'
+      fullPath: '/legal/creator-policy'
+      preLoaderRoute: typeof LegalCreatorPolicyRouteImport
+      parentRoute: typeof LegalRoute
+    }
+    '/legal/commercial-license': {
+      id: '/legal/commercial-license'
+      path: '/commercial-license'
+      fullPath: '/legal/commercial-license'
+      preLoaderRoute: typeof LegalCommercialLicenseRouteImport
+      parentRoute: typeof LegalRoute
+    }
+    '/legal/collaborators': {
+      id: '/legal/collaborators'
+      path: '/collaborators'
+      fullPath: '/legal/collaborators'
+      preLoaderRoute: typeof LegalCollaboratorsRouteImport
+      parentRoute: typeof LegalRoute
+    }
+    '/legal/blueprint': {
+      id: '/legal/blueprint'
+      path: '/blueprint'
+      fullPath: '/legal/blueprint'
+      preLoaderRoute: typeof LegalBlueprintRouteImport
+      parentRoute: typeof LegalRoute
+    }
   }
 }
+
+interface LegalRouteChildren {
+  LegalBlueprintRoute: typeof LegalBlueprintRoute
+  LegalCollaboratorsRoute: typeof LegalCollaboratorsRoute
+  LegalCommercialLicenseRoute: typeof LegalCommercialLicenseRoute
+  LegalCreatorPolicyRoute: typeof LegalCreatorPolicyRoute
+  LegalResearchLicenseRoute: typeof LegalResearchLicenseRoute
+  LegalTermsRoute: typeof LegalTermsRoute
+}
+
+const LegalRouteChildren: LegalRouteChildren = {
+  LegalBlueprintRoute: LegalBlueprintRoute,
+  LegalCollaboratorsRoute: LegalCollaboratorsRoute,
+  LegalCommercialLicenseRoute: LegalCommercialLicenseRoute,
+  LegalCreatorPolicyRoute: LegalCreatorPolicyRoute,
+  LegalResearchLicenseRoute: LegalResearchLicenseRoute,
+  LegalTermsRoute: LegalTermsRoute,
+}
+
+const LegalRouteWithChildren = LegalRoute._addFileChildren(LegalRouteChildren)
 
 interface WorldRouteChildren {
   WorldLedgerRoute: typeof WorldLedgerRoute
@@ -96,6 +260,7 @@ const WorldRouteWithChildren = WorldRoute._addFileChildren(WorldRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LegalRoute: LegalRouteWithChildren,
   WorldRoute: WorldRouteWithChildren,
 }
 export const routeTree = rootRouteImport

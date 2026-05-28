@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useWorld, getBreakthrough } from "@/lib/world-store";
 import { BREAKTHROUGHS, type Breakthrough } from "@/lib/breakthroughs";
+import { downloadCreatorRecord } from "@/lib/creator-records";
 
 export const Route = createFileRoute("/world/ledger")({
   component: LedgerPage,
@@ -51,6 +52,7 @@ function LedgerPage() {
   const init = useWorld((s) => s.init);
   const startLoop = useWorld((s) => s.startLoop);
   const unlocked = useWorld((s) => s.unlocked);
+  const addExternalUnlock = useWorld((s) => s.addExternalUnlock);
   useEffect(() => {
     init();
     return startLoop();
@@ -59,9 +61,11 @@ function LedgerPage() {
   const [filter, setFilter] = useState<"all" | "established" | "frontier" | "speculative">("all");
   const [category, setCategory] = useState<string>("all");
   const [tier, setTier] = useState<string>("all");
+  const [source, setSource] = useState<"all" | "simulation" | "external_research">("all");
   const [query, setQuery] = useState("");
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [ingestOpen, setIngestOpen] = useState(false);
 
   const categories = useMemo(
     () => Array.from(new Set(BREAKTHROUGHS.map((b) => b.category))).sort(),
@@ -73,16 +77,30 @@ function LedgerPage() {
   );
 
   const rows = useMemo(() => {
-    const unlockedMap = new Map(unlocked.map((u) => [u.id, u]));
+    // Collect ALL events per breakthrough id (multiple external entries possible).
+    const eventsById = new Map<string, typeof unlocked>();
+    unlocked.forEach((u) => {
+      const arr = eventsById.get(u.id) || [];
+      arr.push(u);
+      eventsById.set(u.id, arr);
+    });
     const q = query.trim().toLowerCase();
-    return BREAKTHROUGHS.map((b) => ({
-      bt: b,
-      u: unlockedMap.get(b.id) || null,
-    }))
+    return BREAKTHROUGHS.map((b) => {
+      const events = (eventsById.get(b.id) || []).slice().sort((a, c) => c.unlockedAt - a.unlockedAt);
+      const u = events[0] || null;
+      const hasSim = events.some((e) => e.source === "simulation");
+      const hasExt = events.some((e) => e.source === "external_research");
+      return { bt: b, u, events, hasSim, hasExt };
+    })
       .filter((r) => (filter === "all" ? true : r.bt.realityTag === filter))
       .filter((r) => (category === "all" ? true : r.bt.category === category))
       .filter((r) => (tier === "all" ? true : String(r.bt.tier) === tier))
       .filter((r) => (onlyUnlocked ? !!r.u : true))
+      .filter((r) => {
+        if (source === "all") return true;
+        if (source === "simulation") return r.hasSim || !r.u;
+        return r.hasExt;
+      })
       .filter((r) =>
         q
           ? r.bt.name.toLowerCase().includes(q) ||
@@ -96,7 +114,7 @@ function LedgerPage() {
         if (b.u) return 1;
         return a.bt.tier - b.bt.tier;
       });
-  }, [unlocked, filter, category, tier, query, onlyUnlocked]);
+  }, [unlocked, filter, category, tier, query, onlyUnlocked, source]);
 
   function exportAll() {
     const blocks = unlocked
@@ -263,6 +281,15 @@ function LedgerPage() {
               <option key={t} value={String(t)}>tier {t}</option>
             ))}
           </select>
+          <select
+            value={source}
+            onChange={(e) => setSource(e.target.value as typeof source)}
+            className="border border-white/15 bg-black/40 px-2 py-2 text-xs uppercase tracking-[0.15em] text-white"
+          >
+            <option value="all">all sources</option>
+            <option value="simulation">simulation</option>
+            <option value="external_research">external research</option>
+          </select>
           <label className="flex cursor-pointer items-center gap-2 border border-white/15 px-3 py-2 uppercase tracking-[0.15em] hover:bg-white/5">
             <input
               type="checkbox"
@@ -272,8 +299,29 @@ function LedgerPage() {
             />
             unlocked only
           </label>
+          <button
+            onClick={() => setIngestOpen((v) => !v)}
+            className="border border-emerald-400/40 px-3 py-2 uppercase tracking-[0.15em] text-emerald-200 hover:bg-emerald-400/10"
+          >
+            {ingestOpen ? "Close ingest" : "Log external result"}
+          </button>
           <span className="ml-auto text-muted-foreground">{rows.length} shown</span>
         </div>
+
+        <div className="mb-4 border border-amber-400/30 bg-amber-500/5 px-4 py-3 font-mono text-[10px] text-amber-200/90">
+          Per Creator Policy §5: every entry is labeled <b className="text-amber-100">SIMULATION</b> (bots / story engine) or <b className="text-emerald-200">EXTERNAL RESEARCH</b> (real computation, named authors). Simulation entries are not solved physics.
+        </div>
+
+        {ingestOpen && (
+          <IngestPanel
+            onSubmit={(payload) => {
+              const ev = addExternalUnlock(payload);
+              setIngestOpen(false);
+              downloadCreatorRecord(ev);
+            }}
+          />
+        )}
+
 
 
         <div className="mb-6 grid grid-cols-3 gap-2 font-mono text-xs">
@@ -283,7 +331,7 @@ function LedgerPage() {
         </div>
 
         <div className="border border-white/10">
-          {rows.map(({ bt, u }) => {
+          {rows.map(({ bt, u, events, hasSim, hasExt }) => {
             const open = openId === bt.id;
             return (
               <div key={bt.id} className="border-b border-white/5 last:border-b-0">
@@ -291,10 +339,20 @@ function LedgerPage() {
                   onClick={() => setOpenId(open ? null : bt.id)}
                   className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-white/5"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className={`border px-2 py-0.5 font-mono text-[9px] uppercase ${TAG_STYLES[bt.realityTag]}`}>
                       {bt.realityTag}
                     </span>
+                    {hasSim && (
+                      <span className="border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] uppercase text-amber-300">
+                        sim
+                      </span>
+                    )}
+                    {hasExt && (
+                      <span className="border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] uppercase text-emerald-300">
+                        external
+                      </span>
+                    )}
                     <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-chrome">T{bt.tier}</span>
                     <span className="font-bold text-white">{bt.name}</span>
                     <span className="font-mono text-[10px] text-muted-foreground">{bt.category}</span>
@@ -310,6 +368,33 @@ function LedgerPage() {
                 {open && (
                   <div className="space-y-4 border-t border-white/5 bg-black/30 px-4 py-4 font-mono text-xs">
                     <p className="text-white/85">{bt.summary}</p>
+
+                    {events.length > 0 && (
+                      <div>
+                        <div className="mb-1 text-[10px] uppercase tracking-[0.2em] text-chrome">Unlock events ({events.length})</div>
+                        <ul className="space-y-1 text-[11px]">
+                          {events.map((e, i) => (
+                            <li key={i} className="flex flex-wrap items-center justify-between gap-2 border border-white/5 bg-black/40 px-2 py-1">
+                              <span>
+                                <span className={`mr-2 border px-1.5 py-0.5 text-[9px] uppercase ${e.source === "external_research" ? "border-emerald-400/40 text-emerald-300" : "border-amber-400/40 text-amber-300"}`}>
+                                  {e.source}
+                                </span>
+                                <span className="text-white">{e.authors?.join(", ") || e.discoveredBy}</span>
+                                <span className="ml-2 text-muted-foreground">{new Date(e.unlockedAt).toLocaleString()}</span>
+                                {e.runCardId && <span className="ml-2 text-muted-foreground">· {e.runCardId}</span>}
+                              </span>
+                              <button
+                                onClick={() => downloadCreatorRecord(e)}
+                                className="border border-white/15 px-2 py-0.5 text-[9px] uppercase tracking-[0.15em] hover:bg-white/5"
+                              >
+                                Creator record
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     <div>
                       <div className="mb-1 text-[10px] uppercase tracking-[0.2em] text-chrome">Formula</div>
                       <pre className="whitespace-pre-wrap border-l-2 border-accent/40 bg-black/40 px-3 py-2 text-white/90">{bt.formula.expr}</pre>
@@ -366,6 +451,85 @@ function LedgerPage() {
   );
 }
 
+type IngestPayload = { id: string; authors: string[]; references?: string[]; notes?: string };
+
+function IngestPanel({ onSubmit }: { onSubmit: (p: IngestPayload) => void }) {
+  const [id, setId] = useState(BREAKTHROUGHS[0]?.id ?? "");
+  const [authors, setAuthors] = useState("");
+  const [refs, setRefs] = useState("");
+  const [notes, setNotes] = useState("");
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const a = authors.split(",").map((s) => s.trim()).filter(Boolean);
+        if (!a.length) {
+          alert("At least one author is required (Creator Policy §2).");
+          return;
+        }
+        onSubmit({
+          id,
+          authors: a,
+          references: refs.split("\n").map((s) => s.trim()).filter(Boolean),
+          notes: notes.trim() || undefined,
+        });
+      }}
+      className="mb-6 space-y-3 border border-emerald-400/30 bg-emerald-500/5 p-4 font-mono text-[11px]"
+    >
+      <div className="text-[10px] uppercase tracking-[0.25em] text-emerald-300">Log external research result</div>
+      <p className="text-[10px] text-emerald-100/70">
+        Creates an <b>external_research</b> ledger entry with a Run Card ID and immediately downloads a
+        signed Creator Record attributing the result to its authors and the Platform to Evan Ketchum.
+      </p>
+      <label className="block">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-chrome">Breakthrough</span>
+        <select
+          value={id}
+          onChange={(e) => setId(e.target.value)}
+          className="mt-1 w-full border border-white/15 bg-black/40 px-2 py-2 text-white"
+        >
+          {BREAKTHROUGHS.map((b) => (
+            <option key={b.id} value={b.id}>{b.name} ({b.id})</option>
+          ))}
+        </select>
+      </label>
+      <label className="block">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-chrome">Authors (comma-separated)</span>
+        <input
+          value={authors}
+          onChange={(e) => setAuthors(e.target.value)}
+          placeholder="T. Aoyama, M. Hayakawa, …"
+          className="mt-1 w-full border border-white/15 bg-black/40 px-2 py-2 text-white"
+        />
+      </label>
+      <label className="block">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-chrome">References (one per line: DOI / arXiv / URL)</span>
+        <textarea
+          value={refs}
+          onChange={(e) => setRefs(e.target.value)}
+          rows={3}
+          className="mt-1 w-full border border-white/15 bg-black/40 px-2 py-2 text-white"
+        />
+      </label>
+      <label className="block">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-chrome">Notes (optional)</span>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={2}
+          className="mt-1 w-full border border-white/15 bg-black/40 px-2 py-2 text-white"
+        />
+      </label>
+      <button
+        type="submit"
+        className="border border-emerald-400/50 bg-emerald-500/15 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-emerald-100 hover:bg-emerald-500/25"
+      >
+        Ingest + download Creator Record
+      </button>
+    </form>
+  );
+}
+
 function Stat({ label, v }: { label: string; v: string }) {
   return (
     <div className="border border-white/10 bg-card/40 p-3">
@@ -383,3 +547,4 @@ function Cell({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
+

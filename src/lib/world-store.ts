@@ -36,10 +36,17 @@ export type BotState = {
   contribution: number;
 };
 
+export type UnlockSource = "simulation" | "external_research";
+
 export type UnlockEvent = {
   id: string;
   unlockedAt: number;
   discoveredBy: string;
+  source: UnlockSource;
+  authors?: string[];
+  references?: string[];
+  runCardId?: string;
+  notes?: string;
 };
 
 type WorldState = {
@@ -54,6 +61,7 @@ type WorldState = {
   tick: (deltaMs: number) => void;
   startLoop: () => () => void;
   moveBot: (id: string, x: number, z: number) => void;
+  addExternalUnlock: (input: { id: string; authors: string[]; references?: string[]; notes?: string }) => UnlockEvent;
   reset: () => void;
 };
 
@@ -133,7 +141,7 @@ export const useWorld = create<WorldState>((set, get) => ({
         totalResearch: p.totalResearch,
         worldSize: p.worldSize,
         bots: p.bots.length ? p.bots : BOTS_INIT,
-        unlocked: p.unlocked || [],
+        unlocked: (p.unlocked || []).map((u) => ({ ...u, source: u.source ?? "simulation" })),
       });
       if (elapsed > 0) get().tick(elapsed);
     } else {
@@ -160,7 +168,7 @@ export const useWorld = create<WorldState>((set, get) => ({
       const who = pickDiscoverer(bots);
       bots = bots.map((b) => (b.id === who.id ? { ...b, contribution: b.contribution + cost } : b));
       worldSize = Math.min(400, worldSize + 4);
-      unlocked = [...unlocked, { id: item.id, unlockedAt: Date.now(), discoveredBy: who.name }];
+      unlocked = [...unlocked, { id: item.id, unlockedAt: Date.now(), discoveredBy: who.name, source: "simulation" }];
       try {
         creditDat(15);
       } catch {}
@@ -208,6 +216,31 @@ export const useWorld = create<WorldState>((set, get) => ({
 
   moveBot: (id, x, z) => {
     set({ bots: get().bots.map((b) => (b.id === id ? { ...b, x, z } : b)) });
+  },
+
+  addExternalUnlock: ({ id, authors, references, notes }) => {
+    const ev: UnlockEvent = {
+      id,
+      unlockedAt: Date.now(),
+      discoveredBy: authors[0] || "external",
+      source: "external_research",
+      authors,
+      references,
+      notes,
+      runCardId: `RC-${Date.now().toString(36)}`,
+    };
+    const s = get();
+    const next = { ...s, unlocked: [...s.unlocked, ev], lastTick: Date.now() };
+    savePersisted({
+      lastTick: next.lastTick,
+      researchPoints: next.researchPoints,
+      totalResearch: next.totalResearch,
+      worldSize: next.worldSize,
+      bots: next.bots,
+      unlocked: next.unlocked,
+    });
+    set({ unlocked: next.unlocked });
+    return ev;
   },
 
   reset: () => {

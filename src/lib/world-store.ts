@@ -218,6 +218,31 @@ export const useWorld = create<WorldState>((set, get) => ({
     set({ bots: get().bots.map((b) => (b.id === id ? { ...b, x, z } : b)) });
   },
 
+  addExternalUnlock: ({ id, authors, references, notes }) => {
+    const ev: UnlockEvent = {
+      id,
+      unlockedAt: Date.now(),
+      discoveredBy: authors[0] || "external",
+      source: "external_research",
+      authors,
+      references,
+      notes,
+      runCardId: `RC-${Date.now().toString(36)}`,
+    };
+    const s = get();
+    const next = { ...s, unlocked: [...s.unlocked, ev], lastTick: Date.now() };
+    savePersisted({
+      lastTick: next.lastTick,
+      researchPoints: next.researchPoints,
+      totalResearch: next.totalResearch,
+      worldSize: next.worldSize,
+      bots: next.bots,
+      unlocked: next.unlocked,
+    });
+    set({ unlocked: next.unlocked });
+    return ev;
+  },
+
   reset: () => {
     try {
       localStorage.removeItem(STORAGE_KEY);

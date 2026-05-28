@@ -1,99 +1,109 @@
 
-# Plan: Engine polish + walkable Quantara world
+# Quantara Legal & Creator Policy Integration
 
-Two parts. Part 1 is small QED engine polish you already asked for. Part 2 is the big new feature: a 3D world you walk through as an avatar, meet the bots, and read a live ledger of every artifact / breakthrough they "discover" with formulas and blueprints.
+Goal: bring the 7 uploaded documents into the project as both source files and visible UI, and enforce the CREATOR_POLICY's separation between simulation vs external_research breakthroughs.
 
-Important honesty note up front: the bots are a deterministic simulation. They are not real AI agents discovering real physics. The "breakthroughs" are procedurally generated from a curated catalog of real and speculative tech (with real formulas where they exist, clearly-labeled speculative formulas where they don't). The world keeps advancing while you're offline by computing elapsed time on next load — no server-side mining, no real crypto, no real research. I'll label this clearly in the UI so it isn't mistaken for actual science output.
+## 1. Copy docs into the repo
 
----
+Create `docs/legal/` and copy each upload verbatim (so the markdown is the source of truth):
 
-## Part 1 — QED engine polish (small)
+- `docs/legal/TERMS.md`
+- `docs/legal/LICENSE_RESEARCH.md`
+- `docs/legal/LICENSE_COMMERCIAL.md`
+- `docs/legal/CREATOR_POLICY.md`
+- `docs/legal/FOR_COLLABORATORS.md`
+- `docs/legal/ARCHITECTURAL_BLUEPRINT.md`
+- `docs/legal/README.md`
 
-Already mostly built. Remaining gaps:
+Use Vite's `?raw` import so the same markdown renders in the UI without duplication.
 
-1. **Presets** — confirm the 5 presets render in a dropdown with descriptions on hover.
-2. **Persistence** — already saving `spec` and `runs` to localStorage; add a "Clear saved state" button.
-3. **Validate + clamp** — already in `validateSpec`; add inline red border + tooltip when a value gets clamped, so the user sees what changed.
-4. **Export results summary** — new button "Export summary" in `qed-engine-overview.tsx` that builds a single Markdown blob (spec + last run + frontiers + presets used) and triggers a download as `qed-summary-YYYYMMDD-HHMM.md`. Also a "Copy summary" button next to it.
+## 2. Legal routes (TanStack Start, file-based)
 
-All client-side, no backend.
+Add a parent route + leaf routes under `src/routes/`:
 
----
-
-## Part 2 — Quantara World (walkable 3D)
-
-### 2a. Tech choice
-
-- **react-three-fiber** + **drei** + **three** for the 3D scene.
-- **zustand** for world state (already lightweight, fits the existing localStorage pattern).
-- No backend. Offline growth handled by storing `lastTick` timestamp and replaying elapsed seconds on load (capped at 7 days to avoid runaway numbers).
-
-### 2b. New route
-
-`src/routes/world.tsx` → `/world`. Own `head()` metadata. Link from the main nav.
-
-### 2c. Scene contents
-
-- Ground plane that scales with `world.size` (grows as bot population grows; never shrinks).
-- 6–10 bot avatars (instanced meshes, named: Axiom, Borel, Cayley, Dirac, Euler, Feynman, Gauss, Hilbert, Ising, Jacobi). Each wanders on a simple steering loop and emits a speech bubble when it "discovers" something.
-- Buildings that spawn as breakthroughs are unlocked (lab, foundry, observatory, reactor, archive, gate).
-- First-person WASD + mouse-look controls via `PointerLockControls`. Mobile fallback: on-screen joystick (`nipplejs`-style, but I'll write a tiny custom one to avoid the dep).
-- Minimap in a corner.
-
-### 2d. Live growth loop
-
-- A single `useEffect` tick at 1 Hz while the tab is open.
-- On mount: compute `elapsed = min(now - lastTick, 7 days)`, advance the sim by that many simulated seconds in a fast loop, then resume real-time ticks.
-- Each tick: bots accumulate "research points" → when a threshold is hit, the next item from the breakthrough catalog unlocks, a building spawns, world size nudges up.
-- All state persisted to `localStorage` under `quantara.world.v1` after every unlock and every 30 s.
-
-### 2e. Breakthrough catalog + ledger
-
-A curated list in `src/lib/breakthroughs.ts` of ~40 entries. Each entry:
-
-```
-{
-  id, name, tier, discoveredBy, summary,
-  formula: { latex, plain, variables: [{symbol, meaning, units}] },
-  blueprint: {
-    components: [{name, qty, spec}],
-    assemblySteps: [string],
-    asciiSchematic: string,    // monospaced diagram
-    powerBudget, footprint, risks
-  },
-  realityTag: 'established' | 'frontier' | 'speculative'
-}
+```text
+legal.tsx                 -> /legal       (index hub: cards linking to each doc)
+legal.terms.tsx           -> /legal/terms
+legal.research-license.tsx
+legal.commercial-license.tsx
+legal.creator-policy.tsx
+legal.collaborators.tsx
+legal.blueprint.tsx
 ```
 
-Mix of real (Shor's algorithm, QEC surface code, photolithography node shrink, fusion ignition criterion Q>1, Penning trap g-2 measurement) and speculative (warp metric, axion haloscope tuning, room-temp superconductor target). Every speculative entry carries the `speculative` tag visibly.
+Each leaf:
+- Imports its markdown via `?raw`
+- Renders with `react-markdown` + `remark-gfm` (install both)
+- Sets unique `head()` meta (title, description, og:title/description)
+- Uses `prose` styling for readability
 
-Ledger UI: a sortable, filterable table at `/world/ledger` (child route) with expandable rows showing formula (KaTeX), variable table, ASCII schematic, and a "Copy blueprint" button.
+`/legal` hub: grid of cards summarizing each doc with a "Read →" link, plus the creator/contact block.
 
-### 2f. Files
+## 3. Footer attribution (site-wide)
 
-- `src/routes/world.tsx` — scene
-- `src/routes/world.ledger.tsx` — ledger table
-- `src/lib/world-store.ts` — zustand store + persistence + offline catch-up
-- `src/lib/breakthroughs.ts` — catalog
-- `src/components/world/Bot.tsx`, `Building.tsx`, `Player.tsx`, `Minimap.tsx`, `HUD.tsx`
-- `src/components/world/BreakthroughToast.tsx`
-- Add KaTeX (`katex` + CSS import) for formula rendering
-- Update `src/routes/index.tsx` nav to link `/world`
+Add `<SiteFooter />` rendered in `src/routes/__root.tsx` (outside the 3D `/world` route — wrap with a route-aware check so it does NOT mount on `/world` or `/world/ledger` where the canvas is fullscreen).
 
-### 2g. Packages to add
+Footer contents:
+- "© 2026 Evan Ketchum — Quantara Platform. All rights reserved."
+- Links: Terms · Research License · Commercial License · Creator Policy · Collaborators · Blueprint
+- Contact: Evan.ketchum2026@outlook.com
 
-`three`, `@react-three/fiber`, `@react-three/drei`, `zustand`, `katex`.
+## 4. Ledger: simulation vs external_research labeling
 
-### 2h. Explicit non-goals
+Per CREATOR_POLICY §1 and §5, every ledger entry must show its class.
 
-- No real crypto mining, no wallet routing, no real blockchain interaction.
-- The bots do not call any real AI or solve real open problems; their "discoveries" come from the curated catalog in deterministic order with light randomization.
-- This is a creative simulation/game layer, clearly labeled as such in the world HUD.
+- Extend `UnlockEvent` in `src/lib/world-store.ts` with `source: "simulation" | "external_research"` (default `"simulation"` for bot-driven unlocks; back-fill existing persisted events on `init()`).
+- Extend the type to optionally carry `authors?: string[]`, `references?: string[]`, `runCardId?: string` for external entries.
+- In `src/routes/world.ledger.tsx`:
+  - Add a colored badge per row: amber "SIMULATION" or emerald "EXTERNAL RESEARCH"
+  - Add a Source filter to the existing filters (Category / Tier / Unlock / Search)
+  - Make the PDF export include the source label and (when external) the authors + references block
+  - Add a small disclaimer banner at the top echoing CREATOR_POLICY §5
 
----
+## 5. Creator Record scaffolding
 
-## Open questions before I build
+New module `src/lib/creator-records.ts`:
 
-1. First-person walk (WASD + mouse) or third-person follow-cam on your avatar?
-2. Catalog size: start with ~40 curated entries and unlock at ~1 every few real minutes, or denser (1/minute)?
-3. Should the ledger be export-as-PDF too, or Markdown download is enough?
+- Type `CreatorRecord { id, breakthroughId, kind: "simulation"|"external_research", authors: string[], platformCreator: "Evan Ketchum", commit?, configRef?, isoTimestamp, notes? }`
+- `buildCreatorRecord(event)` → returns a Markdown string in the format documented in CREATOR_POLICY §2 / FOR_COLLABORATORS Run Card table
+- `downloadCreatorRecord(event)` → triggers a `.md` download named `creator-record-<breakthroughId>-<timestamp>.md`
+
+Wire a "Download Creator Record" button into each ledger row.
+
+## 6. External Result ingestion form (small)
+
+On `/world/ledger`, add a collapsible "Log external result" panel that lets a user paste:
+- Breakthrough ID (select from catalog)
+- Author names (comma-separated)
+- References (URLs / DOIs)
+- Optional notes
+
+Submission writes a new `UnlockEvent` with `source: "external_research"` into the world store (separate list, no research-cost deduction — it does not consume bot research) and immediately offers the Creator Record download. Stored in `localStorage` so it persists across sessions.
+
+## 7. Index page nudges
+
+`src/routes/index.tsx`: add small links in the header/nav to `/legal` and surface the "Simulation, not solved physics" disclaimer near the QED Engine section (one line, sourced from `TERMS.md` §3).
+
+## Technical notes
+
+- Install: `bun add react-markdown remark-gfm`
+- Markdown imports use `?raw` to keep a single source of truth; no duplication of legal text in TSX.
+- Route filenames use dots per TanStack convention; `createFileRoute("/legal/terms")` etc.
+- Schema migration in `world-store.ts` `init()`: any existing persisted `UnlockEvent` without `source` is treated as `"simulation"`.
+- No business-logic change to QED engine or 3D simulation; this is purely additive (docs UI + ledger metadata + scaffolding).
+
+## Files touched
+
+Created:
+- `docs/legal/*.md` (7 files, copies of uploads)
+- `src/routes/legal.tsx`, `legal.terms.tsx`, `legal.research-license.tsx`, `legal.commercial-license.tsx`, `legal.creator-policy.tsx`, `legal.collaborators.tsx`, `legal.blueprint.tsx`
+- `src/components/site-footer.tsx`
+- `src/components/markdown-doc.tsx` (shared md renderer)
+- `src/lib/creator-records.ts`
+
+Edited:
+- `src/routes/__root.tsx` (mount footer except on /world*)
+- `src/lib/world-store.ts` (add `source` etc., migrate persisted state)
+- `src/routes/world.ledger.tsx` (badges, source filter, ingestion panel, creator-record export)
+- `src/routes/index.tsx` (legal nav + simulation disclaimer)
+- `package.json` / `bun.lock` (react-markdown, remark-gfm)

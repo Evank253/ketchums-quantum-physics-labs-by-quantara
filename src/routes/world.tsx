@@ -159,10 +159,14 @@ function WorldPage() {
   const total = useWorld((s) => s.totalResearch);
   const unlocked = useWorld((s) => s.unlocked);
   const worldSize = useWorld((s) => s.worldSize);
+  const bots = useWorld((s) => s.bots);
+  const healBot = useWorld((s) => s.healBot);
+  const healAllBots = useWorld((s) => s.healAllBots);
   const [hint, setHint] = useState(true);
   const [dat, setDat] = useState<number>(() => readDat());
   const [capHours, setCapHours] = useState<number>(() => getOfflineCapHours());
   const [panelOpen, setPanelOpen] = useState(false);
+  const [swarmOpen, setSwarmOpen] = useState(false);
 
   useEffect(() => {
     init();

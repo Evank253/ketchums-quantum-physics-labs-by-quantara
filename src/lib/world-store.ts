@@ -185,17 +185,22 @@ export const useWorld = create<WorldState>((set, get) => ({
       } catch {}
     }
 
-    // Drift bots a little so movement looks alive.
+    // Drift bots a little so movement looks alive, and decay phase
+    // correction so the "Heal" button has a visible effect.
+    const decay = Math.min(0.05, seconds * 0.002);
     bots = bots.map((b) => {
       const a = Math.random() * Math.PI * 2;
       const step = Math.min(1.5, seconds * 0.6);
       const nx = b.x + Math.cos(a) * step * 0.4;
       const nz = b.z + Math.sin(a) * step * 0.4;
       const r = worldSize * 0.45;
+      const phase = Math.max(0.6, (b.phaseCorrection ?? 1.0) - decay);
       return {
         ...b,
         x: Math.max(-r, Math.min(r, nx)),
         z: Math.max(-r, Math.min(r, nz)),
+        phaseCorrection: phase,
+        healingActive: b.healingActive && phase > 0.99,
       };
     });
 

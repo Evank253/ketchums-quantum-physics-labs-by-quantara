@@ -234,6 +234,56 @@ export const useWorld = create<WorldState>((set, get) => ({
     set({ bots: get().bots.map((b) => (b.id === id ? { ...b, x, z } : b)) });
   },
 
+  healBot: (id) => {
+    const bots = get().bots.map((b) =>
+      b.id === id ? { ...b, healingActive: true, phaseCorrection: 1.0 } : b
+    );
+    set({ bots });
+    savePersisted({
+      lastTick: get().lastTick,
+      researchPoints: get().researchPoints,
+      totalResearch: get().totalResearch,
+      worldSize: get().worldSize,
+      bots,
+      unlocked: get().unlocked,
+    });
+  },
+
+  healAllBots: () => {
+    const bots = get().bots.map((b) => ({ ...b, healingActive: true, phaseCorrection: 1.0 }));
+    set({ bots });
+    savePersisted({
+      lastTick: get().lastTick,
+      researchPoints: get().researchPoints,
+      totalResearch: get().totalResearch,
+      worldSize: get().worldSize,
+      bots,
+      unlocked: get().unlocked,
+    });
+  },
+
+  logKernelBreakthrough: (id, label) => {
+    const ev: UnlockEvent = {
+      id: `KERNEL-${id.toUpperCase()}-${Date.now().toString(36)}`,
+      unlockedAt: Date.now(),
+      discoveredBy: "QED Kernel",
+      source: "simulation",
+      notes: label,
+    };
+    const s = get();
+    const unlocked = [...s.unlocked, ev];
+    savePersisted({
+      lastTick: s.lastTick,
+      researchPoints: s.researchPoints,
+      totalResearch: s.totalResearch,
+      worldSize: s.worldSize,
+      bots: s.bots,
+      unlocked,
+    });
+    set({ unlocked });
+    return ev;
+  },
+
   addExternalUnlock: ({ id, authors, references, notes }) => {
     const ev: UnlockEvent = {
       id,

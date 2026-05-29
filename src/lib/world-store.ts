@@ -34,6 +34,10 @@ export type BotState = {
   z: number;
   hue: number;
   contribution: number;
+  // Self-Healing Swarm (AHM/PCL protocol). Cosmetic HUD signal only —
+  // does not affect research accrual or unlocks.
+  healingActive: boolean;
+  phaseCorrection: number; // 0.0 – 1.0
 };
 
 export type UnlockSource = "simulation" | "external_research";

@@ -147,7 +147,11 @@ export const useWorld = create<WorldState>((set, get) => ({
         researchPoints: p.researchPoints,
         totalResearch: p.totalResearch,
         worldSize: p.worldSize,
-        bots: p.bots.length ? p.bots : BOTS_INIT,
+        bots: (p.bots.length ? p.bots : BOTS_INIT).map((b) => ({
+          ...b,
+          healingActive: b.healingActive ?? false,
+          phaseCorrection: typeof b.phaseCorrection === "number" ? b.phaseCorrection : 1.0,
+        })),
         unlocked: (p.unlocked || []).map((u) => ({ ...u, source: u.source ?? "simulation" })),
       });
       if (elapsed > 0) get().tick(elapsed);

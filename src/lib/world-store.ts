@@ -65,6 +65,9 @@ type WorldState = {
   tick: (deltaMs: number) => void;
   startLoop: () => () => void;
   moveBot: (id: string, x: number, z: number) => void;
+  healBot: (id: string) => void;
+  healAllBots: () => void;
+  logKernelBreakthrough: (id: string, label: string) => UnlockEvent;
   addExternalUnlock: (input: { id: string; authors: string[]; references?: string[]; notes?: string }) => UnlockEvent;
   reset: () => void;
 };

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorldRouteImport } from './routes/world'
+import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorldLedgerRouteImport } from './routes/world.ledger'
@@ -23,6 +24,11 @@ import { Route as LegalBlueprintRouteImport } from './routes/legal.blueprint'
 const WorldRoute = WorldRouteImport.update({
   id: '/world',
   path: '/world',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SynthesisRoute = SynthesisRouteImport.update({
+  id: '/synthesis',
+  path: '/synthesis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalRoute = LegalRouteImport.update({
@@ -74,6 +80,7 @@ const LegalBlueprintRoute = LegalBlueprintRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/legal': typeof LegalRouteWithChildren
+  '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/legal': typeof LegalRouteWithChildren
+  '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/legal': typeof LegalRouteWithChildren
+  '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/legal'
+    | '/synthesis'
     | '/world'
     | '/legal/blueprint'
     | '/legal/collaborators'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/legal'
+    | '/synthesis'
     | '/world'
     | '/legal/blueprint'
     | '/legal/collaborators'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/legal'
+    | '/synthesis'
     | '/world'
     | '/legal/blueprint'
     | '/legal/collaborators'
@@ -150,6 +162,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LegalRoute: typeof LegalRouteWithChildren
+  SynthesisRoute: typeof SynthesisRoute
   WorldRoute: typeof WorldRouteWithChildren
 }
 
@@ -160,6 +173,13 @@ declare module '@tanstack/react-router' {
       path: '/world'
       fullPath: '/world'
       preLoaderRoute: typeof WorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/synthesis': {
+      id: '/synthesis'
+      path: '/synthesis'
+      fullPath: '/synthesis'
+      preLoaderRoute: typeof SynthesisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal': {
@@ -261,6 +281,7 @@ const WorldRouteWithChildren = WorldRoute._addFileChildren(WorldRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LegalRoute: LegalRouteWithChildren,
+  SynthesisRoute: SynthesisRoute,
   WorldRoute: WorldRouteWithChildren,
 }
 export const routeTree = rootRouteImport

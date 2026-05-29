@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useWorld } from "@/lib/world-store";
 
 // ---------------------------------------------------------------------------
 // QED COMPUTER — operator-facing terminal.

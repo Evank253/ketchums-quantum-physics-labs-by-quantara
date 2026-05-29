@@ -159,10 +159,14 @@ function WorldPage() {
   const total = useWorld((s) => s.totalResearch);
   const unlocked = useWorld((s) => s.unlocked);
   const worldSize = useWorld((s) => s.worldSize);
+  const bots = useWorld((s) => s.bots);
+  const healBot = useWorld((s) => s.healBot);
+  const healAllBots = useWorld((s) => s.healAllBots);
   const [hint, setHint] = useState(true);
   const [dat, setDat] = useState<number>(() => readDat());
   const [capHours, setCapHours] = useState<number>(() => getOfflineCapHours());
   const [panelOpen, setPanelOpen] = useState(false);
+  const [swarmOpen, setSwarmOpen] = useState(false);
 
   useEffect(() => {
     init();
@@ -211,6 +215,12 @@ function WorldPage() {
               className="rounded-sm border border-white/15 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/10"
             >
               {panelOpen ? "Close panel" : "World panel"}
+            </button>
+            <button
+              onClick={() => setSwarmOpen((v) => !v)}
+              className="rounded-sm border border-cyan-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-500/10"
+            >
+              {swarmOpen ? "Close swarm" : "Self-healing swarm"}
             </button>
             <Link
               to="/"
@@ -270,6 +280,59 @@ function WorldPage() {
                   When you return, bots replay up to this much wall-clock time. Hard ceiling 30 days.
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {swarmOpen && (
+          <div className="pointer-events-auto absolute left-4 top-44 max-h-[70vh] w-80 overflow-y-auto rounded-sm border border-cyan-400/30 bg-black/85 p-4 backdrop-blur-md">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-[0.25em] text-cyan-300">Self-Healing Swarm · AHM/PCL</div>
+              <button
+                onClick={healAllBots}
+                className="rounded-sm border border-cyan-400/40 px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] text-cyan-200 hover:bg-cyan-500/15"
+              >
+                Heal all
+              </button>
+            </div>
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              Autonomous Healing Multiplier + Phase Correction Layer. Phase drifts
+              over time; healing restores coherence. Cosmetic — no economy impact.
+            </p>
+            <div className="mt-3 space-y-2">
+              {bots.map((b) => {
+                const phase = b.phaseCorrection ?? 1.0;
+                const pctPhase = Math.round(phase * 100);
+                const ok = phase >= 0.85;
+                return (
+                  <div key={b.id} className="rounded-sm border border-white/10 bg-black/40 p-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px] font-bold text-white">{b.name}</div>
+                        <div className="text-[9px] uppercase tracking-[0.2em] text-chrome">{b.role}</div>
+                      </div>
+                      <button
+                        onClick={() => healBot(b.id)}
+                        className="rounded-sm border border-white/20 px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] text-white hover:bg-white/10"
+                      >
+                        Heal
+                      </button>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-sm bg-white/10">
+                      <div
+                        className={`h-full transition-all ${ok ? "bg-cyan-400" : "bg-amber-400"}`}
+                        style={{ width: `${pctPhase}%` }}
+                      />
+                    </div>
+                    <div className="mt-0.5 flex justify-between text-[9px] text-muted-foreground">
+                      <span>phase {pctPhase}%</span>
+                      <span className={b.healingActive ? "text-cyan-300" : ""}>
+                        {b.healingActive ? "HEALING" : ok ? "stable" : "drift"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

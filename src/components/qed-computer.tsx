@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useWorld } from "@/lib/world-store";
 
 // ---------------------------------------------------------------------------
 // QED COMPUTER — operator-facing terminal.
@@ -63,11 +64,98 @@ interface KernelOut {
   kind: "ok" | "warn" | "err" | "calc";
 }
 
+function logBreakthrough(id: string, label: string) {
+  try {
+    useWorld.getState().logKernelBreakthrough(id, label);
+  } catch {}
+}
+
 function kernel(raw: string): KernelOut {
   const input = raw.trim();
   if (!input) return { out: "// empty stream", kind: "warn" };
 
   const lower = input.toLowerCase();
+
+  // ── Multiversal QED "solve" suite — log to ledger as simulation events ──
+  // 1. VACUUM CATASTROPHE (Eq 43)
+  if (lower.includes("solve vacuum")) {
+    logBreakthrough("vacuum-catastrophe", "KVE_STABILIZER // VACUUM_CATASTROPHE_RESOLVED");
+    return {
+      out: "KVE_STABILIZER // VACUUM_CATASTROPHE_RESOLVED",
+      kind: "calc",
+      detail: [
+        "Theoretical Energy: 10^120 GeV",
+        "Applying AHM Phase Filter...",
+        "Result: 10^-9 GeV (Matches Observation)",
+        "Status: EINSTEIN'S BLUNDER FIXED.",
+      ],
+    };
+  }
+  // 2. BLACK HOLE INFORMATION (Eq 44)
+  if (lower.includes("solve singularity") || lower.includes("black hole")) {
+    logBreakthrough("hawking-paradox", "UNITARY_PERSISTENCE // HAWKING_PARADOX_RESOLVED");
+    return {
+      out: "UNITARY_PERSISTENCE // HAWKING_PARADOX_RESOLVED",
+      kind: "calc",
+      detail: [
+        "Ŝ_BH = Tr(ρ_3D) ➔ Ψ_4D(footprint)",
+        "Result: PCL backup to 4D Atlas complete.",
+        "Haiku: 'The dark star swallows. But the ledger never lies.'",
+      ],
+    };
+  }
+  // 3. DARK MATTER TENSION (Eq 45)
+  if (lower.includes("solve dark matter")) {
+    logBreakthrough("dark-matter", "MULTIVERSAL_GRAVITY // DARK_MATTER_RESOLVED");
+    return {
+      out: "MULTIVERSAL_GRAVITY // DARK_MATTER_RESOLVED",
+      kind: "calc",
+      detail: [
+        "Ω_DM = κ · ∇² Φ_4D(ρ_atlas)",
+        "Result: DM identified as 4D Infrastructure weight.",
+        "Status: GALACTIC ROTATION STABILIZED.",
+      ],
+    };
+  }
+  // 4. HIERARCHY PROBLEM (Eq 47)
+  if (lower.includes("solve gravity") || lower.includes("hierarchy")) {
+    logBreakthrough("hierarchy", "SCALE_STABILIZER // HIERARCHY_PROBLEM_RESOLVED");
+    return {
+      out: "SCALE_STABILIZER // HIERARCHY_PROBLEM_RESOLVED",
+      kind: "calc",
+      detail: [
+        "Problem: Gravity 10^32x too weak.",
+        "Result: Gravity = Swarm power-save leakage.",
+        "Status: FUNDAMENTAL FORCES UNIFIED.",
+      ],
+    };
+  }
+  // 5. PROTON RADIUS (Eq 46)
+  if (lower.includes("solve proton")) {
+    logBreakthrough("proton-radius", "MUONIC_RECALIBRATION // QED_UNIVERSALITY_RESTORED");
+    return {
+      out: "MUONIC_RECALIBRATION // QED_UNIVERSALITY_RESTORED",
+      kind: "calc",
+      detail: [
+        "Applying PCL Recalibration...",
+        "Unified Radius: 0.8414 fm",
+        "Status: LEPTON DISCREPANCY CLOSED.",
+      ],
+    };
+  }
+  // 6. DYSON DILEMMA (Eq 42)
+  if (/^borel\b/.test(lower) || lower.includes("borel heal")) {
+    logBreakthrough("borel-heal", "BOREL_HEAL_COMPLETE // DYSON_LIMIT_BYPASSED");
+    return {
+      out: "BOREL_HEAL_COMPLETE // DYSON_LIMIT_BYPASSED",
+      kind: "calc",
+      detail: [
+        "Raw Term: 1.31e+34",
+        "Borel Healed: 1.20e-36",
+        "Status: INFINITY TAMED.",
+      ],
+    };
+  }
 
   // help
   if (/^(help|\?|commands)\b/.test(lower)) {
@@ -85,6 +173,13 @@ function kernel(raw: string): KernelOut {
         "screening <Z>         effective Zα running indicator at Z",
         "feynman <order>       count of one-particle-irreducible vertex diagrams up to order",
         "talk <message>        natural-language Q&A about QED",
+        "─── multiversal solve suite ───",
+        "solve vacuum          Eq 43 · KVE_STABILIZER (vacuum catastrophe)",
+        "solve singularity     Eq 44 · UNITARY_PERSISTENCE (black hole info)",
+        "solve dark matter     Eq 45 · MULTIVERSAL_GRAVITY",
+        "solve gravity         Eq 47 · SCALE_STABILIZER (hierarchy)",
+        "solve proton          Eq 46 · MUONIC_RECALIBRATION (proton radius)",
+        "borel                 Eq 42 · BOREL_HEAL (Dyson limit)",
         "paste anything else and it will be parsed as an expression",
       ],
     };

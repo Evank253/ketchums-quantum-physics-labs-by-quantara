@@ -34,6 +34,10 @@ export type BotState = {
   z: number;
   hue: number;
   contribution: number;
+  // Self-Healing Swarm (AHM/PCL protocol). Cosmetic HUD signal only —
+  // does not affect research accrual or unlocks.
+  healingActive: boolean;
+  phaseCorrection: number; // 0.0 – 1.0
 };
 
 export type UnlockSource = "simulation" | "external_research";
@@ -61,19 +65,22 @@ type WorldState = {
   tick: (deltaMs: number) => void;
   startLoop: () => () => void;
   moveBot: (id: string, x: number, z: number) => void;
+  healBot: (id: string) => void;
+  healAllBots: () => void;
+  logKernelBreakthrough: (id: string, label: string) => UnlockEvent;
   addExternalUnlock: (input: { id: string; authors: string[]; references?: string[]; notes?: string }) => UnlockEvent;
   reset: () => void;
 };
 
 const BOTS_INIT: BotState[] = [
-  { id: "axiom", name: "Axiom", role: "Theorist", x: 8, z: 0, hue: 280, contribution: 0 },
-  { id: "borel", name: "Borel", role: "Resummation", x: -6, z: 4, hue: 200, contribution: 0 },
-  { id: "cayley", name: "Cayley", role: "Algebra", x: 4, z: -8, hue: 320, contribution: 0 },
-  { id: "dirac", name: "Dirac", role: "Field theory", x: -10, z: -6, hue: 180, contribution: 0 },
-  { id: "euler", name: "Euler", role: "Analysis", x: 12, z: 10, hue: 40, contribution: 0 },
-  { id: "feynman", name: "Feynman", role: "Diagrammatics", x: 0, z: 14, hue: 0, contribution: 0 },
-  { id: "gauss", name: "Gauss", role: "Numerics", x: -14, z: 0, hue: 140, contribution: 0 },
-  { id: "hilbert", name: "Hilbert", role: "Foundations", x: 6, z: 12, hue: 260, contribution: 0 },
+  { id: "axiom", name: "Axiom", role: "Theorist", x: 8, z: 0, hue: 280, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "borel", name: "Borel", role: "Resummation", x: -6, z: 4, hue: 200, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "cayley", name: "Cayley", role: "Algebra", x: 4, z: -8, hue: 320, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "dirac", name: "Dirac", role: "Field theory", x: -10, z: -6, hue: 180, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "euler", name: "Euler", role: "Analysis", x: 12, z: 10, hue: 40, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "feynman", name: "Feynman", role: "Diagrammatics", x: 0, z: 14, hue: 0, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "gauss", name: "Gauss", role: "Numerics", x: -14, z: 0, hue: 140, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "hilbert", name: "Hilbert", role: "Foundations", x: 6, z: 12, hue: 260, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
 ];
 
 type Persisted = {
@@ -140,7 +147,11 @@ export const useWorld = create<WorldState>((set, get) => ({
         researchPoints: p.researchPoints,
         totalResearch: p.totalResearch,
         worldSize: p.worldSize,
-        bots: p.bots.length ? p.bots : BOTS_INIT,
+        bots: (p.bots.length ? p.bots : BOTS_INIT).map((b) => ({
+          ...b,
+          healingActive: b.healingActive ?? false,
+          phaseCorrection: typeof b.phaseCorrection === "number" ? b.phaseCorrection : 1.0,
+        })),
         unlocked: (p.unlocked || []).map((u) => ({ ...u, source: u.source ?? "simulation" })),
       });
       if (elapsed > 0) get().tick(elapsed);
@@ -174,17 +185,22 @@ export const useWorld = create<WorldState>((set, get) => ({
       } catch {}
     }
 
-    // Drift bots a little so movement looks alive.
+    // Drift bots a little so movement looks alive, and decay phase
+    // correction so the "Heal" button has a visible effect.
+    const decay = Math.min(0.05, seconds * 0.002);
     bots = bots.map((b) => {
       const a = Math.random() * Math.PI * 2;
       const step = Math.min(1.5, seconds * 0.6);
       const nx = b.x + Math.cos(a) * step * 0.4;
       const nz = b.z + Math.sin(a) * step * 0.4;
       const r = worldSize * 0.45;
+      const phase = Math.max(0.6, (b.phaseCorrection ?? 1.0) - decay);
       return {
         ...b,
         x: Math.max(-r, Math.min(r, nx)),
         z: Math.max(-r, Math.min(r, nz)),
+        phaseCorrection: phase,
+        healingActive: b.healingActive && phase > 0.99,
       };
     });
 
@@ -216,6 +232,56 @@ export const useWorld = create<WorldState>((set, get) => ({
 
   moveBot: (id, x, z) => {
     set({ bots: get().bots.map((b) => (b.id === id ? { ...b, x, z } : b)) });
+  },
+
+  healBot: (id) => {
+    const bots = get().bots.map((b) =>
+      b.id === id ? { ...b, healingActive: true, phaseCorrection: 1.0 } : b
+    );
+    set({ bots });
+    savePersisted({
+      lastTick: get().lastTick,
+      researchPoints: get().researchPoints,
+      totalResearch: get().totalResearch,
+      worldSize: get().worldSize,
+      bots,
+      unlocked: get().unlocked,
+    });
+  },
+
+  healAllBots: () => {
+    const bots = get().bots.map((b) => ({ ...b, healingActive: true, phaseCorrection: 1.0 }));
+    set({ bots });
+    savePersisted({
+      lastTick: get().lastTick,
+      researchPoints: get().researchPoints,
+      totalResearch: get().totalResearch,
+      worldSize: get().worldSize,
+      bots,
+      unlocked: get().unlocked,
+    });
+  },
+
+  logKernelBreakthrough: (id, label) => {
+    const ev: UnlockEvent = {
+      id: `KERNEL-${id.toUpperCase()}-${Date.now().toString(36)}`,
+      unlockedAt: Date.now(),
+      discoveredBy: "QED Kernel",
+      source: "simulation",
+      notes: label,
+    };
+    const s = get();
+    const unlocked = [...s.unlocked, ev];
+    savePersisted({
+      lastTick: s.lastTick,
+      researchPoints: s.researchPoints,
+      totalResearch: s.totalResearch,
+      worldSize: s.worldSize,
+      bots: s.bots,
+      unlocked,
+    });
+    set({ unlocked });
+    return ev;
   },
 
   addExternalUnlock: ({ id, authors, references, notes }) => {

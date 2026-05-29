@@ -70,14 +70,14 @@ type WorldState = {
 };
 
 const BOTS_INIT: BotState[] = [
-  { id: "axiom", name: "Axiom", role: "Theorist", x: 8, z: 0, hue: 280, contribution: 0 },
-  { id: "borel", name: "Borel", role: "Resummation", x: -6, z: 4, hue: 200, contribution: 0 },
-  { id: "cayley", name: "Cayley", role: "Algebra", x: 4, z: -8, hue: 320, contribution: 0 },
-  { id: "dirac", name: "Dirac", role: "Field theory", x: -10, z: -6, hue: 180, contribution: 0 },
-  { id: "euler", name: "Euler", role: "Analysis", x: 12, z: 10, hue: 40, contribution: 0 },
-  { id: "feynman", name: "Feynman", role: "Diagrammatics", x: 0, z: 14, hue: 0, contribution: 0 },
-  { id: "gauss", name: "Gauss", role: "Numerics", x: -14, z: 0, hue: 140, contribution: 0 },
-  { id: "hilbert", name: "Hilbert", role: "Foundations", x: 6, z: 12, hue: 260, contribution: 0 },
+  { id: "axiom", name: "Axiom", role: "Theorist", x: 8, z: 0, hue: 280, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "borel", name: "Borel", role: "Resummation", x: -6, z: 4, hue: 200, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "cayley", name: "Cayley", role: "Algebra", x: 4, z: -8, hue: 320, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "dirac", name: "Dirac", role: "Field theory", x: -10, z: -6, hue: 180, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "euler", name: "Euler", role: "Analysis", x: 12, z: 10, hue: 40, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "feynman", name: "Feynman", role: "Diagrammatics", x: 0, z: 14, hue: 0, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "gauss", name: "Gauss", role: "Numerics", x: -14, z: 0, hue: 140, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
+  { id: "hilbert", name: "Hilbert", role: "Foundations", x: 6, z: 12, hue: 260, contribution: 0, healingActive: false, phaseCorrection: 1.0 },
 ];
 
 type Persisted = {

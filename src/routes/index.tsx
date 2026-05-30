@@ -6,6 +6,7 @@ import { QedSolver } from "@/components/qed-solver";
 import { QedComputer } from "@/components/qed-computer";
 import { QedEngineOverview } from "@/components/qed-engine-overview";
 import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
+import { SolvedTheories } from "@/components/solved-theories";
 
 
 import entityHero from "@/assets/entity-hero.jpg";

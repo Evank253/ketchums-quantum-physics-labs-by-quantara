@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { readLedger, subscribeLedger, clearLedger, exportLedgerJSON, type LedgerEntry } from "@/lib/learning-ledger";
 import { runBenchmarks } from "../../benchmarks/qed_benchmarks";
 import { logLedger } from "@/lib/learning-ledger";
+import { StarField, AuroraBlobs } from "@/components/quantara-fx";
 
 export const Route = createFileRoute("/ledger")({
   component: LedgerPage,

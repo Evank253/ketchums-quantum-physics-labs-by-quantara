@@ -9,6 +9,7 @@
 import { create } from "zustand";
 import { BREAKTHROUGHS, type Breakthrough } from "./breakthroughs";
 import { creditDat } from "./dat-tokens";
+import { logLedger } from "./learning-ledger";
 
 const STORAGE_KEY = "quantara.world.v1";
 const HARD_MAX_OFFLINE_MS = 30 * 24 * 60 * 60 * 1000; // absolute ceiling 30d
@@ -180,9 +181,9 @@ export const useWorld = create<WorldState>((set, get) => ({
       bots = bots.map((b) => (b.id === who.id ? { ...b, contribution: b.contribution + cost } : b));
       worldSize = Math.min(400, worldSize + 4);
       unlocked = [...unlocked, { id: item.id, unlockedAt: Date.now(), discoveredBy: who.name, source: "simulation" }];
-      try {
-        creditDat(15);
-      } catch {}
+      try { creditDat(15); } catch {}
+      try { logLedger("unlock", item.id, { by: who.name, cost }); } catch {}
+      try { logLedger("bot_advance", who.name, { contribution: who.contribution + cost }); } catch {}
     }
 
     // Drift bots a little so movement looks alive, and decay phase

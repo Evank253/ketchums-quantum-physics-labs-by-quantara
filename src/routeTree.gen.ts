@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorldRouteImport } from './routes/world'
 import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as LegalRouteImport } from './routes/legal'
+import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as BenchmarksRouteImport } from './routes/benchmarks'
 import { Route as AtlasRouteImport } from './routes/atlas'
 import { Route as IndexRouteImport } from './routes/index'
@@ -36,6 +37,11 @@ const SynthesisRoute = SynthesisRouteImport.update({
 const LegalRoute = LegalRouteImport.update({
   id: '/legal',
   path: '/legal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LedgerRoute = LedgerRouteImport.update({
+  id: '/ledger',
+  path: '/ledger',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BenchmarksRoute = BenchmarksRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/atlas'
     | '/benchmarks'
+    | '/ledger'
     | '/legal'
     | '/synthesis'
     | '/world'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/atlas'
     | '/benchmarks'
+    | '/ledger'
     | '/legal'
     | '/synthesis'
     | '/world'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/atlas'
     | '/benchmarks'
+    | '/ledger'
     | '/legal'
     | '/synthesis'
     | '/world'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtlasRoute: typeof AtlasRoute
   BenchmarksRoute: typeof BenchmarksRoute
+  LedgerRoute: typeof LedgerRoute
   LegalRoute: typeof LegalRouteWithChildren
   SynthesisRoute: typeof SynthesisRoute
   WorldRoute: typeof WorldRouteWithChildren
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/legal'
       fullPath: '/legal'
       preLoaderRoute: typeof LegalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ledger': {
+      id: '/ledger'
+      path: '/ledger'
+      fullPath: '/ledger'
+      preLoaderRoute: typeof LedgerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/benchmarks': {
@@ -322,6 +342,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtlasRoute: AtlasRoute,
   BenchmarksRoute: BenchmarksRoute,
+  LedgerRoute: LedgerRoute,
   LegalRoute: LegalRouteWithChildren,
   SynthesisRoute: SynthesisRoute,
   WorldRoute: WorldRouteWithChildren,

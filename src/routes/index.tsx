@@ -61,6 +61,7 @@ function Index() {
     <main className="grain relative min-h-screen overflow-x-hidden scroll-smooth bg-background text-foreground">
       <Nav />
       <div id="genesis"><Hero /></div>
+      <SolvedTheories />
       <UniverseFilm />
       <Principle />
       <DossierGrid />

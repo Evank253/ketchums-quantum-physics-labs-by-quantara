@@ -23,6 +23,10 @@ import { Route as LegalCreatorPolicyRouteImport } from './routes/legal.creator-p
 import { Route as LegalCommercialLicenseRouteImport } from './routes/legal.commercial-license'
 import { Route as LegalCollaboratorsRouteImport } from './routes/legal.collaborators'
 import { Route as LegalBlueprintRouteImport } from './routes/legal.blueprint'
+import { Route as ApiQedRouteImport } from './routes/api/qed'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
+import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
 
 const WorldRoute = WorldRouteImport.update({
   id: '/world',
@@ -94,6 +98,26 @@ const LegalBlueprintRoute = LegalBlueprintRouteImport.update({
   path: '/blueprint',
   getParentRoute: () => LegalRoute,
 } as any)
+const ApiQedRoute = ApiQedRouteImport.update({
+  id: '/api/qed',
+  path: '/api/qed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBenchmarkRoute = ApiBenchmarkRouteImport.update({
+  id: '/api/benchmark',
+  path: '/api/benchmark',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhookRoute = ApiPublicWebhookRouteImport.update({
+  id: '/api/public/webhook',
+  path: '/api/public/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +127,9 @@ export interface FileRoutesByFullPath {
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
+  '/api/benchmark': typeof ApiBenchmarkRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/qed': typeof ApiQedRoute
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
@@ -110,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/api/public/webhook': typeof ApiPublicWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -119,6 +147,9 @@ export interface FileRoutesByTo {
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
+  '/api/benchmark': typeof ApiBenchmarkRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/qed': typeof ApiQedRoute
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
@@ -126,6 +157,7 @@ export interface FileRoutesByTo {
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/api/public/webhook': typeof ApiPublicWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -136,6 +168,9 @@ export interface FileRoutesById {
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
+  '/api/benchmark': typeof ApiBenchmarkRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/qed': typeof ApiQedRoute
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
@@ -143,6 +178,7 @@ export interface FileRoutesById {
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/api/public/webhook': typeof ApiPublicWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,6 +190,9 @@ export interface FileRouteTypes {
     | '/legal'
     | '/synthesis'
     | '/world'
+    | '/api/benchmark'
+    | '/api/health'
+    | '/api/qed'
     | '/legal/blueprint'
     | '/legal/collaborators'
     | '/legal/commercial-license'
@@ -161,6 +200,7 @@ export interface FileRouteTypes {
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
+    | '/api/public/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -170,6 +210,9 @@ export interface FileRouteTypes {
     | '/legal'
     | '/synthesis'
     | '/world'
+    | '/api/benchmark'
+    | '/api/health'
+    | '/api/qed'
     | '/legal/blueprint'
     | '/legal/collaborators'
     | '/legal/commercial-license'
@@ -177,6 +220,7 @@ export interface FileRouteTypes {
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
+    | '/api/public/webhook'
   id:
     | '__root__'
     | '/'
@@ -186,6 +230,9 @@ export interface FileRouteTypes {
     | '/legal'
     | '/synthesis'
     | '/world'
+    | '/api/benchmark'
+    | '/api/health'
+    | '/api/qed'
     | '/legal/blueprint'
     | '/legal/collaborators'
     | '/legal/commercial-license'
@@ -193,6 +240,7 @@ export interface FileRouteTypes {
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
+    | '/api/public/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -203,6 +251,10 @@ export interface RootRouteChildren {
   LegalRoute: typeof LegalRouteWithChildren
   SynthesisRoute: typeof SynthesisRoute
   WorldRoute: typeof WorldRouteWithChildren
+  ApiBenchmarkRoute: typeof ApiBenchmarkRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiQedRoute: typeof ApiQedRoute
+  ApiPublicWebhookRoute: typeof ApiPublicWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -305,6 +357,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalBlueprintRouteImport
       parentRoute: typeof LegalRoute
     }
+    '/api/qed': {
+      id: '/api/qed'
+      path: '/api/qed'
+      fullPath: '/api/qed'
+      preLoaderRoute: typeof ApiQedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/benchmark': {
+      id: '/api/benchmark'
+      path: '/api/benchmark'
+      fullPath: '/api/benchmark'
+      preLoaderRoute: typeof ApiBenchmarkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhook': {
+      id: '/api/public/webhook'
+      path: '/api/public/webhook'
+      fullPath: '/api/public/webhook'
+      preLoaderRoute: typeof ApiPublicWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -346,6 +426,10 @@ const rootRouteChildren: RootRouteChildren = {
   LegalRoute: LegalRouteWithChildren,
   SynthesisRoute: SynthesisRoute,
   WorldRoute: WorldRouteWithChildren,
+  ApiBenchmarkRoute: ApiBenchmarkRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiQedRoute: ApiQedRoute,
+  ApiPublicWebhookRoute: ApiPublicWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

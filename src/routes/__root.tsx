@@ -73,18 +73,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Quantara quantum electrodynamics systems" },
+      { title: "Quantara-Core Quantum electrodynamics systems DNA" },
       { name: "description", content: "Quantara is a synthetic reality platform for evolving AI civilizations using human digital artifacts." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Quantara quantum electrodynamics systems" },
+      { property: "og:title", content: "Quantara-Core Quantum electrodynamics systems DNA" },
       { property: "og:description", content: "Quantara is a synthetic reality platform for evolving AI civilizations using human digital artifacts." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Quantara quantum electrodynamics systems" },
+      { name: "twitter:title", content: "Quantara-Core Quantum electrodynamics systems DNA" },
       { name: "twitter:description", content: "Quantara is a synthetic reality platform for evolving AI civilizations using human digital artifacts." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12f4eaa2-321a-47b0-872f-7255c7df7f0c/id-preview-86a5ca77--c3270ea2-02ec-4c05-8ee1-5dbf80b96149.lovable.app-1779765922172.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/12f4eaa2-321a-47b0-872f-7255c7df7f0c/id-preview-86a5ca77--c3270ea2-02ec-4c05-8ee1-5dbf80b96149.lovable.app-1779765922172.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c2f3093d-55c4-45ae-8dd3-e5fed458892c" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c2f3093d-55c4-45ae-8dd3-e5fed458892c" },
     ],
     links: [
       {

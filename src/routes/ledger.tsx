@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { readLedger, subscribeLedger, clearLedger, exportLedgerJSON, type LedgerEntry } from "@/lib/learning-ledger";
 import { runBenchmarks } from "../../benchmarks/qed_benchmarks";
 import { logLedger } from "@/lib/learning-ledger";
+import { StarField, AuroraBlobs } from "@/components/quantara-fx";
 
 export const Route = createFileRoute("/ledger")({
   component: LedgerPage,
@@ -56,8 +57,10 @@ function LedgerPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[oklch(0.06_0.01_280)] px-6 py-20 text-white">
-      <div className="mx-auto max-w-6xl">
+    <main className="relative min-h-screen bg-[oklch(0.06_0.01_280)] px-6 py-20 text-white overflow-hidden">
+      <StarField density={140} />
+      <AuroraBlobs />
+      <div className="relative z-10 mx-auto max-w-6xl">
         <div className="mb-6 flex items-center justify-between">
           <Link to="/" className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome hover:text-white">
             ← Quantara

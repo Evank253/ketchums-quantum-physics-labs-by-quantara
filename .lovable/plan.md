@@ -1,68 +1,50 @@
-# Plan: Self-Healing Swarm + Kernel "Solve" Commands
+## Audit vs your checklist
 
-Scope is intentionally narrow: only what the user asked for. No 4D Atlas, no new routes, no business logic changes elsewhere. The uploaded zips are used as reference (AHM/PCL fields and the kernel snippet) — not bulk-copied into the project.
+### ✅ Already present
+- **Frontend UI**: full React app, `/world` 3D viewer, `/atlas` 4D atlas, `/benchmarks`, `/ledger`, `/synthesis`, responsive Tailwind, nav.
+- **Source & deps**: `package.json` (TanStack Start + R3F + drei + zustand + recharts + zod).
+- **QED engine**: `src/engine/qed_calculator.ts` + unit test in `tests/unit/`.
+- **Benchmark runner**: `benchmarks/qed_benchmarks.ts` + `/benchmarks` UI.
+- **Learning Ledger** (autosave of tokens/unlocks/benchmarks/bot advances): `src/lib/learning-ledger.ts` + `/ledger`.
+- **Docker**: `Dockerfile` (Node 20).
+- **CI**: `.github/workflows/deploy.yml` (build + test).
+- **Docs (partial)**: `docs/api/qed-engine.md`, `docs/architecture/README.md`, `docs/guides/run-benchmarks.md`, full `docs/legal/*`.
 
-## 1. Self-Healing Swarm fields on bots
+### ❌ Missing / thin → what I'll add
 
-`src/lib/world-store.ts`
+**1. Backend / API endpoints** (`src/api/` is empty)
+- `src/routes/api/qed.ts` — `GET /api/qed` returns live `a_e`, residual, convergence.
+- `src/routes/api/benchmark.ts` — `POST /api/benchmark` runs the suite, returns result JSON, logs to ledger.
+- `src/routes/api/ledger.ts` — `GET /api/ledger` exports the ledger as JSON (server-side passthrough contract).
+- `src/routes/api/health.ts` — `GET /api/health` liveness probe.
+- `src/routes/api/public/webhook.ts` — signed webhook intake for external advance reports (HMAC-verified).
 
-- Extend `BotState` with:
-  - `healingActive: boolean`
-  - `phaseCorrection: number` (0.0 – 1.0, default 1.0)
-- Back-fill existing persisted bots on load (`init` / hydration path) so old saved state migrates without crashing: any missing field defaults to `healingActive: false`, `phaseCorrection: 1.0`.
-- Add action `healBot(id: string)` — sets `healingActive: true` and `phaseCorrection: 1.0` on the matching bot. Pure state update; no economy side-effects.
-- During `tick`, drift `phaseCorrection` slightly downward over time for each bot (small decay, clamped at 0.6) so "Heal" is meaningful. Healing resets it. No effect on research accrual — purely cosmetic/HUD signal to keep this UI-only.
+**2. Validation & testing**
+- `tests/integration/api.test.ts` — hits the API routes, asserts shape + status.
+- `tests/integration/ledger.test.ts` — autosave path: credit DAT → ledger entry exists.
+- `tests/benchmarks/qed_perf.test.ts` — perf budget: 6-loop QED < 5 ms, residual < 1e-11.
+- `vitest.config.ts` — wire unit/integration/benchmark suites; add `"test": "vitest run"` to `package.json`.
 
-## 2. HUD: Self-Healing Swarm panel
+**3. Documentation**
+- `docs/INSTALL.md` — clone, `bun install`, `bun dev`.
+- `docs/DEVELOPER.md` — repo map (Core / 3D / 4D / Benchmarks / Ledger), data flow, Separation Law.
+- `docs/DEPLOY.md` — Docker build/run, Cloudflare Workers (Wrangler), env vars, custom domain.
+- `docs/api/README.md` — full HTTP API reference (request/response for each route above).
+- `docs/REPRODUCIBILITY.md` — pinned coefficients, CODATA refs, exact commands to reproduce benchmark numbers.
 
-`src/routes/world.tsx`
+**4. Deployment / environment**
+- `.env.example` — `LOVABLE_API_KEY`, `WEBHOOK_SECRET`, `SESSION_SECRET`.
+- Tighten `.github/workflows/deploy.yml` — add lint + typecheck + vitest, cache bun.
+- `Dockerfile` — multi-stage (builder → slim runtime), healthcheck on `/api/health`.
+- `docs/SCALING.md` — Workers concurrency notes, ledger size cap, future Cloud (Supabase) migration path for persistent storage.
 
-- Add a small collapsible HUD card titled "Self-Healing Swarm (AHM/PCL)" inside the existing world overlay (alongside current panels — do not redesign the layout).
-- For each bot: name, role, phase-correction bar (color shifts amber when < 0.85), and a "Heal" button that calls `healBot(id)`.
-- "Heal All" button at the top of the panel.
-- Read-only — no new persisted data beyond what step 1 adds.
+### Out of scope (flag, don't build)
+- Real database — current ledger is `localStorage`. Migrating to Lovable Cloud (Postgres) is a separate decision; I'll note the path in `SCALING.md` but won't enable Cloud unless you say so.
+- GPU/lattice QCD compute — stays simulated until you wire a real worker.
 
-## 3. Kernel "solve" commands
+### Technical notes
+- All new API routes are TanStack `createFileRoute` server handlers under `src/routes/api/`; webhook lives at `/api/public/webhook` so it bypasses auth and verifies HMAC with `WEBHOOK_SECRET`.
+- Benchmark + QED endpoints reuse the existing `QEDEngine` and `runBenchmarks()` — no logic duplication.
+- Integration tests use Vitest + `fetch` against `invoke-server-function` style in-process handlers (no live server needed).
 
-`src/components/qed-computer.tsx` — extend the existing `kernel()` function (lines 66–199) only. No restructuring.
-
-Insert the six new branches near the top of `kernel()`, after the empty/help guards and before the existing numeric routes, so they take precedence over the expression evaluator:
-
-- `solve vacuum` → `KVE_STABILIZER // VACUUM_CATASTROPHE_RESOLVED` (Eq 43)
-- `solve singularity` / `black hole` → `UNITARY_PERSISTENCE // HAWKING_PARADOX_RESOLVED` (Eq 44)
-- `solve dark matter` → `MULTIVERSAL_GRAVITY // DARK_MATTER_RESOLVED` (Eq 45)
-- `solve gravity` / `hierarchy` → `SCALE_STABILIZER // HIERARCHY_PROBLEM_RESOLVED` (Eq 47)
-- `solve proton` → `MUONIC_RECALIBRATION // QED_UNIVERSALITY_RESTORED` (Eq 46)
-- `borel` → `BOREL_HEAL_COMPLETE // DYSON_LIMIT_BYPASSED` (Eq 42)
-
-Each branch returns `kind: "calc"` with the multi-line `detail` array from the user's snippet (theoretical value, applied filter, result, status/haiku line).
-
-Update the `help` block's command list to include the new `solve …` and `borel` commands so users can discover them.
-
-Each successful `solve …` invocation also writes an `UnlockEvent` via `useWorld.getState().addExternalUnlock?` — **No.** To avoid altering ledger semantics (external_research is for real ingestion), we will instead append a `simulation`-source event using a small new helper `logKernelBreakthrough(id, label)` added to `world-store.ts` that pushes an `UnlockEvent { source: "simulation", discoveredBy: "QED Kernel" }`. This keeps the kernel observable from the existing ledger UI without polluting the external-research path.
-
-## 4. Files
-
-- **edit** `src/lib/world-store.ts` — bot fields, migration, `healBot`, `logKernelBreakthrough`, tick decay
-- **edit** `src/routes/world.tsx` — add Self-Healing Swarm HUD panel
-- **edit** `src/components/qed-computer.tsx` — add six kernel branches + import `useWorld` to log breakthroughs + extend help text
-
-## Out of scope (explicitly not doing)
-
-- 4D Atlas / `world4d` route / `atlas.ts` / `footprints.json` bridge
-- Replacing the existing `QedSolver` with the uploaded one
-- New legal/docs changes
-- DAT economy changes
-
-```text
-+----------------+        heal()         +-----------------+
-|  Swarm HUD     | --------------------> |  world-store    |
-|  (world.tsx)   | <-- phase bars ------ |  bots[]         |
-+----------------+                       +--------+--------+
-                                                  ^
-                                  logKernelBreakthrough()
-                                                  |
-+----------------+   "solve vacuum"      +--------+--------+
-|  QedComputer   | --------------------> |  kernel()       |
-+----------------+   KVE_STABILIZER ...  +-----------------+
-```
+Approve and I'll build it.

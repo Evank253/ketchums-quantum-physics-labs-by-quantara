@@ -294,34 +294,165 @@ function kernel(raw: string): KernelOut {
 }
 
 // minimalist QED-aware chat ------------------------------------------------
+// Each KB entry: keywords → headline + optional detail. Freeform analyzer
+// scans for QED concepts; multi-concept inputs are synthesized into one reply.
+const KB: { keys: string[]; out: string; detail?: string[] }[] = [
+  {
+    keys: ["what is qed", "explain qed", "quantum electrodynamics"],
+    out: "QED = relativistic QFT of electrons + photons. Gauge group U(1). Coupling α ≈ 1/137. Best-tested theory in physics: a_e agrees with experiment to >10 decimal places.",
+  },
+  {
+    keys: ["fine-structure", "fine structure", "coupling constant"],
+    out: `α = ${ALPHA.toExponential(10)} (dimensionless). 1/α = ${ALPHA_INV.toFixed(9)}. Sets coupling strength of electromagnetism.`,
+  },
+  {
+    keys: ["anomalous", "g-2", "g2", "magnetic moment", "schwinger"],
+    out: `a_e = (g−2)/2 = ${A_E.toExponential(10)}. Schwinger first term: α/(2π) ≈ ${(ALPHA / (2 * PI)).toExponential(6)}. Five-loop QED + hadronic + EW close the gap to <1 ppt.`,
+  },
+  {
+    keys: ["lamb shift", "bethe log", "2s_1/2", "2p_1/2"],
+    out: "Lamb shift: 2S_1/2 sits ~1058 MHz above 2P_1/2 in hydrogen. Leading piece = electron self-energy (Bethe log). Vacuum polarization (Uehling) ≈ −27 MHz; anomalous moment ≈ +68 MHz. First direct proof QED radiative corrections are real.",
+  },
+  {
+    keys: ["renormaliz"],
+    out: "QED is perturbatively renormalizable. UV divergences in self-energy, vertex, and vacuum-polarization are absorbed into m, e, and field-strength counterterms (Z₁, Z₂, Z₃, δm). Ward identity Z₁ = Z₂ keeps the photon massless.",
+  },
+  {
+    keys: ["vacuum polariz", "uehling", "running coupling", "running of"],
+    out: "Vacuum polarization (Uehling): photon propagator is dressed by virtual e+e− loops → α runs with energy. α(0) ≈ 1/137.036, α(M_Z) ≈ 1/127.95. β(α) > 0 ⇒ Landau pole at exponentially high scale.",
+  },
+  {
+    keys: ["landau pole", "triviality", "trivial"],
+    out: "Triviality of 4D QED: renormalized α_R → 0 as cutoff Λ → ∞ with bare coupling fixed. Numerical lattice evidence (Göckeler, Horsley, Rakow, Schierholz, Stüben) supports α_R → 0. Implication: continuum QED in isolation is non-interacting; it survives empirically only as an effective theory embedded in the Standard Model.",
+    detail: [
+      "Landau pole Λ_L ≈ m_e exp(3π/α) ≈ 10^286 GeV — far above M_Pl, irrelevant in practice.",
+      "Triviality concerns the *isolated* U(1) sector, not the unified electroweak theory.",
+      "Effective-theory reading: QED is valid up to a finite UV cutoff where new physics enters.",
+    ],
+  },
+  {
+    keys: ["lattice qed", "wilson fermion", "staggered", "continuum limit"],
+    out: "Lattice QED: discretize on a⁴ Euclidean lattice, U_μ(x) ∈ U(1) link variables, Wilson/staggered fermions. Continuum limit = tune bare g toward a critical surface so ξ/a → ∞. Schwinger functions exist numerically; uniform control of every OS axiom through a → 0 with light dynamical fermions is still open.",
+    detail: [
+      "Compact U(1) confines at strong coupling (Guth, Frölich-Spencer); the weak-coupling Coulomb phase is the candidate for continuum QED.",
+      "Phase structure: bulk transition + roughening — only the Coulomb phase yields a non-confining continuum.",
+      "QED at μ=0 is sign-problem free; chemical-potential QED is not.",
+    ],
+  },
+  {
+    keys: ["osterwalder", "schrader", "os recon", "reflection posit", "os axiom"],
+    out: "Osterwalder–Schrader reconstruction: Euclidean Schwinger functions satisfying (OS1) regularity, (OS2) Euclidean invariance, (OS3) reflection positivity, (OS4) symmetry, (OS5) clustering ⇒ a Wightman QFT in Minkowski signature with a positive-energy Hilbert space.",
+    detail: [
+      "Reflection positivity is the hardest axiom to preserve uniformly through the continuum limit.",
+      "Wilson-action lattice gauge theory satisfies OS3 exactly (Osterwalder–Seiler); the question is whether it survives a → 0 in S′.",
+      "Dynamical fermions: need det(D + m) ≥ 0 — γ₅-Hermiticity gives positivity for pairs of degenerate flavors.",
+    ],
+  },
+  {
+    keys: ["fermion determinant", "pfaffian", "det(d", "sign problem"],
+    out: "Fermion determinant det(γ·D + m): integrating out ψ̄, ψ leaves a functional of the gauge field. For QED at μ=0 with Wilson/staggered fermions it is real; OS3 positivity requires extra structure (γ₅-Hermiticity ⇒ det ≥ 0 for paired flavors).",
+  },
+  {
+    keys: ["constructive", "rigorous construction", "haag-kastler", "wightman axiom"],
+    out: "Constructive QFT: build interacting QFTs satisfying Wightman/Haag-Kastler axioms from first principles. Successes: P(φ)₂ (Glimm-Jaffe), φ₄³ (Glimm-Jaffe-Spencer), Yukawa₂, Sine-Gordon₂. Open: φ₄⁴, QED₄, Yang-Mills₄ (Clay Millennium Problem for mass-gap YM).",
+  },
+  {
+    keys: ["chiral anomaly", "axial anomaly", "adler-bell-jackiw", "abj"],
+    out: "ABJ anomaly: ∂_μ j₅^μ = (α/π) F·F̃ at one loop. Exact (Adler-Bardeen): no higher-loop corrections. Resolves π⁰ → γγ rate; anchors anomaly cancellation in the Standard Model.",
+  },
+  {
+    keys: ["wightman", "vacuum vector", "spectrum condition"],
+    out: "Wightman axioms: (W1) Hilbert space + Poincaré rep, (W2) spectrum condition p² ≥ 0, p⁰ ≥ 0, (W3) unique vacuum, (W4) operator-valued distributions on dense domain, (W5) local commutativity (microcausality), (W6) cyclicity of vacuum.",
+  },
+  {
+    keys: ["qed3", "qed₃", "three-dimens", "radial quantiz"],
+    out: "QED₃ (2+1 D): super-renormalizable, IR-strong. Compact U(1) confines (Polyakov); non-compact with N_f flavors has a conformal window for N_f > N_f^c (≈1–4). Radial quantization + numerical bootstrap give rigorous bounds on operator dimensions.",
+  },
+  {
+    keys: ["tensor network", "mera", "peps", "hamiltonian lattice"],
+    out: "Tensor-network methods for lattice gauge theory: MPS/PEPS exactly enforce Gauss law on truncated link Hilbert spaces. For Abelian models (Schwinger, QED₂) they deliver sign-problem-free real-time and finite-density results; QED₄ tensor methods exist but scale steeply.",
+  },
+  {
+    keys: ["spde", "stochastic quant", "parisi-wu", "regularity structure"],
+    out: "Stochastic quantization / SPDE (Hairer regularity structures, paracontrolled calculus): rigorous construction of φ₄³, Φ⁴₃, dynamical Sine-Gordon. The gauge-invariant SPDE framework for Abelian/non-Abelian gauge theory is still being assembled (Chandra-Chevyrev-Hairer-Shen for YM₂, YM₃).",
+  },
+  {
+    keys: ["effective theory", "uv complete", "wilsonian"],
+    out: "Wilsonian view: QED is an EFT below some cutoff Λ where UV physics (electroweak unification ~100 GeV, GUT ~10^16 GeV) takes over. The strict-continuum isolated QED endpoint is trivial — this does NOT contradict QED's empirical success.",
+  },
+  {
+    keys: ["mass gap", "confinement", "yang-mills"],
+    out: "Mass gap in pure Yang-Mills (Clay): prove quantum YM₄ has Δ > 0. Open. Lattice gives Δ ≈ 1.5 GeV for SU(3). QED has NO mass gap (massless photon) — different problem class.",
+  },
+  {
+    keys: ["proton radius", "muonic hydrogen"],
+    out: "Proton radius puzzle: electronic-H gave r_p ≈ 0.879 fm, muonic-H gave 0.8409 fm. Re-analyses (CODATA 2018) converged near 0.8414 fm. QED itself was never at fault; the discrepancy was spectroscopy / proton-structure systematics.",
+  },
+  {
+    keys: ["compton"],
+    out: `Compton wavelength λ_c = ħc/m. Electron: λ_c = ${(HBAR_C_MEV_FM / ME_MEV).toFixed(4)} fm. Reduced λ̄_c = λ_c/(2π). Sets the scale below which relativistic / pair-production effects dominate.`,
+  },
+  {
+    keys: ["bohr radius"],
+    out: `Bohr radius a₀ = ħc/(α m_e c²) = ${(HBAR_C_MEV_FM / (ALPHA * ME_MEV)).toFixed(2)} fm ≈ 0.529 Å. Atomic size from α and m_e alone.`,
+  },
+  {
+    keys: ["rydberg"],
+    out: `Rydberg Ry = ½ α² m_e c² = ${(0.5 * ALPHA * ALPHA * ME_MEV * 1e6).toFixed(4)} eV ≈ 13.606 eV. Hydrogen ground-state binding energy.`,
+  },
+  {
+    keys: ["dyson", "asymptotic series", "borel"],
+    out: "Dyson argument: QED perturbation series is asymptotic, not convergent — α → −α makes the vacuum unstable to e⁺e⁻ runaway. Borel resummation handles factorial growth for many sectors; renormalon ambiguities remain.",
+  },
+  {
+    keys: ["ward", "takahashi", "gauge invarian"],
+    out: "Ward-Takahashi identity: k_μ Γ^μ(p, p+k) = S⁻¹(p+k) − S⁻¹(p). Forces Z₁ = Z₂, keeps the photon massless, enforces charge universality across species.",
+  },
+  {
+    keys: ["state of the art", "open problem", "still open", "remains open", "may 2026", "2026"],
+    out: "State of the art (May 2026): no full rigorous OS reconstruction of interacting 4D QED with dynamical light fermions exists. Adjacent progress: regularity-structure SPDE constructions, YM₂/YM₃ rigorous bounds, tensor-network Schwinger models, formalized constructive QFT in Lean/Coq. Triviality remains the consensus end-state for isolated continuum QED.",
+  },
+];
+
 function chat(msg: string): KernelOut {
-  const m = msg.toLowerCase();
+  const m = " " + msg.toLowerCase() + " ";
   const has = (kw: string[]) => kw.some((k) => m.includes(k));
 
-  if (has(["what is qed", "explain qed", "quantum electrodynamics"]))
-    return {
-      out: "QED = relativistic QFT of electrons + photons. Gauge group U(1). Coupling α ≈ 1/137. Best-tested theory in physics: a_e agrees with experiment to >10 decimal places.",
-      kind: "ok",
-    };
-  if (has(["alpha", "fine-structure", "fine structure"]))
-    return { out: `α = ${ALPHA.toExponential(10)} (dimensionless). 1/α = ${ALPHA_INV.toFixed(9)}. Sets coupling strength of electromagnetism.`, kind: "ok" };
-  if (has(["anomalous", "g-2", "g2", "magnetic moment"]))
-    return { out: `a_e = (g−2)/2 = ${A_E.toExponential(10)}. Schwinger first term: α/(2π) ≈ ${(ALPHA / (2 * PI)).toExponential(6)}.`, kind: "ok" };
-  if (has(["lamb"]))
-    return { out: "Lamb shift: 2S_1/2 sits ~1058 MHz above 2P_1/2 in hydrogen — proof that QED radiative corrections are real.", kind: "ok" };
-  if (has(["renormaliz"]))
-    return { out: "QED is perturbatively renormalizable. UV divergences in self-energy, vertex, and vacuum-polarization are absorbed into m, e, and field-strength counterterms.", kind: "ok" };
-  if (has(["vacuum polariz"]))
-    return { out: "Vacuum polarization (Uehling): photon propagator is dressed by virtual e+e− loops → effective coupling runs with energy. α(M_Z) ≈ 1/128.", kind: "ok" };
-  if (has(["help", "what can you", "commands"]))
-    return kernel("help");
-  if (has(["hi", "hello", "hey", "who are you"]))
+  // greetings / meta
+  if (/^(hi|hello|hey|sup|yo)\b/i.test(msg.trim()) || has(["who are you", "what can you do"])) {
     return { out: "QED_COMPUTER online. Paste numbers, expressions, or ask QED questions. Type 'help' for the command surface.", kind: "ok" };
-  if (has(["solve", "iterate", "converge"]))
-    return { out: "The Reality_B swarm above is already iterating α and a_e against measurement. Paste your blueprint constants here and I'll re-derive locally.", kind: "ok" };
+  }
+  if (has(["help", "commands"])) return kernel("help");
+  if (has(["iterate", "converge"]) || /\bsolve\b/.test(m)) {
+    return { out: "The Reality_B swarm above is already iterating α and a_e against measurement. Dedicated solvers: 'solve vacuum', 'solve singularity', 'solve dark matter', 'solve gravity', 'solve proton', 'borel'.", kind: "ok" };
+  }
+
+  // KB matching — single hit, or multi-concept synthesis
+  const hits = KB.filter((e) => e.keys.some((k) => m.includes(k)));
+  if (hits.length === 1) {
+    return { out: hits[0].out, kind: "ok", detail: hits[0].detail };
+  }
+  if (hits.length > 1) {
+    const top = hits.slice(0, 3);
+    return {
+      out: `// matched ${hits.length} QED concept${hits.length > 1 ? "s" : ""} — synthesizing:`,
+      kind: "ok",
+      detail: top.flatMap((h) => [`▸ ${h.out}`, ...(h.detail ?? []).map((d) => `   · ${d}`)]),
+    };
+  }
+
+  // freeform analyzer — loose topical hints when no keyword fired
+  const hints: string[] = [];
+  if (/\b(qed|electrodynamics|photon|electron|qft)\b/i.test(msg)) hints.push("QED (electron-photon U(1) gauge theory) — try 'alpha', 'ae', 'lamb', or 'talk vacuum polarization'.");
+  if (/\b(lattice|continuum|cutoff|regulariz)\b/i.test(msg)) hints.push("Lattice / continuum — try 'talk lattice qed' or 'talk triviality'.");
+  if (/\b(prove|proof|rigorous|axiom|construct|complete)\b/i.test(msg)) hints.push("Constructive QFT — try 'talk osterwalder schrader', 'talk constructive', 'talk wightman'.");
+  if (/\b(open|status|update|state of)\b/i.test(msg)) hints.push("For 2026 status read-out: 'talk state of the art'.");
+  if (hints.length) {
+    return { out: `// no exact rule matched — closest QED threads:`, kind: "warn", detail: hints };
+  }
 
   return {
-    out: `// no rule matched. Try: help · alpha · ae · lamb · compton 105.66 · 1+alpha/(2*pi) · or 'talk explain renormalization'`,
+    out: `// no rule matched. Try: help · alpha · ae · lamb · compton 105.66 · 'talk triviality' · 'talk osterwalder schrader' · 'talk lattice qed' · 'talk state of the art'`,
     kind: "warn",
   };
 }

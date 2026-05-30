@@ -63,6 +63,7 @@ function Index() {
       <Nav />
       <div id="genesis"><Hero /></div>
       <SolvedTheories />
+      <FoundationalEquations />
       <UniverseFilm />
       <Principle />
       <DossierGrid />

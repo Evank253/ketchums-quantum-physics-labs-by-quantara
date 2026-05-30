@@ -23,7 +23,14 @@ export function writeDat(n: number) {
 
 export function creditDat(amount: number) {
   if (!amount) return;
-  writeDat(readDat() + amount);
+  const next = readDat() + amount;
+  writeDat(next);
+  // Autosave to learning ledger (lazy import avoids cycle)
+  if (typeof window !== "undefined") {
+    import("./learning-ledger").then(({ logLedger }) => {
+      logLedger("tokens", `+${amount} $DAT`, { balance: next });
+    }).catch(() => {});
+  }
 }
 
 export function subscribeDat(cb: (v: number) => void): () => void {

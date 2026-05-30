@@ -363,6 +363,18 @@ Co-Evolutionary Dialogue`}
               Open the ledger →
             </Link>
             <Link
+              to="/benchmarks"
+              className="rounded-md border border-emerald-400/40 bg-emerald-400/5 px-5 py-3 text-emerald-300 hover:border-emerald-300"
+            >
+              Benchmark suite →
+            </Link>
+            <Link
+              to="/atlas"
+              className="rounded-md border border-white/15 px-5 py-3 hover:border-accent hover:text-accent"
+            >
+              4D Atlas →
+            </Link>
+            <Link
               to="/legal"
               className="rounded-md border border-white/15 px-5 py-3 hover:border-accent hover:text-accent"
             >

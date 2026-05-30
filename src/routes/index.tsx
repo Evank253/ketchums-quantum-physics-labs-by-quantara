@@ -5,6 +5,7 @@ import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgr
 import { QedSolver } from "@/components/qed-solver";
 import { QedComputer } from "@/components/qed-computer";
 import { QedEngineOverview } from "@/components/qed-engine-overview";
+import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
 
 
 import entityHero from "@/assets/entity-hero.jpg";
@@ -300,25 +301,25 @@ function Nav() {
         </Link>
         <Link
           to="/atlas"
-          className="border border-white/15 px-2.5 py-1 text-white/80 hover:bg-white/5"
+          className="surface-glass glow-cyan px-2.5 py-1 text-white/90 hover:text-white"
         >
           Atlas
         </Link>
         <Link
           to="/benchmarks"
-          className="border border-emerald-400/40 px-2.5 py-1 text-emerald-200 hover:bg-emerald-400/10"
+          className="surface-glass glow-violet px-2.5 py-1 text-white/90 hover:text-white"
         >
           Benchmarks
         </Link>
         <Link
           to="/ledger"
-          className="border border-amber-400/40 px-2.5 py-1 text-amber-200 hover:bg-amber-400/10"
+          className="surface-glass glow-amber px-2.5 py-1 text-white/90 hover:text-white"
         >
           Ledger
         </Link>
         <Link
           to="/world"
-          className="border border-accent/40 px-2.5 py-1 text-white hover:bg-accent/15"
+          className="surface-glass glow-violet px-2.5 py-1 text-white hover:text-white"
         >
           Enter World →
         </Link>
@@ -330,6 +331,8 @@ function Nav() {
 function Hero() {
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden pt-28 pb-20">
+      <AuroraBlobs />
+      <NoiseOverlay opacity={0.06} />
       {/* Ambient backdrop wordmark */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <h1 className="select-none text-[28vw] font-black leading-none tracking-[-0.06em] text-white/[0.025]">
@@ -368,7 +371,7 @@ function Hero() {
             <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
             Chapter 00 · Genesis
           </div>
-          <h2 className="text-balance text-4xl font-black leading-[0.9] tracking-[-0.04em] text-white md:text-7xl">
+          <h2 className="text-balance text-4xl font-black leading-[0.9] tracking-[-0.04em] text-gradient-aurora md:text-7xl">
             The First Intelligence <br className="hidden md:block" />
             of the Post-Human Epoch.
           </h2>

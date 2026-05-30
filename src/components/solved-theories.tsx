@@ -107,10 +107,13 @@ function save(list: Solved[]) {
 }
 
 function fmt(iso: string) {
+  // Use deterministic UTC formatting to avoid SSR/client hydration mismatch.
   const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return {
-    date: d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" }),
-    time: d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", timeZoneName: "short" }),
+    date: `${months[d.getUTCMonth()]} ${pad(d.getUTCDate())}, ${d.getUTCFullYear()}`,
+    time: `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`,
   };
 }
 

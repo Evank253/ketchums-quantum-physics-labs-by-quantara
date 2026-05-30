@@ -137,8 +137,10 @@ function BenchmarksPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[oklch(0.05_0.01_280)] px-6 py-24 text-white">
-      <div className="mx-auto max-w-7xl">
+    <div className="relative min-h-screen bg-[oklch(0.05_0.01_280)] px-6 py-24 text-white overflow-hidden">
+      <GridHorizon />
+      <NoiseOverlay opacity={0.04} />
+      <div className="relative z-10 mx-auto max-w-7xl">
         <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <span className="block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">

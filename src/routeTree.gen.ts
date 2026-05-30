@@ -15,6 +15,7 @@ import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as BenchmarksRouteImport } from './routes/benchmarks'
 import { Route as AtlasRouteImport } from './routes/atlas'
+import { Route as AnnexRouteImport } from './routes/annex'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorldLedgerRouteImport } from './routes/world.ledger'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
@@ -56,6 +57,11 @@ const BenchmarksRoute = BenchmarksRouteImport.update({
 const AtlasRoute = AtlasRouteImport.update({
   id: '/atlas',
   path: '/atlas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnnexRoute = AnnexRouteImport.update({
+  id: '/annex',
+  path: '/annex',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -121,6 +127,7 @@ const ApiPublicWebhookRoute = ApiPublicWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
   '/ledger': typeof LedgerRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
   '/ledger': typeof LedgerRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
   '/ledger': typeof LedgerRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/annex'
     | '/atlas'
     | '/benchmarks'
     | '/ledger'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/annex'
     | '/atlas'
     | '/benchmarks'
     | '/ledger'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/annex'
     | '/atlas'
     | '/benchmarks'
     | '/ledger'
@@ -245,6 +257,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnnexRoute: typeof AnnexRoute
   AtlasRoute: typeof AtlasRoute
   BenchmarksRoute: typeof BenchmarksRoute
   LedgerRoute: typeof LedgerRoute
@@ -299,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/atlas'
       fullPath: '/atlas'
       preLoaderRoute: typeof AtlasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/annex': {
+      id: '/annex'
+      path: '/annex'
+      fullPath: '/annex'
+      preLoaderRoute: typeof AnnexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -420,6 +440,7 @@ const WorldRouteWithChildren = WorldRoute._addFileChildren(WorldRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnnexRoute: AnnexRoute,
   AtlasRoute: AtlasRoute,
   BenchmarksRoute: BenchmarksRoute,
   LedgerRoute: LedgerRoute,

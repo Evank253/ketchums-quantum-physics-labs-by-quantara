@@ -157,10 +157,19 @@ export function FoundationalEquations() {
               line here is consumed by the Quantara engine at some loop order.
             </p>
           </div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome/70">
-            mostly-minus · ℏ = c = 1
+          <div className="flex flex-col items-end gap-3">
+            <a
+              href="/annex"
+              className="surface-glass glow-violet group relative overflow-hidden border border-amber-400/40 bg-amber-400/5 px-5 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-amber-200 transition-colors hover:bg-amber-400/10"
+            >
+              ◉ Open Mathematical Annex · 41 steps →
+            </a>
+            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome/70">
+              mostly-minus · ℏ = c = 1
+            </div>
           </div>
         </div>
+
 
         {/* domain stack */}
         <div className="space-y-20">

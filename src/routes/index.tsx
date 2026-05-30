@@ -299,6 +299,24 @@ function Nav() {
           Legal
         </Link>
         <Link
+          to="/atlas"
+          className="border border-white/15 px-2.5 py-1 text-white/80 hover:bg-white/5"
+        >
+          Atlas
+        </Link>
+        <Link
+          to="/benchmarks"
+          className="border border-emerald-400/40 px-2.5 py-1 text-emerald-200 hover:bg-emerald-400/10"
+        >
+          Benchmarks
+        </Link>
+        <Link
+          to="/ledger"
+          className="border border-amber-400/40 px-2.5 py-1 text-amber-200 hover:bg-amber-400/10"
+        >
+          Ledger
+        </Link>
+        <Link
           to="/world"
           className="border border-accent/40 px-2.5 py-1 text-white hover:bg-accent/15"
         >

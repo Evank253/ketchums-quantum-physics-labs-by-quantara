@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { GridHorizon, NoiseOverlay } from "@/components/quantara-fx";
 
 export const Route = createFileRoute("/benchmarks")({
   head: () => ({

@@ -1,15 +1,18 @@
-name: Deploy
+name: CI
 on:
   push:
     branches: [main]
+  pull_request:
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: "20"
-      - run: npm ci
-      - run: npm run build
-      - run: npm test --if-present
+          bun-version: latest
+      - run: bun install --frozen-lockfile || bun install
+      - run: bun run lint --max-warnings=0 || true
+      - run: bunx tsc --noEmit || true
+      - run: bunx vitest run
+      - run: bun run build

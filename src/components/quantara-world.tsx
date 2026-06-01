@@ -267,15 +267,42 @@ export function LivingPlanet() {
   const [epoch, setEpoch] = useState(1);
   const [population, setPopulation] = useState(2_140_000);
   const [cities, setCities] = useState(7);
+  const [bootLine, setBootLine] = useState(0);
+  const [bootChars, setBootChars] = useState(0);
+  const [tickerIdx, setTickerIdx] = useState(0);
 
   useEffect(() => {
     const tick = setInterval(() => {
       setEpoch((e) => e + 1);
       setPopulation((p) => p + Math.floor(p * 0.012 + Math.random() * 5000));
       setCities((c) => c + (Math.random() < 0.35 ? 1 : 0));
+      setTickerIdx((i) => (i + 1) % TICKER_LINES.length);
     }, 2400);
     return () => clearInterval(tick);
   }, []);
+
+  // boot-sequence typewriter
+  useEffect(() => {
+    const target = BOOT_SEQUENCE[bootLine] ?? "";
+    if (bootChars < target.length) {
+      const t = setTimeout(() => setBootChars((c) => c + 1), 28);
+      return () => clearTimeout(t);
+    }
+    const next = setTimeout(() => {
+      if (bootLine < BOOT_SEQUENCE.length - 1) {
+        setBootLine((l) => l + 1);
+        setBootChars(0);
+      } else {
+        // hold the SUCCESS line for a beat, then loop
+        const restart = setTimeout(() => {
+          setBootLine(0);
+          setBootChars(0);
+        }, 8000);
+        return () => clearTimeout(restart);
+      }
+    }, 350);
+    return () => clearTimeout(next);
+  }, [bootLine, bootChars]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

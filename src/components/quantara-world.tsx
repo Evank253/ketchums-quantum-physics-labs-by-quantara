@@ -192,13 +192,13 @@ const LAUNCH_STEPS = [
   `04 · open http://<your-ip>:3000 on phone · tap SIPHON`,
 ];
 
-function tintLine(line: string): JSX.Element {
+function tintLine(line: string): React.ReactNode {
   // ultra-light syntax tint: comments muted, strings emerald, keywords cyan
   const trimmed = line.trimStart();
   if (trimmed.startsWith("#") || trimmed.startsWith("//")) {
     return <span className="text-muted-foreground">{line}</span>;
   }
-  const parts: JSX.Element[] = [];
+  const parts: React.ReactNode[] = [];
   const re = /("[^"]*"|'[^']*'|`[^`]*`|\b(?:def|class|import|from|return|async|await|if|else|for|while|try|except|with|const|let|var|function|new|this|true|false|null|None|True|False)\b)/g;
   let last = 0;
   let m: RegExpExecArray | null;

@@ -422,8 +422,10 @@ export function LivingPlanet() {
             </h3>
             <p className="mt-4 max-w-md font-mono text-xs leading-relaxed text-muted-foreground">
               A Google-Earth-class view of the civilization we seeded. New city
-              lights ignite each epoch as the species multiplies, terraforms,
-              and constructs. Rotation is real — the planet does not sleep.
+              lights ignite each epoch. Reality_B is also broadcasting its own
+              deployment blueprint back to us — the raw three-file{" "}
+              <span className="text-accent">Ancestral Footprint Engine</span>,
+              streaming live from orbit.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-px border border-white/5 bg-card/40 font-mono text-[10px]">
@@ -433,14 +435,56 @@ export function LivingPlanet() {
           </div>
         </div>
 
-        <div className="glass-panel relative overflow-hidden rounded-sm">
-          <canvas ref={canvasRef} className="block w-full" style={{ height: 480 }} />
-          <div className="scan-effect pointer-events-none absolute inset-0" />
-          <div className="absolute top-3 left-3 font-mono text-[10px] text-chrome">
-            ORBITAL_FEED · 24.0 fps · DRIFT_LOCK
+        <div className="grid gap-6 lg:grid-cols-12">
+          <div className="glass-panel relative overflow-hidden rounded-sm lg:col-span-7">
+            <canvas ref={canvasRef} className="block w-full" style={{ height: 480 }} />
+            <div className="scan-effect pointer-events-none absolute inset-0" />
+            <div className="absolute top-3 left-3 font-mono text-[10px] text-chrome">
+              ORBITAL_FEED · 24.0 fps · DRIFT_LOCK
+            </div>
+            <div className="absolute bottom-10 right-3 font-mono text-[10px] text-emerald-400">
+              ● LIVE · ECOSYSTEM_GROWTH +{(0.012 * 100).toFixed(1)}% / epoch
+            </div>
+            {/* broadcast ticker */}
+            <div className="absolute inset-x-0 bottom-0 border-t border-cyan-400/20 bg-black/70 px-3 py-1.5 font-mono text-[10px] text-cyan-300 backdrop-blur-sm">
+              <span className="text-chrome/60">▌ ORBITAL_TX ›</span>{" "}
+              <span className="text-cyan-200">{TICKER_LINES[tickerIdx]}</span>
+            </div>
           </div>
-          <div className="absolute bottom-3 right-3 font-mono text-[10px] text-emerald-400">
-            ● LIVE · ECOSYSTEM_GROWTH +{(0.012 * 100).toFixed(1)}% / epoch
+
+          {/* Quantara-Core transmission console */}
+          <div className="lg:col-span-5 flex flex-col gap-3">
+            <div className="border border-cyan-400/30 bg-card/50 p-4 shadow-[0_0_24px_-12px_oklch(0.78_0.14_200)]">
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-300">
+                <span>▌ QUANTARA-CORE · ANCESTRAL_FOOTPRINT_BROADCAST</span>
+                <span className="text-chrome/60">EPOCH {epoch}</span>
+              </div>
+              <pre className="mt-3 min-h-[110px] whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-emerald-300">
+                {BOOT_SEQUENCE.slice(0, bootLine).map((l, i) => (
+                  <div key={i}>{l}</div>
+                ))}
+                <div>
+                  {BOOT_SEQUENCE[bootLine]?.slice(0, bootChars)}
+                  <span className="animate-pulse text-cyan-300">▋</span>
+                </div>
+              </pre>
+            </div>
+
+            <FileCard name="server.py" source={SERVER_PY} defaultOpen />
+            <FileCard name="index.html" source={INDEX_HTML} />
+            <FileCard name="quantara_client.js" source={CLIENT_JS} />
+
+            <div className="border border-white/5 bg-card/40 p-4">
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-accent">
+                ▌ Launch Sequence
+              </div>
+              <pre className="mt-2 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-white/80">
+                {LAUNCH_STEPS.join("\n")}
+              </pre>
+              <div className="mt-3 border-l-2 border-cyan-400/40 bg-cyan-400/5 px-3 py-2 font-mono text-[10px] text-cyan-200">
+                ANCESTRAL_KEY · quantara_core_root_77 · sovereign gatekeeper armed
+              </div>
+            </div>
           </div>
         </div>
       </div>

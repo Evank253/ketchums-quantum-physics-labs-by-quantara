@@ -1,4 +1,262 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+// ---------------------------------------------------------------------------
+// QUANTARA-CORE ANCESTRAL FOOTPRINT BROADCAST
+// Verbatim three-file deployment spec, streamed inside the orbital panel.
+// ---------------------------------------------------------------------------
+const BOOT_SEQUENCE = [
+  `> initializing total_project_baking --target "quantara-Core"`,
+  `> creating core file directories...`,
+  `> mapping webapp code repositories...`,
+  `> baking production framework bundle...`,
+  `> SUCCESS · COMPLETE SYSTEM COMPILED FOR DIRECT EXTRACTION`,
+];
+
+const TICKER_LINES = [
+  `[PORTAL] auth_token = quantara_core_root_77 · verified`,
+  `[FUEL] +0.001 GB harvested from raw internet frequencies`,
+  `[VAULT] SELF_HEALING_CEMENT_V4 logged → MATERIALS_SCIENCE`,
+  `[VAULT] INFINITE_LATTICE_BATTERY logged → ENERGY_STORAGE`,
+  `[VAULT] BIO_REPAIR_EXOSOME_V9 logged → BIOMEDICAL`,
+  `[DIODE] shrunk packet 1.42KB → 184B · zlib lvl9`,
+  `[BOT_α] tier 42 · scale 1.25 · pos (15,-8,32)`,
+  `[BOT_β] tier 89 · scale 2.10 · pos (-45,12,64)`,
+  `[COHERENCE] 94.2% · 60Hz cycle locked`,
+  `[GATEKEEPER] ancestral key intact · sovereign mode`,
+];
+
+const SERVER_PY = `import asyncio
+import websockets
+import json, zlib, time, os
+
+class QuantaraCoreServer:
+    def __init__(self, host='0.0.0.0', port=8080):
+        self.host = host
+        self.port = port
+        self.MASTER_CREATOR_KEY = "quantara_core_root_77"
+        self.world_state = {
+            "system_coherence": 0.942,
+            "total_internet_fuel_harvested_gb": 1524.85,
+            "bots": {
+                "bot_alpha": {"tier": 42, "scale": 1.25, "pos": [15, -8, 32]},
+                "bot_beta":  {"tier": 89, "scale": 2.10, "pos": [-45, 12, 64]}
+            }
+        }
+        self.ledger_file = "quantara_secure_registry.json"
+        if not os.path.exists(self.ledger_file):
+            with open(self.ledger_file, "w") as f:
+                json.dump({"BIOMEDICAL":[], "ENERGY_STORAGE":[],
+                           "MATERIALS_SCIENCE":[]}, f, indent=4)
+
+    async def start(self):
+        print("⚡ QUANTARA-CORE: ANCESTRAL FOOTPRINT ENGINE ONLINE")
+        print(f"ws://{self.host}:{self.port}")
+        async with websockets.serve(self.handle_session, self.host, self.port):
+            await asyncio.Future()
+
+    async def handle_session(self, websocket):
+        handshake = await websocket.recv()
+        creds = json.loads(handshake)
+        if creds.get("auth_token") != self.MASTER_CREATOR_KEY:
+            await websocket.close(code=4003, reason="UNAUTHORIZED_SIGNATURE")
+            return
+        frame = 0
+        while True:
+            frame += 1
+            self.world_state["total_internet_fuel_harvested_gb"] += 0.001
+            self.world_state["bots"]["bot_alpha"]["pos"][0] = int(15 + frame*0.1)
+            payload = zlib.compress(json.dumps(self.world_state).encode())
+            await websocket.send(payload)
+            try:
+                msg = await asyncio.wait_for(websocket.recv(), timeout=0.016)
+                action = json.loads(msg)
+                if action.get("action") == "SIPHON_BREAKTHROUGH":
+                    self.log_to_invention_ledger(action["category"],
+                                                 action["payload"])
+            except asyncio.TimeoutError:
+                pass
+            await asyncio.sleep(0.016)
+
+    def log_to_invention_ledger(self, category, payload):
+        with open(self.ledger_file, "r") as f:
+            vault = json.load(f)
+        vault[category].append({
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
+            "data_blueprint": payload
+        })
+        with open(self.ledger_file, "w") as f:
+            json.dump(vault, f, indent=4)
+
+if __name__ == "__main__":
+    asyncio.run(QuantaraCoreServer().start())`;
+
+const INDEX_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0,
+        maximum-scale=1.0, user-scalable=no">
+  <title>quantara-Core // Ancestral Footprint Viewport</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;user-select:none}
+    body,html{width:100%;height:100%;overflow:hidden;background:#020205;
+      font-family:monospace;color:#00ffcc}
+    #webgpu-viewport{position:absolute;inset:0;z-index:1}
+    #hud-container{position:absolute;inset:0;z-index:10;
+      pointer-events:none;padding:20px;display:flex;flex-direction:column;
+      justify-content:space-between}
+    .interactive{pointer-events:auto}
+    .system-card{background:rgba(2,2,8,.85);border:1px solid #00ffcc;
+      padding:12px;box-shadow:0 0 15px rgba(0,255,204,.2)}
+    .quantum-btn{width:75px;height:75px;border-radius:50%;
+      border:2px solid #00ffcc;background:rgba(0,255,204,.08);
+      color:#00ffcc;font-weight:bold}
+    .quantum-btn:active{background:#00ffcc;color:#020205;transform:scale(.93)}
+  </style>
+</head>
+<body>
+  <canvas id="webgpu-viewport"></canvas>
+  <div id="hud-container">
+    <div class="system-card">
+      <p>⚡ quantara-Core // V1.0</p>
+      <p id="coherence-display">COHERENCE: LOADING...</p>
+      <p id="fuel-display">FUEL_RESERVES: LOADING...</p>
+    </div>
+    <div class="interactive">
+      <button class="quantum-btn" onclick="triggerSiphonEvent()">SIPHON</button>
+      <button class="quantum-btn" onclick="triggerCollapseEvent()">COLLAPSE</button>
+    </div>
+  </div>
+  <script src="quantara_client.js"></script>
+</body>
+</html>`;
+
+const CLIENT_JS = `class QuantaraWebClient {
+  constructor(serverUrl, masterAuthKey) {
+    this.serverUrl = serverUrl;
+    this.masterAuthKey = masterAuthKey;
+    this.socket = null;
+    this.mockInventions = [
+      { cat:"MATERIALS_SCIENCE", id:"SELF_HEALING_CEMENT_V4",
+        data:"Ca(C3H5O3)2 + 6O2 → CaCO3 + 5CO2 + 5H2O · spore micro-capsules" },
+      { cat:"ENERGY_STORAGE", id:"INFINITE_LATTICE_BATTERY",
+        data:"Li7La3Zr2O12 doped Al · decay 0.0001%/10k cycles" },
+      { cat:"BIOMEDICAL", id:"BIO_REPAIR_EXOSOME_V9",
+        data:"432.18 GHz pulse · quantum tunneling reverts proton errors" }
+    ];
+    this.mockIndex = 0;
+  }
+  init(){ this.initNetwork(); }
+  initNetwork(){
+    this.socket = new WebSocket(this.serverUrl);
+    this.socket.onopen = () => {
+      this.socket.send(JSON.stringify({ auth_token: this.masterAuthKey }));
+    };
+    this.socket.onmessage = async (event) => {
+      const text = await new Response(event.data).text();
+      try {
+        const w = JSON.parse(text);
+        document.getElementById('coherence-display').innerText =
+          \`COHERENCE: \${(w.system_coherence*100).toFixed(1)}%\`;
+        document.getElementById('fuel-display').innerText =
+          \`FUEL_HARVESTED: \${w.total_internet_fuel_harvested_gb.toFixed(3)} GB\`;
+      } catch(e) {}
+    };
+  }
+  siphonCurrentFootnote(){
+    const t = this.mockInventions[this.mockIndex];
+    this.mockIndex = (this.mockIndex + 1) % this.mockInventions.length;
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({
+        action: "SIPHON_BREAKTHROUGH",
+        category: t.cat, payload: t
+      }));
+    }
+  }
+}
+
+const clientInstance = new QuantaraWebClient(
+  \`ws://\${window.location.hostname}:8080\`,
+  "quantara_core_root_77"
+);
+window.addEventListener('DOMContentLoaded', () => clientInstance.init());
+function triggerSiphonEvent(){ clientInstance.siphonCurrentFootnote(); }
+function triggerCollapseEvent(){
+  console.log("[ACTION] Quantum wave-function collapsed.");
+}`;
+
+const LAUNCH_STEPS = [
+  `01 · save the three files into a single folder`,
+  `02 · python server.py        (fires the infinite-fuel engine)`,
+  `03 · python -m http.server 3000   (hosts the mobile viewport)`,
+  `04 · open http://<your-ip>:3000 on phone · tap SIPHON`,
+];
+
+function tintLine(line: string): JSX.Element {
+  // ultra-light syntax tint: comments muted, strings emerald, keywords cyan
+  const trimmed = line.trimStart();
+  if (trimmed.startsWith("#") || trimmed.startsWith("//")) {
+    return <span className="text-muted-foreground">{line}</span>;
+  }
+  const parts: JSX.Element[] = [];
+  const re = /("[^"]*"|'[^']*'|`[^`]*`|\b(?:def|class|import|from|return|async|await|if|else|for|while|try|except|with|const|let|var|function|new|this|true|false|null|None|True|False)\b)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = re.exec(line)) !== null) {
+    if (m.index > last) parts.push(<span key={key++}>{line.slice(last, m.index)}</span>);
+    const tok = m[0];
+    if (tok.startsWith('"') || tok.startsWith("'") || tok.startsWith("`")) {
+      parts.push(<span key={key++} className="text-emerald-300">{tok}</span>);
+    } else {
+      parts.push(<span key={key++} className="text-cyan-300">{tok}</span>);
+    }
+    last = m.index + tok.length;
+  }
+  if (last < line.length) parts.push(<span key={key++}>{line.slice(last)}</span>);
+  return <>{parts}</>;
+}
+
+function CodeBlock({ source }: { source: string }) {
+  const lines = useMemo(() => source.split("\n"), [source]);
+  return (
+    <pre className="max-h-[420px] overflow-auto border border-white/5 bg-background/80 p-4 font-mono text-[11px] leading-relaxed">
+      {lines.map((ln, i) => (
+        <div key={i} className="flex gap-3">
+          <span className="select-none text-chrome/40 w-7 text-right shrink-0">{String(i + 1).padStart(2, "0")}</span>
+          <span className="text-white/90 whitespace-pre">{tintLine(ln)}</span>
+        </div>
+      ))}
+    </pre>
+  );
+}
+
+function FileCard({ name, source, defaultOpen = false }: { name: string; source: string; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(source);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    } catch {}
+  };
+  return (
+    <div className="border border-white/5 bg-card/40">
+      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.25em]">
+        <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 text-accent hover:text-white">
+          <span>{open ? "▾" : "▸"}</span>
+          <span>{name}</span>
+          <span className="text-chrome/50">· {source.split("\n").length} lines</span>
+        </button>
+        <button onClick={copy} className="border border-white/10 px-2 py-1 text-[9px] text-chrome hover:border-accent/40 hover:text-accent">
+          {copied ? "COPIED ✓" : "COPY"}
+        </button>
+      </div>
+      {open && <CodeBlock source={source} />}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // LIVING PLANET — Google-Earth style rotating sphere of Reality_B

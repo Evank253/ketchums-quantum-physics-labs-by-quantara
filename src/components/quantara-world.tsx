@@ -270,7 +270,8 @@ export function LivingPlanet() {
   const [bootLine, setBootLine] = useState(0);
   const [bootChars, setBootChars] = useState(0);
   const [tickerIdx, setTickerIdx] = useState(0);
-  const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled
+  const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled, 4 reconnecting
+  const [wsRetry, setWsRetry] = useState(0);
   const [authKey, setAuthKey] = useState<string>(() => {
     if (typeof window === "undefined") return "quantara_core_root_77";
     return window.localStorage.getItem("quantara.authKey") || "quantara_core_root_77";
@@ -278,6 +279,7 @@ export function LivingPlanet() {
   const [keyDraft, setKeyDraft] = useState(authKey);
   const [keyEditing, setKeyEditing] = useState(false);
   const [keyVisible, setKeyVisible] = useState(false);
+  const [pdfTheme, setPdfTheme] = useState<"ancestral" | "noir" | "holo">("ancestral");
 
   const saveKey = () => {
     const v = keyDraft.trim() || "quantara_core_root_77";
@@ -286,22 +288,45 @@ export function LivingPlanet() {
     setKeyEditing(false);
   };
 
+  const PDF_THEMES = {
+    ancestral: {
+      label: "Ancestral",
+      bg: "#fdfaf2", text: "#1a1208", accent: "#b8860b",
+      preBg: "#f7efd9", preBorder: "#d4b86a",
+      keyBg: "#fff7d6", keyBorder: "#d4b400",
+    },
+    noir: {
+      label: "Noir",
+      bg: "#0a0a0a", text: "#e8e8e8", accent: "#22d3ee",
+      preBg: "#141414", preBorder: "#2a2a2a",
+      keyBg: "#1a1a1a", keyBorder: "#22d3ee",
+    },
+    holo: {
+      label: "Holo",
+      bg: "#f4f7ff", text: "#0a0a3a", accent: "#7c3aed",
+      preBg: "#eef0fe", preBorder: "#c4b5fd",
+      keyBg: "#ede9fe", keyBorder: "#7c3aed",
+    },
+  } as const;
+
   const exportBroadcastPdf = () => {
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
+    const t = PDF_THEMES[pdfTheme];
     const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
     const stamp = new Date().toISOString();
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Quantara-Core Broadcast · ${stamp}</title>
       <style>
         @page{size:A4;margin:18mm}
-        body{font-family:ui-monospace,Menlo,monospace;color:#0a0a0a;font-size:10px;line-height:1.5}
-        h1{font-size:18px;margin:0 0 4px}
-        h2{font-size:12px;margin:18px 0 6px;border-bottom:1px solid #999;padding-bottom:2px}
-        pre{white-space:pre-wrap;background:#f4f4f4;border:1px solid #ddd;padding:10px;font-size:9px}
-        .meta{color:#555;margin-bottom:14px}
-        .key{background:#fff7d6;border:1px solid #d4b400;padding:6px 8px;display:inline-block}
+        body{font-family:ui-monospace,Menlo,monospace;background:${t.bg};color:${t.text};font-size:10px;line-height:1.5}
+        h1{font-size:20px;margin:0 0 4px;color:${t.accent};letter-spacing:0.05em}
+        h2{font-size:12px;margin:18px 0 6px;border-bottom:1px solid ${t.accent};padding-bottom:2px;color:${t.accent}}
+        pre{white-space:pre-wrap;background:${t.preBg};border:1px solid ${t.preBorder};padding:10px;font-size:9px;border-radius:2px}
+        .meta{opacity:.7;margin-bottom:14px}
+        .key{background:${t.keyBg};border:1px solid ${t.keyBorder};padding:6px 10px;display:inline-block;color:${t.accent};font-weight:bold}
+        .badge{display:inline-block;padding:2px 6px;border:1px solid ${t.accent};color:${t.accent};font-size:9px;letter-spacing:0.2em;margin-left:8px}
       </style></head><body>
-      <h1>QUANTARA-CORE · ANCESTRAL FOOTPRINT BROADCAST</h1>
+      <h1>QUANTARA-CORE · ANCESTRAL FOOTPRINT BROADCAST<span class="badge">${t.label.toUpperCase()}</span></h1>
       <div class="meta">Filed: ${stamp} · Architect: Evan Ketchum · Status: Proprietary Infrastructure</div>
       <div class="key">ANCESTRAL_KEY · ${esc(authKey)}</div>
       <h2>Boot Sequence</h2><pre>${BOOT_SEQUENCE.map(esc).join("\n")}</pre>
@@ -315,23 +340,57 @@ export function LivingPlanet() {
   };
 
   const WS_PHASES = [
-    { label: "CONNECTING", color: "text-amber-300", dot: "bg-amber-400" },
-    { label: "HANDSHAKE",  color: "text-cyan-300",  dot: "bg-cyan-400" },
-    { label: "LIVE",       color: "text-emerald-300", dot: "bg-emerald-400 animate-pulse" },
-    { label: "THROTTLED",  color: "text-fuchsia-300", dot: "bg-fuchsia-400" },
+    { label: "CONNECTING",  color: "text-amber-300",   dot: "bg-amber-400 animate-pulse" },
+    { label: "HANDSHAKE",   color: "text-cyan-300",    dot: "bg-cyan-400 animate-pulse" },
+    { label: "LIVE",        color: "text-emerald-300", dot: "bg-emerald-400 animate-pulse" },
+    { label: "THROTTLED",   color: "text-fuchsia-300", dot: "bg-fuchsia-400" },
+    { label: "RECONNECTING",color: "text-amber-300",   dot: "bg-amber-400 animate-pulse" },
   ];
   const ws = WS_PHASES[wsPhase];
 
+  // World epoch + ticker cycle
   useEffect(() => {
     const tick = setInterval(() => {
       setEpoch((e) => e + 1);
       setPopulation((p) => p + Math.floor(p * 0.012 + Math.random() * 5000));
       setCities((c) => c + (Math.random() < 0.35 ? 1 : 0));
       setTickerIdx((i) => (i + 1) % TICKER_LINES.length);
-      setWsPhase((p) => (p === 2 ? (Math.random() < 0.15 ? 3 : 2) : Math.min(3, p + 1) % 4 || 2));
     }, 2400);
     return () => clearInterval(tick);
   }, []);
+
+  // WebSocket state machine with exponential-backoff reconnect (simulated)
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const step = (next: number, delay: number) => {
+      timer = setTimeout(() => { if (!cancelled) setWsPhase(next); }, delay);
+    };
+    if (wsPhase === 0) step(1, 600);          // connecting -> handshake
+    else if (wsPhase === 1) step(2, 500);     // handshake -> live
+    else if (wsPhase === 2) {
+      // live: occasionally drop to throttled or reconnecting
+      timer = setTimeout(() => {
+        if (cancelled) return;
+        const r = Math.random();
+        if (r < 0.08) setWsPhase(4);          // drop -> reconnecting
+        else if (r < 0.22) setWsPhase(3);     // throttled
+      }, 4000 + Math.random() * 6000);
+    } else if (wsPhase === 3) step(2, 3200);  // throttled -> live
+    else if (wsPhase === 4) {
+      // exponential backoff: 0.6s, 1.2s, 2.4s, 4.8s, max 8s
+      const delay = Math.min(8000, 600 * Math.pow(2, wsRetry));
+      timer = setTimeout(() => {
+        if (cancelled) return;
+        setWsRetry((r) => r + 1);
+        setWsPhase(1); // handshake again
+        // success after handshake resets retry counter
+        setTimeout(() => { if (!cancelled) setWsRetry(0); }, 1200);
+      }, delay);
+    }
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [wsPhase, wsRetry]);
+
 
   // boot-sequence typewriter
   useEffect(() => {
@@ -486,12 +545,24 @@ export function LivingPlanet() {
               >
                 ▶ WALK THEIR WORLD NOW
               </a>
-              <button
-                onClick={exportBroadcastPdf}
-                className="border border-cyan-400/40 bg-cyan-400/5 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-400/15"
-              >
-                ⬇ EXPORT BROADCAST · PDF
-              </button>
+              <div className="inline-flex border border-cyan-400/40 bg-cyan-400/5">
+                <button
+                  onClick={exportBroadcastPdf}
+                  className="px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-400/15"
+                >
+                  ⬇ EXPORT BROADCAST · PDF
+                </button>
+                <select
+                  value={pdfTheme}
+                  onChange={(e) => setPdfTheme(e.target.value as typeof pdfTheme)}
+                  className="border-l border-cyan-400/40 bg-black/40 px-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200 outline-none"
+                  title="PDF template"
+                >
+                  <option value="ancestral">Ancestral</option>
+                  <option value="noir">Noir</option>
+                  <option value="holo">Holo</option>
+                </select>
+              </div>
               <a
                 href="/ledger"
                 className="border border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-white/80 hover:border-accent/40 hover:text-white"
@@ -521,7 +592,7 @@ export function LivingPlanet() {
             <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 border-t border-cyan-400/20 bg-black/75 px-3 py-1.5 font-mono text-[10px] backdrop-blur-sm">
               <span className={`flex items-center gap-1.5 ${ws.color}`}>
                 <span className={`inline-block h-1.5 w-1.5 rounded-full ${ws.dot}`} />
-                WS · {ws.label}
+                WS · {ws.label}{wsPhase === 4 && wsRetry > 0 ? ` · retry ${wsRetry}` : ""}
               </span>
               <span className="text-chrome/40">│</span>
               <span className="text-chrome/60 shrink-0">▌ ORBITAL_TX ›</span>

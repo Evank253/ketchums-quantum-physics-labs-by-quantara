@@ -27,13 +27,18 @@ const KIND_COLOR: Record<string, string> = {
 function LedgerPage() {
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [filter, setFilter] = useState<string>("all");
+  const [query, setQuery] = useState<string>("");
 
   useEffect(() => {
     setEntries(readLedger());
     return subscribeLedger(() => setEntries(readLedger()));
   }, []);
 
-  const filtered = filter === "all" ? entries : entries.filter((e) => e.kind === filter);
+  const byKind = filter === "all" ? entries : entries.filter((e) => e.kind === filter);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? byKind.filter((e) => e.label.toLowerCase().includes(q) || JSON.stringify(e.data ?? "").toLowerCase().includes(q))
+    : byKind;
   const view = [...filtered].reverse();
 
   const counts = entries.reduce<Record<string, number>>((acc, e) => {
@@ -100,7 +105,20 @@ function LedgerPage() {
           ))}
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="search label or data…"
+            className="min-w-[14rem] flex-1 rounded-sm border border-white/10 bg-card/40 px-3 py-2 font-mono text-[11px] text-white placeholder:text-muted-foreground outline-none focus:border-accent/40"
+          />
+          {query && (
+            <button onClick={() => setQuery("")} className="border border-white/10 px-2 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-chrome hover:text-white">
+              clear search
+            </button>
+          )}
+          <span className="font-mono text-[10px] text-muted-foreground">{view.length} match{view.length === 1 ? "" : "es"}</span>
+          <span className="flex-1" />
           <button onClick={onBenchmark} className="border border-cyan-400/40 bg-cyan-400/5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-300 hover:bg-cyan-400/10">
             Run QED benchmark → ledger
           </button>

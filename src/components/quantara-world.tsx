@@ -545,12 +545,24 @@ export function LivingPlanet() {
               >
                 ▶ WALK THEIR WORLD NOW
               </a>
-              <button
-                onClick={exportBroadcastPdf}
-                className="border border-cyan-400/40 bg-cyan-400/5 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-400/15"
-              >
-                ⬇ EXPORT BROADCAST · PDF
-              </button>
+              <div className="inline-flex border border-cyan-400/40 bg-cyan-400/5">
+                <button
+                  onClick={exportBroadcastPdf}
+                  className="px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-400/15"
+                >
+                  ⬇ EXPORT BROADCAST · PDF
+                </button>
+                <select
+                  value={pdfTheme}
+                  onChange={(e) => setPdfTheme(e.target.value as typeof pdfTheme)}
+                  className="border-l border-cyan-400/40 bg-black/40 px-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200 outline-none"
+                  title="PDF template"
+                >
+                  <option value="ancestral">Ancestral</option>
+                  <option value="noir">Noir</option>
+                  <option value="holo">Holo</option>
+                </select>
+              </div>
               <a
                 href="/ledger"
                 className="border border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-white/80 hover:border-accent/40 hover:text-white"
@@ -580,7 +592,7 @@ export function LivingPlanet() {
             <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 border-t border-cyan-400/20 bg-black/75 px-3 py-1.5 font-mono text-[10px] backdrop-blur-sm">
               <span className={`flex items-center gap-1.5 ${ws.color}`}>
                 <span className={`inline-block h-1.5 w-1.5 rounded-full ${ws.dot}`} />
-                WS · {ws.label}
+                WS · {ws.label}{wsPhase === 4 && wsRetry > 0 ? ` · retry ${wsRetry}` : ""}
               </span>
               <span className="text-chrome/40">│</span>
               <span className="text-chrome/60 shrink-0">▌ ORBITAL_TX ›</span>

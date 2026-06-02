@@ -479,6 +479,26 @@ export function LivingPlanet() {
               <span className="text-accent">Ancestral Footprint Engine</span>,
               streaming live from orbit.
             </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <a
+                href="#avatar-walk"
+                className="border border-accent/40 bg-accent/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-accent hover:bg-accent/20"
+              >
+                ▶ WALK THEIR WORLD NOW
+              </a>
+              <button
+                onClick={exportBroadcastPdf}
+                className="border border-cyan-400/40 bg-cyan-400/5 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-400/15"
+              >
+                ⬇ EXPORT BROADCAST · PDF
+              </button>
+              <a
+                href="/ledger"
+                className="border border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-white/80 hover:border-accent/40 hover:text-white"
+              >
+                ⌗ LEDGER VIEWER
+              </a>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-px border border-white/5 bg-card/40 font-mono text-[10px]">
             <div className="px-4 py-3"><div className="text-chrome">EPOCH</div><div className="text-lg font-black text-accent">{epoch}</div></div>

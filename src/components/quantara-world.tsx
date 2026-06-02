@@ -517,10 +517,15 @@ export function LivingPlanet() {
             <div className="absolute bottom-10 right-3 font-mono text-[10px] text-emerald-400">
               ● LIVE · ECOSYSTEM_GROWTH +{(0.012 * 100).toFixed(1)}% / epoch
             </div>
-            {/* broadcast ticker */}
-            <div className="absolute inset-x-0 bottom-0 border-t border-cyan-400/20 bg-black/70 px-3 py-1.5 font-mono text-[10px] text-cyan-300 backdrop-blur-sm">
-              <span className="text-chrome/60">▌ ORBITAL_TX ›</span>{" "}
-              <span className="text-cyan-200">{TICKER_LINES[tickerIdx]}</span>
+            {/* broadcast ticker + WS socket status */}
+            <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 border-t border-cyan-400/20 bg-black/75 px-3 py-1.5 font-mono text-[10px] backdrop-blur-sm">
+              <span className={`flex items-center gap-1.5 ${ws.color}`}>
+                <span className={`inline-block h-1.5 w-1.5 rounded-full ${ws.dot}`} />
+                WS · {ws.label}
+              </span>
+              <span className="text-chrome/40">│</span>
+              <span className="text-chrome/60 shrink-0">▌ ORBITAL_TX ›</span>
+              <span className="text-cyan-200 truncate">{TICKER_LINES[tickerIdx]}</span>
             </div>
           </div>
 

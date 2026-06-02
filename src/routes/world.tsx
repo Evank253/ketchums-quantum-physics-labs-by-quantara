@@ -5,7 +5,7 @@ import { PointerLockControls, Sky, Text, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import { useWorld, nextCost, getBreakthrough, getOfflineCapHours, setOfflineCapHours } from "@/lib/world-store";
 import { useGameplay, type WeaponId, type InventoryEntry } from "@/lib/world-gameplay";
-import { readDat, subscribeDat, creditDat } from "@/lib/dat-tokens";
+import { readDat, subscribeDat, creditDat, writeDat } from "@/lib/dat-tokens";
 
 export const Route = createFileRoute("/world")({
   component: WorldPage,

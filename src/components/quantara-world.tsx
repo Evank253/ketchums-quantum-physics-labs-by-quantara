@@ -756,7 +756,7 @@ export function AvatarWalk() {
   };
 
   return (
-    <section className="border-t border-white/5 bg-[oklch(0.08_0.01_280)] px-6 py-32">
+    <section id="avatar-walk" className="border-t border-white/5 bg-[oklch(0.08_0.01_280)] px-6 py-32 scroll-mt-16">
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 max-w-xl">
           <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">

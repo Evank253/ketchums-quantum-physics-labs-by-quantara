@@ -328,6 +328,7 @@ export function LivingPlanet() {
       setPopulation((p) => p + Math.floor(p * 0.012 + Math.random() * 5000));
       setCities((c) => c + (Math.random() < 0.35 ? 1 : 0));
       setTickerIdx((i) => (i + 1) % TICKER_LINES.length);
+      setWsPhase((p) => (p === 2 ? (Math.random() < 0.15 ? 3 : 2) : Math.min(3, p + 1) % 4 || 2));
     }, 2400);
     return () => clearInterval(tick);
   }, []);

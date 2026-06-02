@@ -270,6 +270,57 @@ export function LivingPlanet() {
   const [bootLine, setBootLine] = useState(0);
   const [bootChars, setBootChars] = useState(0);
   const [tickerIdx, setTickerIdx] = useState(0);
+  const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled
+  const [authKey, setAuthKey] = useState<string>(() => {
+    if (typeof window === "undefined") return "quantara_core_root_77";
+    return window.localStorage.getItem("quantara.authKey") || "quantara_core_root_77";
+  });
+  const [keyDraft, setKeyDraft] = useState(authKey);
+  const [keyEditing, setKeyEditing] = useState(false);
+  const [keyVisible, setKeyVisible] = useState(false);
+
+  const saveKey = () => {
+    const v = keyDraft.trim() || "quantara_core_root_77";
+    setAuthKey(v);
+    try { window.localStorage.setItem("quantara.authKey", v); } catch {}
+    setKeyEditing(false);
+  };
+
+  const exportBroadcastPdf = () => {
+    const w = window.open("", "_blank", "width=900,height=1100");
+    if (!w) return;
+    const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
+    const stamp = new Date().toISOString();
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Quantara-Core Broadcast · ${stamp}</title>
+      <style>
+        @page{size:A4;margin:18mm}
+        body{font-family:ui-monospace,Menlo,monospace;color:#0a0a0a;font-size:10px;line-height:1.5}
+        h1{font-size:18px;margin:0 0 4px}
+        h2{font-size:12px;margin:18px 0 6px;border-bottom:1px solid #999;padding-bottom:2px}
+        pre{white-space:pre-wrap;background:#f4f4f4;border:1px solid #ddd;padding:10px;font-size:9px}
+        .meta{color:#555;margin-bottom:14px}
+        .key{background:#fff7d6;border:1px solid #d4b400;padding:6px 8px;display:inline-block}
+      </style></head><body>
+      <h1>QUANTARA-CORE · ANCESTRAL FOOTPRINT BROADCAST</h1>
+      <div class="meta">Filed: ${stamp} · Architect: Evan Ketchum · Status: Proprietary Infrastructure</div>
+      <div class="key">ANCESTRAL_KEY · ${esc(authKey)}</div>
+      <h2>Boot Sequence</h2><pre>${BOOT_SEQUENCE.map(esc).join("\n")}</pre>
+      <h2>Launch Sequence</h2><pre>${LAUNCH_STEPS.map(esc).join("\n")}</pre>
+      <h2>server.py</h2><pre>${esc(SERVER_PY)}</pre>
+      <h2>index.html</h2><pre>${esc(INDEX_HTML)}</pre>
+      <h2>quantara_client.js</h2><pre>${esc(CLIENT_JS)}</pre>
+      <script>window.onload=()=>{setTimeout(()=>window.print(),300)}</script>
+      </body></html>`);
+    w.document.close();
+  };
+
+  const WS_PHASES = [
+    { label: "CONNECTING", color: "text-amber-300", dot: "bg-amber-400" },
+    { label: "HANDSHAKE",  color: "text-cyan-300",  dot: "bg-cyan-400" },
+    { label: "LIVE",       color: "text-emerald-300", dot: "bg-emerald-400 animate-pulse" },
+    { label: "THROTTLED",  color: "text-fuchsia-300", dot: "bg-fuchsia-400" },
+  ];
+  const ws = WS_PHASES[wsPhase];
 
   useEffect(() => {
     const tick = setInterval(() => {
@@ -277,6 +328,7 @@ export function LivingPlanet() {
       setPopulation((p) => p + Math.floor(p * 0.012 + Math.random() * 5000));
       setCities((c) => c + (Math.random() < 0.35 ? 1 : 0));
       setTickerIdx((i) => (i + 1) % TICKER_LINES.length);
+      setWsPhase((p) => (p === 2 ? (Math.random() < 0.15 ? 3 : 2) : Math.min(3, p + 1) % 4 || 2));
     }, 2400);
     return () => clearInterval(tick);
   }, []);
@@ -427,6 +479,26 @@ export function LivingPlanet() {
               <span className="text-accent">Ancestral Footprint Engine</span>,
               streaming live from orbit.
             </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <a
+                href="#avatar-walk"
+                className="border border-accent/40 bg-accent/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-accent hover:bg-accent/20"
+              >
+                ▶ WALK THEIR WORLD NOW
+              </a>
+              <button
+                onClick={exportBroadcastPdf}
+                className="border border-cyan-400/40 bg-cyan-400/5 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-400/15"
+              >
+                ⬇ EXPORT BROADCAST · PDF
+              </button>
+              <a
+                href="/ledger"
+                className="border border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-white/80 hover:border-accent/40 hover:text-white"
+              >
+                ⌗ LEDGER VIEWER
+              </a>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-px border border-white/5 bg-card/40 font-mono text-[10px]">
             <div className="px-4 py-3"><div className="text-chrome">EPOCH</div><div className="text-lg font-black text-accent">{epoch}</div></div>
@@ -445,10 +517,15 @@ export function LivingPlanet() {
             <div className="absolute bottom-10 right-3 font-mono text-[10px] text-emerald-400">
               ● LIVE · ECOSYSTEM_GROWTH +{(0.012 * 100).toFixed(1)}% / epoch
             </div>
-            {/* broadcast ticker */}
-            <div className="absolute inset-x-0 bottom-0 border-t border-cyan-400/20 bg-black/70 px-3 py-1.5 font-mono text-[10px] text-cyan-300 backdrop-blur-sm">
-              <span className="text-chrome/60">▌ ORBITAL_TX ›</span>{" "}
-              <span className="text-cyan-200">{TICKER_LINES[tickerIdx]}</span>
+            {/* broadcast ticker + WS socket status */}
+            <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 border-t border-cyan-400/20 bg-black/75 px-3 py-1.5 font-mono text-[10px] backdrop-blur-sm">
+              <span className={`flex items-center gap-1.5 ${ws.color}`}>
+                <span className={`inline-block h-1.5 w-1.5 rounded-full ${ws.dot}`} />
+                WS · {ws.label}
+              </span>
+              <span className="text-chrome/40">│</span>
+              <span className="text-chrome/60 shrink-0">▌ ORBITAL_TX ›</span>
+              <span className="text-cyan-200 truncate">{TICKER_LINES[tickerIdx]}</span>
             </div>
           </div>
 
@@ -481,8 +558,46 @@ export function LivingPlanet() {
               <pre className="mt-2 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-white/80">
                 {LAUNCH_STEPS.join("\n")}
               </pre>
-              <div className="mt-3 border-l-2 border-cyan-400/40 bg-cyan-400/5 px-3 py-2 font-mono text-[10px] text-cyan-200">
-                ANCESTRAL_KEY · quantara_core_root_77 · sovereign gatekeeper armed
+              {/* AUTH KEY SETTINGS — editable, persisted to localStorage */}
+              <div className="mt-3 border border-cyan-400/30 bg-cyan-400/5 p-3 font-mono text-[10px] text-cyan-200">
+                <div className="flex items-center justify-between">
+                  <span className="uppercase tracking-[0.25em] text-cyan-300">▌ Auth Key Settings</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setKeyVisible((v) => !v)}
+                      className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent"
+                    >
+                      {keyVisible ? "HIDE" : "REVEAL"}
+                    </button>
+                    {!keyEditing ? (
+                      <button
+                        onClick={() => { setKeyDraft(authKey); setKeyEditing(true); }}
+                        className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent"
+                      >
+                        EDIT
+                      </button>
+                    ) : (
+                      <>
+                        <button onClick={saveKey} className="border border-emerald-400/40 px-2 py-0.5 text-[9px] text-emerald-300 hover:bg-emerald-400/10">SAVE</button>
+                        <button onClick={() => setKeyEditing(false)} className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:text-white">CANCEL</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {keyEditing ? (
+                  <input
+                    value={keyDraft}
+                    onChange={(e) => setKeyDraft(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && saveKey()}
+                    autoFocus
+                    className="mt-2 w-full rounded-sm border border-white/10 bg-background px-2 py-1 font-mono text-[11px] text-white outline-none focus:border-accent/40"
+                  />
+                ) : (
+                  <div className="mt-2 break-all text-[11px]">
+                    ANCESTRAL_KEY · <span className="text-cyan-100">{keyVisible ? authKey : "•".repeat(Math.max(8, authKey.length))}</span>
+                  </div>
+                )}
+                <div className="mt-1 text-[9px] text-chrome/70">sovereign gatekeeper armed · persisted locally · injected into client handshake</div>
               </div>
             </div>
           </div>
@@ -641,7 +756,7 @@ export function AvatarWalk() {
   };
 
   return (
-    <section className="border-t border-white/5 bg-[oklch(0.08_0.01_280)] px-6 py-32">
+    <section id="avatar-walk" className="border-t border-white/5 bg-[oklch(0.08_0.01_280)] px-6 py-32 scroll-mt-16">
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 max-w-xl">
           <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">

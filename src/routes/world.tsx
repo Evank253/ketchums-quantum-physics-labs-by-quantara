@@ -466,7 +466,7 @@ function WorldPage() {
               </div>
               <div className="border border-white/10 p-2">
                 <div className="uppercase tracking-[0.2em] text-chrome">Bounty crate</div>
-                <button onClick={() => { if (dat >= 25) { creditDat(-25); /* small refund avg */ const r = Math.floor(20 + Math.random() * 60); creditDat(r); } }}
+                <button onClick={() => { if (dat >= 25) { writeDat(readDat() - 25); const r = Math.floor(20 + Math.random() * 60); creditDat(r); } }}
                   className="mt-2 w-full border border-amber-400/40 px-2 py-1 text-amber-200 hover:bg-amber-400/10 disabled:opacity-30"
                   disabled={dat < 25}>
                   Open · 25 $DAT

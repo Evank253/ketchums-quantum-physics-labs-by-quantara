@@ -270,7 +270,8 @@ export function LivingPlanet() {
   const [bootLine, setBootLine] = useState(0);
   const [bootChars, setBootChars] = useState(0);
   const [tickerIdx, setTickerIdx] = useState(0);
-  const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled
+  const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled, 4 reconnecting
+  const [wsRetry, setWsRetry] = useState(0);
   const [authKey, setAuthKey] = useState<string>(() => {
     if (typeof window === "undefined") return "quantara_core_root_77";
     return window.localStorage.getItem("quantara.authKey") || "quantara_core_root_77";
@@ -278,6 +279,7 @@ export function LivingPlanet() {
   const [keyDraft, setKeyDraft] = useState(authKey);
   const [keyEditing, setKeyEditing] = useState(false);
   const [keyVisible, setKeyVisible] = useState(false);
+  const [pdfTheme, setPdfTheme] = useState<"ancestral" | "noir" | "holo">("ancestral");
 
   const saveKey = () => {
     const v = keyDraft.trim() || "quantara_core_root_77";

@@ -558,8 +558,46 @@ export function LivingPlanet() {
               <pre className="mt-2 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-white/80">
                 {LAUNCH_STEPS.join("\n")}
               </pre>
-              <div className="mt-3 border-l-2 border-cyan-400/40 bg-cyan-400/5 px-3 py-2 font-mono text-[10px] text-cyan-200">
-                ANCESTRAL_KEY · quantara_core_root_77 · sovereign gatekeeper armed
+              {/* AUTH KEY SETTINGS — editable, persisted to localStorage */}
+              <div className="mt-3 border border-cyan-400/30 bg-cyan-400/5 p-3 font-mono text-[10px] text-cyan-200">
+                <div className="flex items-center justify-between">
+                  <span className="uppercase tracking-[0.25em] text-cyan-300">▌ Auth Key Settings</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setKeyVisible((v) => !v)}
+                      className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent"
+                    >
+                      {keyVisible ? "HIDE" : "REVEAL"}
+                    </button>
+                    {!keyEditing ? (
+                      <button
+                        onClick={() => { setKeyDraft(authKey); setKeyEditing(true); }}
+                        className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent"
+                      >
+                        EDIT
+                      </button>
+                    ) : (
+                      <>
+                        <button onClick={saveKey} className="border border-emerald-400/40 px-2 py-0.5 text-[9px] text-emerald-300 hover:bg-emerald-400/10">SAVE</button>
+                        <button onClick={() => setKeyEditing(false)} className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:text-white">CANCEL</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {keyEditing ? (
+                  <input
+                    value={keyDraft}
+                    onChange={(e) => setKeyDraft(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && saveKey()}
+                    autoFocus
+                    className="mt-2 w-full rounded-sm border border-white/10 bg-background px-2 py-1 font-mono text-[11px] text-white outline-none focus:border-accent/40"
+                  />
+                ) : (
+                  <div className="mt-2 break-all text-[11px]">
+                    ANCESTRAL_KEY · <span className="text-cyan-100">{keyVisible ? authKey : "•".repeat(Math.max(8, authKey.length))}</span>
+                  </div>
+                )}
+                <div className="mt-1 text-[9px] text-chrome/70">sovereign gatekeeper armed · persisted locally · injected into client handshake</div>
               </div>
             </div>
           </div>

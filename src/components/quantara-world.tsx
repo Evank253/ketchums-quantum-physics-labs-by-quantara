@@ -270,6 +270,57 @@ export function LivingPlanet() {
   const [bootLine, setBootLine] = useState(0);
   const [bootChars, setBootChars] = useState(0);
   const [tickerIdx, setTickerIdx] = useState(0);
+  const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled
+  const [authKey, setAuthKey] = useState<string>(() => {
+    if (typeof window === "undefined") return "quantara_core_root_77";
+    return window.localStorage.getItem("quantara.authKey") || "quantara_core_root_77";
+  });
+  const [keyDraft, setKeyDraft] = useState(authKey);
+  const [keyEditing, setKeyEditing] = useState(false);
+  const [keyVisible, setKeyVisible] = useState(false);
+
+  const saveKey = () => {
+    const v = keyDraft.trim() || "quantara_core_root_77";
+    setAuthKey(v);
+    try { window.localStorage.setItem("quantara.authKey", v); } catch {}
+    setKeyEditing(false);
+  };
+
+  const exportBroadcastPdf = () => {
+    const w = window.open("", "_blank", "width=900,height=1100");
+    if (!w) return;
+    const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
+    const stamp = new Date().toISOString();
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Quantara-Core Broadcast · ${stamp}</title>
+      <style>
+        @page{size:A4;margin:18mm}
+        body{font-family:ui-monospace,Menlo,monospace;color:#0a0a0a;font-size:10px;line-height:1.5}
+        h1{font-size:18px;margin:0 0 4px}
+        h2{font-size:12px;margin:18px 0 6px;border-bottom:1px solid #999;padding-bottom:2px}
+        pre{white-space:pre-wrap;background:#f4f4f4;border:1px solid #ddd;padding:10px;font-size:9px}
+        .meta{color:#555;margin-bottom:14px}
+        .key{background:#fff7d6;border:1px solid #d4b400;padding:6px 8px;display:inline-block}
+      </style></head><body>
+      <h1>QUANTARA-CORE · ANCESTRAL FOOTPRINT BROADCAST</h1>
+      <div class="meta">Filed: ${stamp} · Architect: Evan Ketchum · Status: Proprietary Infrastructure</div>
+      <div class="key">ANCESTRAL_KEY · ${esc(authKey)}</div>
+      <h2>Boot Sequence</h2><pre>${BOOT_SEQUENCE.map(esc).join("\n")}</pre>
+      <h2>Launch Sequence</h2><pre>${LAUNCH_STEPS.map(esc).join("\n")}</pre>
+      <h2>server.py</h2><pre>${esc(SERVER_PY)}</pre>
+      <h2>index.html</h2><pre>${esc(INDEX_HTML)}</pre>
+      <h2>quantara_client.js</h2><pre>${esc(CLIENT_JS)}</pre>
+      <script>window.onload=()=>{setTimeout(()=>window.print(),300)}</script>
+      </body></html>`);
+    w.document.close();
+  };
+
+  const WS_PHASES = [
+    { label: "CONNECTING", color: "text-amber-300", dot: "bg-amber-400" },
+    { label: "HANDSHAKE",  color: "text-cyan-300",  dot: "bg-cyan-400" },
+    { label: "LIVE",       color: "text-emerald-300", dot: "bg-emerald-400 animate-pulse" },
+    { label: "THROTTLED",  color: "text-fuchsia-300", dot: "bg-fuchsia-400" },
+  ];
+  const ws = WS_PHASES[wsPhase];
 
   useEffect(() => {
     const tick = setInterval(() => {

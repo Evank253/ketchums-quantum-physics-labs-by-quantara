@@ -247,7 +247,10 @@ export const useGameplay = create<GameState>((set, get) => ({
     let badData = s.badData;
     let kills = s.kills, cleaned = s.cleaned;
     let bounty = 0;
+    let hitX = endX, hitZ = endZ;
     if (hitId) {
+      const target = s.badData.find((b) => b.id === hitId)!;
+      hitX = target.x; hitZ = target.z;
       badData = s.badData.flatMap((b) => {
         if (b.id !== hitId) return [b];
         const nhp = b.hp - w.damage * dmgMul;
@@ -265,8 +268,7 @@ export const useGameplay = create<GameState>((set, get) => ({
 
     const shot: ShotFx = {
       id: _shotSeq++, x1: origin.x, z1: origin.z,
-      x2: hitId ? badData[0]?.x ?? endX : endX,
-      z2: hitId ? badData[0]?.z ?? endZ : endZ,
+      x2: hitX, z2: hitZ,
       bornAt: now, hue: w.tint,
     };
     const lastFire = { ...s.lastFire, [w.id]: now };

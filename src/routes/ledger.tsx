@@ -27,13 +27,18 @@ const KIND_COLOR: Record<string, string> = {
 function LedgerPage() {
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [filter, setFilter] = useState<string>("all");
+  const [query, setQuery] = useState<string>("");
 
   useEffect(() => {
     setEntries(readLedger());
     return subscribeLedger(() => setEntries(readLedger()));
   }, []);
 
-  const filtered = filter === "all" ? entries : entries.filter((e) => e.kind === filter);
+  const byKind = filter === "all" ? entries : entries.filter((e) => e.kind === filter);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? byKind.filter((e) => e.label.toLowerCase().includes(q) || JSON.stringify(e.data ?? "").toLowerCase().includes(q))
+    : byKind;
   const view = [...filtered].reverse();
 
   const counts = entries.reduce<Record<string, number>>((acc, e) => {

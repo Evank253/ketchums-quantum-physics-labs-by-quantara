@@ -495,6 +495,9 @@ function WorldPage() {
             <button onClick={() => setPanelOpen((v) => !v)} className="rounded-sm border border-white/15 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/10">
               {panelOpen ? "Close panel" : "World panel"}
             </button>
+            <button onClick={() => setSwarmOpen((v) => !v)} className="rounded-sm border border-cyan-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-500/10">
+              {swarmOpen ? "Close swarm" : "Self-healing swarm"}
+            </button>
             <button onClick={() => setUploadOpen((v) => !v)} className="rounded-sm border border-emerald-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-emerald-200 hover:bg-emerald-500/10">
               {uploadOpen ? "Close uploads" : `Upload discovery (${discoveries.length})`}
             </button>

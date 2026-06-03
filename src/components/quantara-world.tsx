@@ -177,7 +177,7 @@ const CLIENT_JS = `class QuantaraWebClient {
 
 const clientInstance = new QuantaraWebClient(
   \`ws://\${window.location.hostname}:8080\`,
-  "quantara_core_root_77"
+  localStorage.getItem("quantara.authKey") || ""   // operator-supplied · never shipped in source
 );
 window.addEventListener('DOMContentLoaded', () => clientInstance.init());
 function triggerSiphonEvent(){ clientInstance.siphonCurrentFootnote(); }

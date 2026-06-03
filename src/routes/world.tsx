@@ -392,13 +392,23 @@ function WorldPage() {
   const [marketOpen, setMarketOpen] = useState(false);
   const [marketNear, setMarketNear] = useState(false);
   const [pos, setPos] = useState({ x: 0, z: 18 });
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [discoveries, setDiscoveries] = useState<Discovery[]>(() => readDiscoveries());
+
+  const touch = useIsTouch();
+  const input = useRef<InputState>({
+    move: { x: 0, y: 0 }, look: { x: 0, y: 0 }, fire: false, run: false,
+  });
+  const onMove = useCallback((v: { x: number; y: number }) => { input.current.move = v; }, []);
+  const onLook = useCallback((v: { x: number; y: number }) => { input.current.look = v; }, []);
 
   useEffect(() => {
     init();
     initGame();
     const stop = startLoop();
     const unsub = subscribeDat(setDat);
-    return () => { stop(); unsub(); };
+    const unsubD = subscribeDiscoveries(() => setDiscoveries(readDiscoveries()));
+    return () => { stop(); unsub(); unsubD(); };
   }, [init, initGame, startLoop]);
 
   const cost = nextCost(unlocked.length);
@@ -409,14 +419,46 @@ function WorldPage() {
   const activeW = weapons.find((w) => w.id === activeWeapon)!;
   const boostMs = boost ? Math.max(0, boost.expiresAt - Date.now()) : 0;
 
+  const handleUpload = async (files: FileList | null) => {
+    if (!files) return;
+    for (const f of Array.from(files)) {
+      await ingestFile(f, "operator-discovery");
+    }
+    setDiscoveries(readDiscoveries());
+    creditDat(10 * files.length);
+  };
+
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black text-white">
-      <Canvas shadows camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
-        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }}>
+      <Canvas shadows dpr={[1, 2]} camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
+        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2, powerPreference: "high-performance" }}>
         <Suspense fallback={null}>
-          <Scene onPosition={(p) => setPos({ x: p.x, z: p.z })} onMarketProx={setMarketNear} />
+          <Scene
+            onPosition={(p) => setPos({ x: p.x, z: p.z })}
+            onMarketProx={setMarketNear}
+            input={input}
+            touch={touch}
+          />
         </Suspense>
       </Canvas>
+
+      {/* TOUCH CONTROLS — only on touch devices */}
+      {touch && (
+        <>
+          <TouchJoystick side="left" onChange={onMove} label="WALK" />
+          <TouchJoystick side="right" onChange={onLook} label="LOOK" />
+          <TouchButton
+            side="right" bottom={150} label="FIRE" color="#22d3ee"
+            onPress={() => (input.current.fire = true)}
+            onRelease={() => (input.current.fire = false)}
+          />
+          <TouchButton
+            side="left" bottom={150} label="RUN" color="#a78bfa"
+            onPress={() => (input.current.run = true)}
+            onRelease={() => (input.current.run = false)}
+          />
+        </>
+      )}
 
       {/* CROSSHAIR */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

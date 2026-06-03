@@ -671,7 +671,41 @@ function WorldPage() {
           </div>
         )}
 
-        {hint && (
+        {uploadOpen && (
+          <div className="pointer-events-auto absolute left-1/2 top-24 w-[30rem] max-w-[95vw] -translate-x-1/2 rounded-sm border border-emerald-400/40 bg-black/90 p-4 backdrop-blur-md">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-[0.25em] text-emerald-300">▌ Operator Discoveries</div>
+              <button onClick={() => setUploadOpen(false)} className="text-[10px] text-chrome hover:text-white">✕</button>
+            </div>
+            <label className="mt-3 flex cursor-pointer flex-col items-center justify-center rounded-sm border border-dashed border-emerald-400/40 bg-emerald-400/5 px-4 py-6 text-center hover:bg-emerald-400/10">
+              <input
+                type="file" multiple accept=".md,.txt,.json,.csv,.tex,.log,text/*,application/json"
+                onChange={(e) => { handleUpload(e.target.files); e.target.value = ""; }}
+                className="sr-only"
+              />
+              <div className="text-[11px] font-bold text-emerald-200">drop / pick files to ingest</div>
+              <div className="mt-1 text-[9px] uppercase tracking-[0.25em] text-emerald-300/70">md · txt · json · csv · up to 1.5 MB · stays local</div>
+              <div className="mt-2 text-[9px] text-amber-200">+10 $DAT awarded per discovery</div>
+            </label>
+            <div className="mt-3 max-h-60 space-y-1 overflow-y-auto">
+              {discoveries.length === 0 && (
+                <div className="text-[10px] text-muted-foreground">// no discoveries yet — upload findings to seal them into the ledger</div>
+              )}
+              {discoveries.slice().reverse().map((d) => (
+                <div key={d.id} className="flex items-center justify-between rounded-sm border border-white/10 bg-black/40 px-2 py-1 text-[10px]">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="truncate text-emerald-200">{d.name}</div>
+                    <div className="text-[9px] text-chrome">{(d.size / 1024).toFixed(1)} KB · {new Date(d.uploadedAt).toLocaleString()}</div>
+                  </div>
+                  <button onClick={() => { removeDiscovery(d.id); setDiscoveries(readDiscoveries()); }}
+                    className="border border-rose-400/40 px-2 py-0.5 text-[9px] text-rose-300 hover:bg-rose-400/10">DEL</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-white/20 bg-black/70 px-5 py-4 text-center backdrop-blur-sm">
             <div className="text-[10px] uppercase tracking-[0.3em] text-chrome">Click to enter explore mode</div>
             <div className="mt-2 text-[11px] text-white">WASD walk · mouse look · Shift run · Esc release</div>

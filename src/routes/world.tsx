@@ -1,11 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { PointerLockControls, Sky, Text, Sparkles } from "@react-three/drei";
+import { PointerLockControls, Sky, Text, Sparkles, ContactShadows, Environment } from "@react-three/drei";
+import { EffectComposer, Bloom, Vignette, ChromaticAberration, SMAA, BrightnessContrast } from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import { useWorld, nextCost, getBreakthrough, getOfflineCapHours, setOfflineCapHours } from "@/lib/world-store";
-import { useGameplay, type WeaponId, type InventoryEntry } from "@/lib/world-gameplay";
+import { useGameplay, type InventoryEntry } from "@/lib/world-gameplay";
 import { readDat, subscribeDat, creditDat, writeDat } from "@/lib/dat-tokens";
+import { TouchJoystick, TouchButton, useIsTouch } from "@/components/touch-joystick";
+import { ingestFile, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
 
 export const Route = createFileRoute("/world")({
   component: WorldPage,
@@ -160,25 +164,40 @@ function Marketplace() {
   );
 }
 
+// External input refs shared with touch controls
+export interface InputState {
+  move: { x: number; y: number };  // -1..1 (y: forward+, back-)
+  look: { x: number; y: number };  // delta yaw / pitch per frame from touch pad
+  fire: boolean;
+  run: boolean;
+}
+
 // --------- Player with weapon firing ----------
-function Player({ onPosition, onMarketProx }: { onPosition: (p: THREE.Vector3) => void; onMarketProx: (near: boolean) => void }) {
+function Player({
+  onPosition, onMarketProx, input,
+}: {
+  onPosition: (p: THREE.Vector3) => void;
+  onMarketProx: (near: boolean) => void;
+  input: React.MutableRefObject<InputState>;
+}) {
   const { camera } = useThree();
   const keys = useRef<Record<string, boolean>>({});
   const velocity = useRef(new THREE.Vector3());
   const fire = useGameplay((s) => s.fire);
   const collect = useGameplay((s) => s.collect);
+  const fireCooldown = useRef(0);
+  const pitch = useRef(0);
+  const yaw = useRef(0);
 
   useEffect(() => {
     const d = (e: KeyboardEvent) => {
       keys.current[e.code] = true;
-      // weapon hotkeys
       if (e.code === "Digit1") useGameplay.getState().setWeapon("pulse");
       if (e.code === "Digit2") useGameplay.getState().setWeapon("lattice");
       if (e.code === "Digit3") useGameplay.getState().setWeapon("phase");
     };
     const u = (e: KeyboardEvent) => (keys.current[e.code] = false);
     const click = () => {
-      // fire toward camera forward
       const fwd = new THREE.Vector3();
       camera.getWorldDirection(fwd);
       fire({ x: camera.position.x, z: camera.position.z }, { x: fwd.x, z: fwd.z });
@@ -195,7 +214,18 @@ function Player({ onPosition, onMarketProx }: { onPosition: (p: THREE.Vector3) =
   }, [camera, fire]);
 
   useFrame((_, delta) => {
-    const speed = (keys.current["ShiftLeft"] ? 12 : 6) * delta;
+    // touch look — applied directly to camera euler
+    if (input.current.look.x || input.current.look.y) {
+      const euler = new THREE.Euler(0, 0, 0, "YXZ");
+      euler.setFromQuaternion(camera.quaternion);
+      euler.y -= input.current.look.x * delta * 2.5;
+      euler.x -= input.current.look.y * delta * 2.0;
+      euler.x = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, euler.x));
+      camera.quaternion.setFromEuler(euler);
+    }
+
+    const running = keys.current["ShiftLeft"] || input.current.run;
+    const speed = (running ? 12 : 6) * delta;
     const fwd = new THREE.Vector3();
     camera.getWorldDirection(fwd);
     fwd.y = 0; fwd.normalize();
@@ -205,14 +235,28 @@ function Player({ onPosition, onMarketProx }: { onPosition: (p: THREE.Vector3) =
     if (keys.current["KeyS"]) velocity.current.sub(fwd);
     if (keys.current["KeyD"]) velocity.current.add(right);
     if (keys.current["KeyA"]) velocity.current.sub(right);
-    velocity.current.normalize().multiplyScalar(speed);
+    // touch joystick
+    const m = input.current.move;
+    if (m.x || m.y) {
+      velocity.current.add(fwd.clone().multiplyScalar(-m.y));
+      velocity.current.add(right.clone().multiplyScalar(m.x));
+    }
+    if (velocity.current.lengthSq() > 0) velocity.current.normalize().multiplyScalar(speed);
     camera.position.add(velocity.current);
     camera.position.y = 2;
     onPosition(camera.position);
-    // auto-collect nearby pickups
     collect({ x: camera.position.x, z: camera.position.z });
-    // marketplace proximity
     onMarketProx(Math.hypot(camera.position.x, camera.position.z + 16) < 4.5);
+
+    // touch fire (auto-repeat while held)
+    fireCooldown.current -= delta * 1000;
+    if (input.current.fire && fireCooldown.current <= 0) {
+      const fwdv = new THREE.Vector3();
+      camera.getWorldDirection(fwdv);
+      fire({ x: camera.position.x, z: camera.position.z }, { x: fwdv.x, z: fwdv.z });
+      fireCooldown.current = 140;
+    }
+    void pitch; void yaw;
   });
   return null;
 }
@@ -241,7 +285,14 @@ function WeaponViewmodel() {
   );
 }
 
-function Scene({ onPosition, onMarketProx }: { onPosition: (p: THREE.Vector3) => void; onMarketProx: (n: boolean) => void }) {
+function Scene({
+  onPosition, onMarketProx, input, touch,
+}: {
+  onPosition: (p: THREE.Vector3) => void;
+  onMarketProx: (n: boolean) => void;
+  input: React.MutableRefObject<InputState>;
+  touch: boolean;
+}) {
   const bots = useWorld((s) => s.bots);
   const worldSize = useWorld((s) => s.worldSize);
   const unlocked = useWorld((s) => s.unlocked);
@@ -265,26 +316,41 @@ function Scene({ onPosition, onMarketProx }: { onPosition: (p: THREE.Vector3) =>
     };
   }), [unlocked]);
 
+  const groundSize = Math.max(80, worldSize * 1.6);
+
   return (
     <>
-      <fog attach="fog" args={["#06081a", 28, 110]} />
+      <fog attach="fog" args={["#06081a", 32, 130]} />
       <color attach="background" args={["#04050d"]} />
       <Sky distance={450000} sunPosition={[10, 4, 10]} turbidity={7} rayleigh={3} mieCoefficient={0.005} mieDirectionalG={0.85} />
-      <ambientLight intensity={0.32} />
-      <hemisphereLight args={["#7c3aed", "#0c0c1e", 0.5]} />
-      <directionalLight position={[20, 30, 10]} intensity={1.2} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-      <Ground size={Math.max(80, worldSize * 1.6)} />
-      <GridLines size={Math.max(80, worldSize * 1.6)} />
-      <Sparkles count={120} scale={[60, 18, 60]} size={1.4} color="#7c3aed" position={[0, 4, 0]} />
+      <Environment preset="night" />
+      <ambientLight intensity={0.28} />
+      <hemisphereLight args={["#7c3aed", "#0c0c1e", 0.55]} />
+      <directionalLight
+        position={[20, 30, 10]} intensity={1.4} castShadow
+        shadow-mapSize-width={2048} shadow-mapSize-height={2048}
+        shadow-bias={-0.0005}
+      />
+      <Ground size={groundSize} />
+      <GridLines size={groundSize} />
+      <ContactShadows position={[0, 0.02, 0]} opacity={0.55} scale={groundSize * 0.5} blur={2.6} far={20} resolution={1024} />
+      <Sparkles count={160} scale={[60, 18, 60]} size={1.6} color="#7c3aed" position={[0, 4, 0]} />
       {bots.map((b) => <Bot key={b.id} x={b.x} z={b.z} hue={b.hue} label={b.name} sublabel={b.role} />)}
       {buildings.map((b, i) => <Building key={i} {...b} />)}
       {badData.map((b) => <BadDataMesh key={b.id} x={b.x} z={b.z} hue={b.hue} hpRatio={b.hp / b.maxHp} />)}
       {pickups.map((p) => <PickupMesh key={p.id} x={p.x} z={p.z} kind={p.kind} rarity={p.rarity} />)}
       {shots.map((s) => <ShotTracer key={s.id} x1={s.x1} z1={s.z1} x2={s.x2} z2={s.z2} hue={s.hue} />)}
       <Marketplace />
-      <Player onPosition={onPosition} onMarketProx={onMarketProx} />
+      <Player onPosition={onPosition} onMarketProx={onMarketProx} input={input} />
       <WeaponViewmodel />
-      <PointerLockControls />
+      {!touch && <PointerLockControls />}
+      <EffectComposer multisampling={0}>
+        <SMAA />
+        <Bloom intensity={0.9} luminanceThreshold={0.35} luminanceSmoothing={0.85} mipmapBlur radius={0.85} />
+        <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0006, 0.0009]} radialModulation={false} modulationOffset={0} />
+        <BrightnessContrast brightness={0.02} contrast={0.12} />
+        <Vignette eskil={false} offset={0.18} darkness={0.85} />
+      </EffectComposer>
     </>
   );
 }
@@ -326,13 +392,23 @@ function WorldPage() {
   const [marketOpen, setMarketOpen] = useState(false);
   const [marketNear, setMarketNear] = useState(false);
   const [pos, setPos] = useState({ x: 0, z: 18 });
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [discoveries, setDiscoveries] = useState<Discovery[]>(() => readDiscoveries());
+
+  const touch = useIsTouch();
+  const input = useRef<InputState>({
+    move: { x: 0, y: 0 }, look: { x: 0, y: 0 }, fire: false, run: false,
+  });
+  const onMove = useCallback((v: { x: number; y: number }) => { input.current.move = v; }, []);
+  const onLook = useCallback((v: { x: number; y: number }) => { input.current.look = v; }, []);
 
   useEffect(() => {
     init();
     initGame();
     const stop = startLoop();
     const unsub = subscribeDat(setDat);
-    return () => { stop(); unsub(); };
+    const unsubD = subscribeDiscoveries(() => setDiscoveries(readDiscoveries()));
+    return () => { stop(); unsub(); unsubD(); };
   }, [init, initGame, startLoop]);
 
   const cost = nextCost(unlocked.length);
@@ -343,14 +419,46 @@ function WorldPage() {
   const activeW = weapons.find((w) => w.id === activeWeapon)!;
   const boostMs = boost ? Math.max(0, boost.expiresAt - Date.now()) : 0;
 
+  const handleUpload = async (files: FileList | null) => {
+    if (!files) return;
+    for (const f of Array.from(files)) {
+      await ingestFile(f, "operator-discovery");
+    }
+    setDiscoveries(readDiscoveries());
+    creditDat(10 * files.length);
+  };
+
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black text-white">
-      <Canvas shadows camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
-        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }}>
+      <Canvas shadows dpr={[1, 2]} camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
+        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2, powerPreference: "high-performance" }}>
         <Suspense fallback={null}>
-          <Scene onPosition={(p) => setPos({ x: p.x, z: p.z })} onMarketProx={setMarketNear} />
+          <Scene
+            onPosition={(p) => setPos({ x: p.x, z: p.z })}
+            onMarketProx={setMarketNear}
+            input={input}
+            touch={touch}
+          />
         </Suspense>
       </Canvas>
+
+      {/* TOUCH CONTROLS — only on touch devices */}
+      {touch && (
+        <>
+          <TouchJoystick side="left" onChange={onMove} label="WALK" />
+          <TouchJoystick side="right" onChange={onLook} label="LOOK" />
+          <TouchButton
+            side="right" bottom={150} label="FIRE" color="#22d3ee"
+            onPress={() => (input.current.fire = true)}
+            onRelease={() => (input.current.fire = false)}
+          />
+          <TouchButton
+            side="left" bottom={150} label="RUN" color="#a78bfa"
+            onPress={() => (input.current.run = true)}
+            onRelease={() => (input.current.run = false)}
+          />
+        </>
+      )}
 
       {/* CROSSHAIR */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -389,6 +497,9 @@ function WorldPage() {
             </button>
             <button onClick={() => setSwarmOpen((v) => !v)} className="rounded-sm border border-cyan-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-cyan-200 hover:bg-cyan-500/10">
               {swarmOpen ? "Close swarm" : "Self-healing swarm"}
+            </button>
+            <button onClick={() => setUploadOpen((v) => !v)} className="rounded-sm border border-emerald-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-emerald-200 hover:bg-emerald-500/10">
+              {uploadOpen ? "Close uploads" : `Upload discovery (${discoveries.length})`}
             </button>
             <Link to="/" className="rounded-sm border border-white/15 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/10">
               ← Back to main site
@@ -560,10 +671,44 @@ function WorldPage() {
           </div>
         )}
 
+        {uploadOpen && (
+          <div className="pointer-events-auto absolute left-1/2 top-24 w-[30rem] max-w-[95vw] -translate-x-1/2 rounded-sm border border-emerald-400/40 bg-black/90 p-4 backdrop-blur-md">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-[0.25em] text-emerald-300">▌ Operator Discoveries</div>
+              <button onClick={() => setUploadOpen(false)} className="text-[10px] text-chrome hover:text-white">✕</button>
+            </div>
+            <label className="mt-3 flex cursor-pointer flex-col items-center justify-center rounded-sm border border-dashed border-emerald-400/40 bg-emerald-400/5 px-4 py-6 text-center hover:bg-emerald-400/10">
+              <input
+                type="file" multiple accept=".md,.txt,.json,.csv,.tex,.log,text/*,application/json"
+                onChange={(e) => { handleUpload(e.target.files); e.target.value = ""; }}
+                className="sr-only"
+              />
+              <div className="text-[11px] font-bold text-emerald-200">drop / pick files to ingest</div>
+              <div className="mt-1 text-[9px] uppercase tracking-[0.25em] text-emerald-300/70">md · txt · json · csv · up to 1.5 MB · stays local</div>
+              <div className="mt-2 text-[9px] text-amber-200">+10 $DAT awarded per discovery</div>
+            </label>
+            <div className="mt-3 max-h-60 space-y-1 overflow-y-auto">
+              {discoveries.length === 0 && (
+                <div className="text-[10px] text-muted-foreground">// no discoveries yet — upload findings to seal them into the ledger</div>
+              )}
+              {discoveries.slice().reverse().map((d) => (
+                <div key={d.id} className="flex items-center justify-between rounded-sm border border-white/10 bg-black/40 px-2 py-1 text-[10px]">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="truncate text-emerald-200">{d.name}</div>
+                    <div className="text-[9px] text-chrome">{(d.size / 1024).toFixed(1)} KB · {new Date(d.uploadedAt).toLocaleString()}</div>
+                  </div>
+                  <button onClick={() => { removeDiscovery(d.id); setDiscoveries(readDiscoveries()); }}
+                    className="border border-rose-400/40 px-2 py-0.5 text-[9px] text-rose-300 hover:bg-rose-400/10">DEL</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {hint && (
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-white/20 bg-black/70 px-5 py-4 text-center backdrop-blur-sm">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-chrome">Click to enter explore mode</div>
-            <div className="mt-2 text-[11px] text-white">WASD walk · mouse look · Shift run · Esc release</div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-chrome">{touch ? "Tap to dive in" : "Click to enter explore mode"}</div>
+            <div className="mt-2 text-[11px] text-white">{touch ? "Left stick walk · Right stick look · FIRE button shoots" : "WASD walk · mouse look · Shift run · Esc release"}</div>
             <div className="mt-1 text-[11px] text-cyan-300">CLICK to fire · 1·2·3 swap weapons</div>
             <div className="mt-1 text-[10px] text-amber-300">walk over glowing pickups to loot · go south to marketplace</div>
           </div>

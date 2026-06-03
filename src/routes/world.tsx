@@ -705,10 +705,10 @@ function WorldPage() {
           </div>
         )}
 
-
+        {hint && (
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-white/20 bg-black/70 px-5 py-4 text-center backdrop-blur-sm">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-chrome">Click to enter explore mode</div>
-            <div className="mt-2 text-[11px] text-white">WASD walk · mouse look · Shift run · Esc release</div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-chrome">{touch ? "Tap to dive in" : "Click to enter explore mode"}</div>
+            <div className="mt-2 text-[11px] text-white">{touch ? "Left stick walk · Right stick look · FIRE button shoots" : "WASD walk · mouse look · Shift run · Esc release"}</div>
             <div className="mt-1 text-[11px] text-cyan-300">CLICK to fire · 1·2·3 swap weapons</div>
             <div className="mt-1 text-[10px] text-amber-300">walk over glowing pickups to loot · go south to marketplace</div>
           </div>

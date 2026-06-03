@@ -13,7 +13,7 @@ const BOOT_SEQUENCE = [
 ];
 
 const TICKER_LINES = [
-  `[PORTAL] auth_token = quantara_core_root_77 · verified`,
+  `[PORTAL] auth_token = •••••••••••• · sealed · verified`,
   `[FUEL] +0.001 GB harvested from raw internet frequencies`,
   `[VAULT] SELF_HEALING_CEMENT_V4 logged → MATERIALS_SCIENCE`,
   `[VAULT] INFINITE_LATTICE_BATTERY logged → ENERGY_STORAGE`,

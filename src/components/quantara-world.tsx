@@ -273,8 +273,8 @@ export function LivingPlanet() {
   const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled, 4 reconnecting
   const [wsRetry, setWsRetry] = useState(0);
   const [authKey, setAuthKey] = useState<string>(() => {
-    if (typeof window === "undefined") return "quantara_core_root_77";
-    return window.localStorage.getItem("quantara.authKey") || "quantara_core_root_77";
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem("quantara.authKey") || "";
   });
   const [keyDraft, setKeyDraft] = useState(authKey);
   const [keyEditing, setKeyEditing] = useState(false);
@@ -282,10 +282,21 @@ export function LivingPlanet() {
   const [pdfTheme, setPdfTheme] = useState<"ancestral" | "noir" | "holo">("ancestral");
 
   const saveKey = () => {
-    const v = keyDraft.trim() || "quantara_core_root_77";
+    const v = keyDraft.trim();
     setAuthKey(v);
-    try { window.localStorage.setItem("quantara.authKey", v); } catch {}
+    try {
+      if (v) window.localStorage.setItem("quantara.authKey", v);
+      else window.localStorage.removeItem("quantara.authKey");
+    } catch {}
     setKeyEditing(false);
+  };
+
+  const clearKey = () => {
+    setAuthKey("");
+    setKeyDraft("");
+    try { window.localStorage.removeItem("quantara.authKey"); } catch {}
+    setKeyEditing(false);
+    setKeyVisible(false);
   };
 
   const PDF_THEMES = {

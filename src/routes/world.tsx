@@ -1,11 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { PointerLockControls, Sky, Text, Sparkles } from "@react-three/drei";
+import { PointerLockControls, Sky, Text, Sparkles, ContactShadows, Environment } from "@react-three/drei";
+import { EffectComposer, Bloom, Vignette, ChromaticAberration, SMAA, BrightnessContrast } from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import { useWorld, nextCost, getBreakthrough, getOfflineCapHours, setOfflineCapHours } from "@/lib/world-store";
-import { useGameplay, type WeaponId, type InventoryEntry } from "@/lib/world-gameplay";
+import { useGameplay, type InventoryEntry } from "@/lib/world-gameplay";
 import { readDat, subscribeDat, creditDat, writeDat } from "@/lib/dat-tokens";
+import { TouchJoystick, TouchButton, useIsTouch } from "@/components/touch-joystick";
+import { ingestFile, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
 
 export const Route = createFileRoute("/world")({
   component: WorldPage,

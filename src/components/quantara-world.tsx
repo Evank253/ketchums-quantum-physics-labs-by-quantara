@@ -339,7 +339,7 @@ export function LivingPlanet() {
       </style></head><body>
       <h1>QUANTARA-CORE · ANCESTRAL FOOTPRINT BROADCAST<span class="badge">${t.label.toUpperCase()}</span></h1>
       <div class="meta">Filed: ${stamp} · Architect: Evan Ketchum · Status: Proprietary Infrastructure</div>
-      <div class="key">ANCESTRAL_KEY · ${esc(authKey)}</div>
+      <div class="key">ANCESTRAL_KEY · ${authKey ? esc(authKey) : "•••••••••••• [SEALED · operator-only]"}</div>
       <h2>Boot Sequence</h2><pre>${BOOT_SEQUENCE.map(esc).join("\n")}</pre>
       <h2>Launch Sequence</h2><pre>${LAUNCH_STEPS.map(esc).join("\n")}</pre>
       <h2>server.py</h2><pre>${esc(SERVER_PY)}</pre>

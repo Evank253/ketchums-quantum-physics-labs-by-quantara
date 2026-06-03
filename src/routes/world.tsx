@@ -164,25 +164,40 @@ function Marketplace() {
   );
 }
 
+// External input refs shared with touch controls
+export interface InputState {
+  move: { x: number; y: number };  // -1..1 (y: forward+, back-)
+  look: { x: number; y: number };  // delta yaw / pitch per frame from touch pad
+  fire: boolean;
+  run: boolean;
+}
+
 // --------- Player with weapon firing ----------
-function Player({ onPosition, onMarketProx }: { onPosition: (p: THREE.Vector3) => void; onMarketProx: (near: boolean) => void }) {
+function Player({
+  onPosition, onMarketProx, input,
+}: {
+  onPosition: (p: THREE.Vector3) => void;
+  onMarketProx: (near: boolean) => void;
+  input: React.MutableRefObject<InputState>;
+}) {
   const { camera } = useThree();
   const keys = useRef<Record<string, boolean>>({});
   const velocity = useRef(new THREE.Vector3());
   const fire = useGameplay((s) => s.fire);
   const collect = useGameplay((s) => s.collect);
+  const fireCooldown = useRef(0);
+  const pitch = useRef(0);
+  const yaw = useRef(0);
 
   useEffect(() => {
     const d = (e: KeyboardEvent) => {
       keys.current[e.code] = true;
-      // weapon hotkeys
       if (e.code === "Digit1") useGameplay.getState().setWeapon("pulse");
       if (e.code === "Digit2") useGameplay.getState().setWeapon("lattice");
       if (e.code === "Digit3") useGameplay.getState().setWeapon("phase");
     };
     const u = (e: KeyboardEvent) => (keys.current[e.code] = false);
     const click = () => {
-      // fire toward camera forward
       const fwd = new THREE.Vector3();
       camera.getWorldDirection(fwd);
       fire({ x: camera.position.x, z: camera.position.z }, { x: fwd.x, z: fwd.z });
@@ -199,7 +214,18 @@ function Player({ onPosition, onMarketProx }: { onPosition: (p: THREE.Vector3) =
   }, [camera, fire]);
 
   useFrame((_, delta) => {
-    const speed = (keys.current["ShiftLeft"] ? 12 : 6) * delta;
+    // touch look — applied directly to camera euler
+    if (input.current.look.x || input.current.look.y) {
+      const euler = new THREE.Euler(0, 0, 0, "YXZ");
+      euler.setFromQuaternion(camera.quaternion);
+      euler.y -= input.current.look.x * delta * 2.5;
+      euler.x -= input.current.look.y * delta * 2.0;
+      euler.x = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, euler.x));
+      camera.quaternion.setFromEuler(euler);
+    }
+
+    const running = keys.current["ShiftLeft"] || input.current.run;
+    const speed = (running ? 12 : 6) * delta;
     const fwd = new THREE.Vector3();
     camera.getWorldDirection(fwd);
     fwd.y = 0; fwd.normalize();
@@ -209,14 +235,28 @@ function Player({ onPosition, onMarketProx }: { onPosition: (p: THREE.Vector3) =
     if (keys.current["KeyS"]) velocity.current.sub(fwd);
     if (keys.current["KeyD"]) velocity.current.add(right);
     if (keys.current["KeyA"]) velocity.current.sub(right);
-    velocity.current.normalize().multiplyScalar(speed);
+    // touch joystick
+    const m = input.current.move;
+    if (m.x || m.y) {
+      velocity.current.add(fwd.clone().multiplyScalar(-m.y));
+      velocity.current.add(right.clone().multiplyScalar(m.x));
+    }
+    if (velocity.current.lengthSq() > 0) velocity.current.normalize().multiplyScalar(speed);
     camera.position.add(velocity.current);
     camera.position.y = 2;
     onPosition(camera.position);
-    // auto-collect nearby pickups
     collect({ x: camera.position.x, z: camera.position.z });
-    // marketplace proximity
     onMarketProx(Math.hypot(camera.position.x, camera.position.z + 16) < 4.5);
+
+    // touch fire (auto-repeat while held)
+    fireCooldown.current -= delta * 1000;
+    if (input.current.fire && fireCooldown.current <= 0) {
+      const fwdv = new THREE.Vector3();
+      camera.getWorldDirection(fwdv);
+      fire({ x: camera.position.x, z: camera.position.z }, { x: fwdv.x, z: fwdv.z });
+      fireCooldown.current = 140;
+    }
+    void pitch; void yaw;
   });
   return null;
 }

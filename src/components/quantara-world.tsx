@@ -1,4 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ensureKey, readKey, readKeyMeta, readAuditLog, subscribeAuth,
+  rotateKey, sealKey, importKey, logReveal, logHide, logExport,
+  setRotationMs, exportAuditCSV, clearAudit, fingerprint,
+  ROTATION_PRESETS, type AuditEntry, type KeyMeta,
+} from "@/lib/auth-key";
 
 // ---------------------------------------------------------------------------
 // QUANTARA-CORE ANCESTRAL FOOTPRINT BROADCAST

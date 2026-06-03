@@ -13,7 +13,7 @@ const BOOT_SEQUENCE = [
 ];
 
 const TICKER_LINES = [
-  `[PORTAL] auth_token = quantara_core_root_77 · verified`,
+  `[PORTAL] auth_token = •••••••••••• · sealed · verified`,
   `[FUEL] +0.001 GB harvested from raw internet frequencies`,
   `[VAULT] SELF_HEALING_CEMENT_V4 logged → MATERIALS_SCIENCE`,
   `[VAULT] INFINITE_LATTICE_BATTERY logged → ENERGY_STORAGE`,
@@ -33,7 +33,7 @@ class QuantaraCoreServer:
     def __init__(self, host='0.0.0.0', port=8080):
         self.host = host
         self.port = port
-        self.MASTER_CREATOR_KEY = "quantara_core_root_77"
+        self.MASTER_CREATOR_KEY = os.environ["QUANTARA_MASTER_KEY"]  # never hard-code · load from env
         self.world_state = {
             "system_coherence": 0.942,
             "total_internet_fuel_harvested_gb": 1524.85,
@@ -177,7 +177,7 @@ const CLIENT_JS = `class QuantaraWebClient {
 
 const clientInstance = new QuantaraWebClient(
   \`ws://\${window.location.hostname}:8080\`,
-  "quantara_core_root_77"
+  localStorage.getItem("quantara.authKey") || ""   // operator-supplied · never shipped in source
 );
 window.addEventListener('DOMContentLoaded', () => clientInstance.init());
 function triggerSiphonEvent(){ clientInstance.siphonCurrentFootnote(); }
@@ -273,8 +273,8 @@ export function LivingPlanet() {
   const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled, 4 reconnecting
   const [wsRetry, setWsRetry] = useState(0);
   const [authKey, setAuthKey] = useState<string>(() => {
-    if (typeof window === "undefined") return "quantara_core_root_77";
-    return window.localStorage.getItem("quantara.authKey") || "quantara_core_root_77";
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem("quantara.authKey") || "";
   });
   const [keyDraft, setKeyDraft] = useState(authKey);
   const [keyEditing, setKeyEditing] = useState(false);
@@ -282,10 +282,21 @@ export function LivingPlanet() {
   const [pdfTheme, setPdfTheme] = useState<"ancestral" | "noir" | "holo">("ancestral");
 
   const saveKey = () => {
-    const v = keyDraft.trim() || "quantara_core_root_77";
+    const v = keyDraft.trim();
     setAuthKey(v);
-    try { window.localStorage.setItem("quantara.authKey", v); } catch {}
+    try {
+      if (v) window.localStorage.setItem("quantara.authKey", v);
+      else window.localStorage.removeItem("quantara.authKey");
+    } catch {}
     setKeyEditing(false);
+  };
+
+  const clearKey = () => {
+    setAuthKey("");
+    setKeyDraft("");
+    try { window.localStorage.removeItem("quantara.authKey"); } catch {}
+    setKeyEditing(false);
+    setKeyVisible(false);
   };
 
   const PDF_THEMES = {
@@ -328,7 +339,7 @@ export function LivingPlanet() {
       </style></head><body>
       <h1>QUANTARA-CORE · ANCESTRAL FOOTPRINT BROADCAST<span class="badge">${t.label.toUpperCase()}</span></h1>
       <div class="meta">Filed: ${stamp} · Architect: Evan Ketchum · Status: Proprietary Infrastructure</div>
-      <div class="key">ANCESTRAL_KEY · ${esc(authKey)}</div>
+      <div class="key">ANCESTRAL_KEY · ${authKey ? esc(authKey) : "•••••••••••• [SEALED · operator-only]"}</div>
       <h2>Boot Sequence</h2><pre>${BOOT_SEQUENCE.map(esc).join("\n")}</pre>
       <h2>Launch Sequence</h2><pre>${LAUNCH_STEPS.map(esc).join("\n")}</pre>
       <h2>server.py</h2><pre>${esc(SERVER_PY)}</pre>
@@ -641,12 +652,22 @@ export function LivingPlanet() {
                       {keyVisible ? "HIDE" : "REVEAL"}
                     </button>
                     {!keyEditing ? (
-                      <button
-                        onClick={() => { setKeyDraft(authKey); setKeyEditing(true); }}
-                        className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent"
-                      >
-                        EDIT
-                      </button>
+                      <>
+                        <button
+                          onClick={() => { setKeyDraft(authKey); setKeyEditing(true); }}
+                          className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent"
+                        >
+                          {authKey ? "EDIT" : "SET KEY"}
+                        </button>
+                        {authKey && (
+                          <button
+                            onClick={clearKey}
+                            className="border border-rose-400/40 px-2 py-0.5 text-[9px] text-rose-300 hover:bg-rose-400/10"
+                          >
+                            SEAL
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <>
                         <button onClick={saveKey} className="border border-emerald-400/40 px-2 py-0.5 text-[9px] text-emerald-300 hover:bg-emerald-400/10">SAVE</button>
@@ -657,18 +678,27 @@ export function LivingPlanet() {
                 </div>
                 {keyEditing ? (
                   <input
+                    type="password"
                     value={keyDraft}
                     onChange={(e) => setKeyDraft(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && saveKey()}
                     autoFocus
+                    placeholder="paste your private master key · stored only in this browser"
                     className="mt-2 w-full rounded-sm border border-white/10 bg-background px-2 py-1 font-mono text-[11px] text-white outline-none focus:border-accent/40"
                   />
                 ) : (
                   <div className="mt-2 break-all text-[11px]">
-                    ANCESTRAL_KEY · <span className="text-cyan-100">{keyVisible ? authKey : "•".repeat(Math.max(8, authKey.length))}</span>
+                    ANCESTRAL_KEY ·{" "}
+                    {authKey ? (
+                      <span className="text-cyan-100">{keyVisible ? authKey : "•".repeat(Math.max(12, authKey.length))}</span>
+                    ) : (
+                      <span className="text-rose-300">[ SEALED · no key on this device ]</span>
+                    )}
                   </div>
                 )}
-                <div className="mt-1 text-[9px] text-chrome/70">sovereign gatekeeper armed · persisted locally · injected into client handshake</div>
+                <div className="mt-1 text-[9px] text-chrome/70">
+                  zero-trust · never embedded in source · never transmitted to Lovable · lives only in your browser's localStorage on this device
+                </div>
               </div>
             </div>
           </div>

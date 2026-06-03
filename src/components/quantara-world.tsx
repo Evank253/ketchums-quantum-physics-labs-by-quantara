@@ -33,7 +33,7 @@ class QuantaraCoreServer:
     def __init__(self, host='0.0.0.0', port=8080):
         self.host = host
         self.port = port
-        self.MASTER_CREATOR_KEY = "quantara_core_root_77"
+        self.MASTER_CREATOR_KEY = os.environ["QUANTARA_MASTER_KEY"]  # never hard-code · load from env
         self.world_state = {
             "system_coherence": 0.942,
             "total_internet_fuel_harvested_gb": 1524.85,

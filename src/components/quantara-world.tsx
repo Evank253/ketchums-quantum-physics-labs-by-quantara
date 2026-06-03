@@ -652,12 +652,22 @@ export function LivingPlanet() {
                       {keyVisible ? "HIDE" : "REVEAL"}
                     </button>
                     {!keyEditing ? (
-                      <button
-                        onClick={() => { setKeyDraft(authKey); setKeyEditing(true); }}
-                        className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent"
-                      >
-                        EDIT
-                      </button>
+                      <>
+                        <button
+                          onClick={() => { setKeyDraft(authKey); setKeyEditing(true); }}
+                          className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent"
+                        >
+                          {authKey ? "EDIT" : "SET KEY"}
+                        </button>
+                        {authKey && (
+                          <button
+                            onClick={clearKey}
+                            className="border border-rose-400/40 px-2 py-0.5 text-[9px] text-rose-300 hover:bg-rose-400/10"
+                          >
+                            SEAL
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <>
                         <button onClick={saveKey} className="border border-emerald-400/40 px-2 py-0.5 text-[9px] text-emerald-300 hover:bg-emerald-400/10">SAVE</button>
@@ -668,18 +678,27 @@ export function LivingPlanet() {
                 </div>
                 {keyEditing ? (
                   <input
+                    type="password"
                     value={keyDraft}
                     onChange={(e) => setKeyDraft(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && saveKey()}
                     autoFocus
+                    placeholder="paste your private master key · stored only in this browser"
                     className="mt-2 w-full rounded-sm border border-white/10 bg-background px-2 py-1 font-mono text-[11px] text-white outline-none focus:border-accent/40"
                   />
                 ) : (
                   <div className="mt-2 break-all text-[11px]">
-                    ANCESTRAL_KEY · <span className="text-cyan-100">{keyVisible ? authKey : "•".repeat(Math.max(8, authKey.length))}</span>
+                    ANCESTRAL_KEY ·{" "}
+                    {authKey ? (
+                      <span className="text-cyan-100">{keyVisible ? authKey : "•".repeat(Math.max(12, authKey.length))}</span>
+                    ) : (
+                      <span className="text-rose-300">[ SEALED · no key on this device ]</span>
+                    )}
                   </div>
                 )}
-                <div className="mt-1 text-[9px] text-chrome/70">sovereign gatekeeper armed · persisted locally · injected into client handshake</div>
+                <div className="mt-1 text-[9px] text-chrome/70">
+                  zero-trust · never embedded in source · never transmitted to Lovable · lives only in your browser's localStorage on this device
+                </div>
               </div>
             </div>
           </div>

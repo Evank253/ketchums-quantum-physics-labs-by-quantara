@@ -278,32 +278,85 @@ export function LivingPlanet() {
   const [tickerIdx, setTickerIdx] = useState(0);
   const [wsPhase, setWsPhase] = useState(0); // 0 connecting, 1 handshaking, 2 live, 3 throttled, 4 reconnecting
   const [wsRetry, setWsRetry] = useState(0);
-  const [authKey, setAuthKey] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    return window.localStorage.getItem("quantara.authKey") || "";
-  });
-  const [keyDraft, setKeyDraft] = useState(authKey);
+  const [authKey, setAuthKey] = useState<string>("");
+  const [keyMeta, setKeyMeta] = useState<KeyMeta | null>(null);
+  const [keyFp, setKeyFp] = useState<string>("------------");
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [keyDraft, setKeyDraft] = useState("");
   const [keyEditing, setKeyEditing] = useState(false);
   const [keyVisible, setKeyVisible] = useState(false);
   const [pdfTheme, setPdfTheme] = useState<"ancestral" | "noir" | "holo">("ancestral");
+  const [, setNowTick] = useState(0);
 
-  const saveKey = () => {
+  // bootstrap: ensure a rotating key exists and subscribe to lifecycle events
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      await ensureKey();
+      if (!alive) return;
+      const k = readKey();
+      setAuthKey(k);
+      setKeyMeta(readKeyMeta());
+      setAudit(readAuditLog());
+      setKeyFp(await fingerprint(k));
+    })();
+    const unsub = subscribeAuth(async () => {
+      const k = readKey();
+      setAuthKey(k);
+      setKeyMeta(readKeyMeta());
+      setAudit(readAuditLog());
+      setKeyFp(await fingerprint(k));
+    });
+    // tick every 30s so "rotates in" countdown stays live + triggers auto-rotation check
+    const t = setInterval(async () => {
+      setNowTick((n) => n + 1);
+      await ensureKey();
+    }, 30_000);
+    return () => { alive = false; unsub(); clearInterval(t); };
+  }, []);
+
+  const saveKey = async () => {
     const v = keyDraft.trim();
-    setAuthKey(v);
-    try {
-      if (v) window.localStorage.setItem("quantara.authKey", v);
-      else window.localStorage.removeItem("quantara.authKey");
-    } catch {}
+    if (v) await importKey(v);
     setKeyEditing(false);
   };
 
-  const clearKey = () => {
-    setAuthKey("");
+  const clearKey = async () => {
+    await sealKey();
     setKeyDraft("");
-    try { window.localStorage.removeItem("quantara.authKey"); } catch {}
     setKeyEditing(false);
     setKeyVisible(false);
   };
+
+  const handleRotate = async () => { await rotateKey("rotate"); };
+  const handleReveal = async () => {
+    const next = !keyVisible;
+    setKeyVisible(next);
+    if (next) await logReveal(); else await logHide();
+  };
+  const handleExportAudit = async () => {
+    await logExport();
+    const blob = new Blob([exportAuditCSV()], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `quantara-auth-audit-${Date.now()}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  const rotatesIn = useMemo(() => {
+    if (!keyMeta) return "—";
+    const ms = keyMeta.rotatesAt - Date.now();
+    if (ms <= 0) return "rotating…";
+    const s = Math.floor(ms / 1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m ${s % 60}s`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ${m % 60}m`;
+    return `${Math.floor(h / 24)}d ${h % 24}h`;
+  }, [keyMeta, audit]);
+
 
   const PDF_THEMES = {
     ancestral: {

@@ -9,7 +9,9 @@ import { useWorld, nextCost, getBreakthrough, getOfflineCapHours, setOfflineCapH
 import { useGameplay, type InventoryEntry } from "@/lib/world-gameplay";
 import { readDat, subscribeDat, creditDat, writeDat } from "@/lib/dat-tokens";
 import { TouchJoystick, TouchButton, useIsTouch } from "@/components/touch-joystick";
-import { ingestFile, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
+import { enqueueUpload, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
+import { useQuality, type QualityTier } from "@/lib/quality";
+import { ThreatWatch } from "@/components/threat-watch";
 
 export const Route = createFileRoute("/world")({
   component: WorldPage,
@@ -318,23 +320,24 @@ function Scene({
 
   const groundSize = Math.max(80, worldSize * 1.6);
 
+  const q = useQuality((s) => s.settings);
   return (
     <>
       <fog attach="fog" args={["#06081a", 32, 130]} />
       <color attach="background" args={["#04050d"]} />
       <Sky distance={450000} sunPosition={[10, 4, 10]} turbidity={7} rayleigh={3} mieCoefficient={0.005} mieDirectionalG={0.85} />
-      <Environment preset="night" />
+      {q.environment && <Environment preset="night" />}
       <ambientLight intensity={0.28} />
       <hemisphereLight args={["#7c3aed", "#0c0c1e", 0.55]} />
       <directionalLight
-        position={[20, 30, 10]} intensity={1.4} castShadow
-        shadow-mapSize-width={2048} shadow-mapSize-height={2048}
+        position={[20, 30, 10]} intensity={1.4} castShadow={q.shadows}
+        shadow-mapSize-width={q.shadows ? 2048 : 512} shadow-mapSize-height={q.shadows ? 2048 : 512}
         shadow-bias={-0.0005}
       />
       <Ground size={groundSize} />
       <GridLines size={groundSize} />
-      <ContactShadows position={[0, 0.02, 0]} opacity={0.55} scale={groundSize * 0.5} blur={2.6} far={20} resolution={1024} />
-      <Sparkles count={160} scale={[60, 18, 60]} size={1.6} color="#7c3aed" position={[0, 4, 0]} />
+      {q.contactShadows && <ContactShadows position={[0, 0.02, 0]} opacity={0.55} scale={groundSize * 0.5} blur={2.6} far={20} resolution={1024} />}
+      {q.sparkles && <Sparkles count={160} scale={[60, 18, 60]} size={1.6} color="#7c3aed" position={[0, 4, 0]} />}
       {bots.map((b) => <Bot key={b.id} x={b.x} z={b.z} hue={b.hue} label={b.name} sublabel={b.role} />)}
       {buildings.map((b, i) => <Building key={i} {...b} />)}
       {badData.map((b) => <BadDataMesh key={b.id} x={b.x} z={b.z} hue={b.hue} hpRatio={b.hp / b.maxHp} />)}
@@ -344,13 +347,21 @@ function Scene({
       <Player onPosition={onPosition} onMarketProx={onMarketProx} input={input} />
       <WeaponViewmodel />
       {!touch && <PointerLockControls />}
-      <EffectComposer multisampling={0}>
-        <SMAA />
-        <Bloom intensity={0.9} luminanceThreshold={0.35} luminanceSmoothing={0.85} mipmapBlur radius={0.85} />
-        <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0006, 0.0009]} radialModulation={false} modulationOffset={0} />
-        <BrightnessContrast brightness={0.02} contrast={0.12} />
-        <Vignette eskil={false} offset={0.18} darkness={0.85} />
-      </EffectComposer>
+      {q.postFx && (q.bloom ? (
+        <EffectComposer multisampling={q.msaa ? 4 : 0}>
+          <SMAA />
+          <Bloom intensity={0.9} luminanceThreshold={0.35} luminanceSmoothing={0.85} mipmapBlur radius={0.85} />
+          <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0006, 0.0009]} radialModulation={false} modulationOffset={0} />
+          <BrightnessContrast brightness={0.02} contrast={0.12} />
+          <Vignette eskil={false} offset={0.18} darkness={0.85} />
+        </EffectComposer>
+      ) : (
+        <EffectComposer multisampling={q.msaa ? 4 : 0}>
+          <SMAA />
+          <BrightnessContrast brightness={0.02} contrast={0.12} />
+          <Vignette eskil={false} offset={0.18} darkness={0.85} />
+        </EffectComposer>
+      ))}
     </>
   );
 }
@@ -394,6 +405,10 @@ function WorldPage() {
   const [pos, setPos] = useState({ x: 0, z: 18 });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [discoveries, setDiscoveries] = useState<Discovery[]>(() => readDiscoveries());
+  const [threatOpen, setThreatOpen] = useState(false);
+  const qualityTier = useQuality((s) => s.tier);
+  const qualitySettings = useQuality((s) => s.settings);
+  const setQuality = useQuality((s) => s.setTier);
 
   const touch = useIsTouch();
   const input = useRef<InputState>({
@@ -419,18 +434,19 @@ function WorldPage() {
   const activeW = weapons.find((w) => w.id === activeWeapon)!;
   const boostMs = boost ? Math.max(0, boost.expiresAt - Date.now()) : 0;
 
-  const handleUpload = async (files: FileList | null) => {
+  const handleUpload = (files: FileList | null) => {
     if (!files) return;
     for (const f of Array.from(files)) {
-      await ingestFile(f, "operator-discovery");
+      enqueueUpload(f, "operator-discovery");
     }
-    setDiscoveries(readDiscoveries());
+    // soft refresh after queue drains
+    setTimeout(() => setDiscoveries(readDiscoveries()), 300);
     creditDat(10 * files.length);
   };
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black text-white">
-      <Canvas shadows dpr={[1, 2]} camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
+      <Canvas shadows={qualitySettings.shadows} dpr={qualitySettings.dpr} camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2, powerPreference: "high-performance" }}>
         <Suspense fallback={null}>
           <Scene
@@ -501,6 +517,20 @@ function WorldPage() {
             <button onClick={() => setUploadOpen((v) => !v)} className="rounded-sm border border-emerald-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-emerald-200 hover:bg-emerald-500/10">
               {uploadOpen ? "Close uploads" : `Upload discovery (${discoveries.length})`}
             </button>
+            <button onClick={() => setThreatOpen((v) => !v)} className="rounded-sm border border-rose-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-rose-200 hover:bg-rose-500/10">
+              {threatOpen ? "Close watchlist" : "Threat watchlist"}
+            </button>
+            <div className="rounded-sm border border-white/15 bg-black/55 px-3 py-2">
+              <div className="text-[9px] uppercase tracking-[0.25em] text-chrome">Quality</div>
+              <div className="mt-1 flex gap-1">
+                {(["low","medium","high","ultra"] as QualityTier[]).map((t) => (
+                  <button key={t} onClick={() => setQuality(t)}
+                    className={`flex-1 border px-1 py-0.5 text-[9px] uppercase tracking-[0.15em] ${qualityTier === t ? "border-cyan-400 bg-cyan-400/15 text-cyan-200" : "border-white/15 text-white/70 hover:bg-white/10"}`}>
+                    {t[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Link to="/" className="rounded-sm border border-white/15 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/10">
               ← Back to main site
             </Link>
@@ -738,6 +768,7 @@ function WorldPage() {
           </div>
         </div>
       </div>
+      {threatOpen && <ThreatWatch onClose={() => setThreatOpen(false)} />}
     </main>
   );
 }

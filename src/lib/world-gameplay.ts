@@ -9,7 +9,7 @@ import { logLedger } from "./learning-ledger";
 
 const KEY = "quantara.gameplay.v1";
 
-export type WeaponId = "pulse" | "lattice" | "phase";
+export type WeaponId = "pulse" | "lattice" | "phase" | "wave";
 export type PickupKind = "artifact" | "contract" | "boost";
 
 export interface BadData {
@@ -96,6 +96,7 @@ const WEAPONS_INIT: Weapon[] = [
   { id: "pulse",   name: "Pulse Lance",   damage: 28, cooldownMs: 220, range: 14, color: "#22d3ee", tint: 190, unlocked: true,  cost: 0 },
   { id: "lattice", name: "Lattice Beam",  damage: 60, cooldownMs: 520, range: 22, color: "#a78bfa", tint: 270, unlocked: false, cost: 90 },
   { id: "phase",   name: "Phase Cleaver", damage: 140, cooldownMs: 900, range: 30, color: "#f472b6", tint: 320, unlocked: false, cost: 240 },
+  { id: "wave",    name: "Wave Cannon",   damage: 55,  cooldownMs: 1400, range: 18, color: "#34d399", tint: 150, unlocked: false, cost: 320 },
 ];
 
 interface Persisted {
@@ -168,7 +169,7 @@ export const useGameplay = create<GameState>((set, get) => ({
   shots: [],
   weapons: WEAPONS_INIT,
   activeWeapon: "pulse",
-  lastFire: { pulse: 0, lattice: 0, phase: 0 },
+  lastFire: { pulse: 0, lattice: 0, phase: 0, wave: 0 },
   boost: null,
   kills: 0,
   cleaned: 0,
@@ -231,6 +232,33 @@ export const useGameplay = create<GameState>((set, get) => ({
     const dx = dir.x / dl, dz = dir.z / dl;
     const endX = origin.x + dx * w.range;
     const endZ = origin.z + dz * w.range;
+    const dmgMul = s.boost?.label.includes("Damage") ? 2 : 1;
+
+    // -------- Wave Cannon: AoE cone sweep (neutralizes waves of bad-data) --------
+    if (w.id === "wave") {
+      const coneCos = Math.cos((Math.PI / 180) * 55); // ~110° cone
+      let kills = s.kills, cleaned = s.cleaned, bounty = 0;
+      const shots: ShotFx[] = [];
+      const badData = s.badData.flatMap((b) => {
+        const vx = b.x - origin.x, vz = b.z - origin.z;
+        const d = Math.hypot(vx, vz) || 1;
+        if (d > w.range) return [b];
+        const cos = (vx * dx + vz * dz) / d;
+        if (cos < coneCos) return [b];
+        // tracer per hit
+        shots.push({ id: _shotSeq++, x1: origin.x, z1: origin.z, x2: b.x, z2: b.z, bornAt: now, hue: w.tint });
+        const nhp = b.hp - w.damage * dmgMul;
+        if (nhp <= 0) { kills += 1; cleaned += 1; bounty += b.bounty; return []; }
+        return [{ ...b, hp: nhp }];
+      });
+      if (bounty > 0) {
+        creditDat(bounty);
+        logLedger("tokens", `+${bounty} $DAT · wave sweep`, { weapon: w.id });
+      }
+      const lastFire = { ...s.lastFire, [w.id]: now };
+      set({ badData, kills, cleaned, lastFire, shots: [...s.shots, ...shots] });
+      return true;
+    }
 
     // hit detection — line vs circle (r=0.8)
     let hitId: string | null = null;
@@ -243,7 +271,6 @@ export const useGameplay = create<GameState>((set, get) => ({
       if (d2 < 1.2 && t < bestT) { bestT = t; hitId = b.id; }
     }
 
-    const dmgMul = s.boost?.label.includes("Damage") ? 2 : 1;
     let badData = s.badData;
     let kills = s.kills, cleaned = s.cleaned;
     let bounty = 0;
@@ -352,7 +379,7 @@ export const useGameplay = create<GameState>((set, get) => ({
     set({
       badData: [], pickups: [], inventory: [], shots: [],
       weapons: WEAPONS_INIT, activeWeapon: "pulse",
-      lastFire: { pulse: 0, lattice: 0, phase: 0 },
+      lastFire: { pulse: 0, lattice: 0, phase: 0, wave: 0 },
       boost: null, kills: 0, cleaned: 0, collected: 0,
     });
   },

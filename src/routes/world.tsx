@@ -513,6 +513,20 @@ function WorldPage() {
             <button onClick={() => setUploadOpen((v) => !v)} className="rounded-sm border border-emerald-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-emerald-200 hover:bg-emerald-500/10">
               {uploadOpen ? "Close uploads" : `Upload discovery (${discoveries.length})`}
             </button>
+            <button onClick={() => setThreatOpen((v) => !v)} className="rounded-sm border border-rose-400/40 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-rose-200 hover:bg-rose-500/10">
+              {threatOpen ? "Close watchlist" : "Threat watchlist"}
+            </button>
+            <div className="rounded-sm border border-white/15 bg-black/55 px-3 py-2">
+              <div className="text-[9px] uppercase tracking-[0.25em] text-chrome">Quality</div>
+              <div className="mt-1 flex gap-1">
+                {(["low","medium","high","ultra"] as QualityTier[]).map((t) => (
+                  <button key={t} onClick={() => setQuality(t)}
+                    className={`flex-1 border px-1 py-0.5 text-[9px] uppercase tracking-[0.15em] ${qualityTier === t ? "border-cyan-400 bg-cyan-400/15 text-cyan-200" : "border-white/15 text-white/70 hover:bg-white/10"}`}>
+                    {t[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Link to="/" className="rounded-sm border border-white/15 bg-black/55 px-3 py-2 text-[10px] uppercase tracking-[0.25em] text-white hover:bg-white/10">
               ← Back to main site
             </Link>

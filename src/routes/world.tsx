@@ -401,6 +401,10 @@ function WorldPage() {
   const [pos, setPos] = useState({ x: 0, z: 18 });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [discoveries, setDiscoveries] = useState<Discovery[]>(() => readDiscoveries());
+  const [threatOpen, setThreatOpen] = useState(false);
+  const qualityTier = useQuality((s) => s.tier);
+  const qualitySettings = useQuality((s) => s.settings);
+  const setQuality = useQuality((s) => s.setTier);
 
   const touch = useIsTouch();
   const input = useRef<InputState>({
@@ -426,12 +430,13 @@ function WorldPage() {
   const activeW = weapons.find((w) => w.id === activeWeapon)!;
   const boostMs = boost ? Math.max(0, boost.expiresAt - Date.now()) : 0;
 
-  const handleUpload = async (files: FileList | null) => {
+  const handleUpload = (files: FileList | null) => {
     if (!files) return;
     for (const f of Array.from(files)) {
-      await ingestFile(f, "operator-discovery");
+      enqueueUpload(f, "operator-discovery");
     }
-    setDiscoveries(readDiscoveries());
+    // soft refresh after queue drains
+    setTimeout(() => setDiscoveries(readDiscoveries()), 300);
     creditDat(10 * files.length);
   };
 

@@ -320,23 +320,24 @@ function Scene({
 
   const groundSize = Math.max(80, worldSize * 1.6);
 
+  const q = useQuality((s) => s.settings);
   return (
     <>
       <fog attach="fog" args={["#06081a", 32, 130]} />
       <color attach="background" args={["#04050d"]} />
       <Sky distance={450000} sunPosition={[10, 4, 10]} turbidity={7} rayleigh={3} mieCoefficient={0.005} mieDirectionalG={0.85} />
-      <Environment preset="night" />
+      {q.environment && <Environment preset="night" />}
       <ambientLight intensity={0.28} />
       <hemisphereLight args={["#7c3aed", "#0c0c1e", 0.55]} />
       <directionalLight
-        position={[20, 30, 10]} intensity={1.4} castShadow
-        shadow-mapSize-width={2048} shadow-mapSize-height={2048}
+        position={[20, 30, 10]} intensity={1.4} castShadow={q.shadows}
+        shadow-mapSize-width={q.shadows ? 2048 : 512} shadow-mapSize-height={q.shadows ? 2048 : 512}
         shadow-bias={-0.0005}
       />
       <Ground size={groundSize} />
       <GridLines size={groundSize} />
-      <ContactShadows position={[0, 0.02, 0]} opacity={0.55} scale={groundSize * 0.5} blur={2.6} far={20} resolution={1024} />
-      <Sparkles count={160} scale={[60, 18, 60]} size={1.6} color="#7c3aed" position={[0, 4, 0]} />
+      {q.contactShadows && <ContactShadows position={[0, 0.02, 0]} opacity={0.55} scale={groundSize * 0.5} blur={2.6} far={20} resolution={1024} />}
+      {q.sparkles && <Sparkles count={160} scale={[60, 18, 60]} size={1.6} color="#7c3aed" position={[0, 4, 0]} />}
       {bots.map((b) => <Bot key={b.id} x={b.x} z={b.z} hue={b.hue} label={b.name} sublabel={b.role} />)}
       {buildings.map((b, i) => <Building key={i} {...b} />)}
       {badData.map((b) => <BadDataMesh key={b.id} x={b.x} z={b.z} hue={b.hue} hpRatio={b.hp / b.maxHp} />)}
@@ -346,13 +347,17 @@ function Scene({
       <Player onPosition={onPosition} onMarketProx={onMarketProx} input={input} />
       <WeaponViewmodel />
       {!touch && <PointerLockControls />}
-      <EffectComposer multisampling={0}>
-        <SMAA />
-        <Bloom intensity={0.9} luminanceThreshold={0.35} luminanceSmoothing={0.85} mipmapBlur radius={0.85} />
-        <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0006, 0.0009]} radialModulation={false} modulationOffset={0} />
-        <BrightnessContrast brightness={0.02} contrast={0.12} />
-        <Vignette eskil={false} offset={0.18} darkness={0.85} />
-      </EffectComposer>
+      {q.postFx && (
+        <EffectComposer multisampling={q.msaa ? 4 : 0}>
+          <SMAA />
+          {q.bloom ? (
+            <Bloom intensity={0.9} luminanceThreshold={0.35} luminanceSmoothing={0.85} mipmapBlur radius={0.85} />
+          ) : <></>}
+          <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0006, 0.0009]} radialModulation={false} modulationOffset={0} />
+          <BrightnessContrast brightness={0.02} contrast={0.12} />
+          <Vignette eskil={false} offset={0.18} darkness={0.85} />
+        </EffectComposer>
+      )}
     </>
   );
 }

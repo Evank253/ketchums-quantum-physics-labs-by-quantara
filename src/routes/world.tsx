@@ -347,17 +347,21 @@ function Scene({
       <Player onPosition={onPosition} onMarketProx={onMarketProx} input={input} />
       <WeaponViewmodel />
       {!touch && <PointerLockControls />}
-      {q.postFx && (
+      {q.postFx && (q.bloom ? (
         <EffectComposer multisampling={q.msaa ? 4 : 0}>
           <SMAA />
-          {q.bloom ? (
-            <Bloom intensity={0.9} luminanceThreshold={0.35} luminanceSmoothing={0.85} mipmapBlur radius={0.85} />
-          ) : null}
+          <Bloom intensity={0.9} luminanceThreshold={0.35} luminanceSmoothing={0.85} mipmapBlur radius={0.85} />
           <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0006, 0.0009]} radialModulation={false} modulationOffset={0} />
           <BrightnessContrast brightness={0.02} contrast={0.12} />
           <Vignette eskil={false} offset={0.18} darkness={0.85} />
         </EffectComposer>
-      )}
+      ) : (
+        <EffectComposer multisampling={q.msaa ? 4 : 0}>
+          <SMAA />
+          <BrightnessContrast brightness={0.02} contrast={0.12} />
+          <Vignette eskil={false} offset={0.18} darkness={0.85} />
+        </EffectComposer>
+      ))}
     </>
   );
 }

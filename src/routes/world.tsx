@@ -764,6 +764,7 @@ function WorldPage() {
           </div>
         </div>
       </div>
+      {threatOpen && <ThreatWatch onClose={() => setThreatOpen(false)} />}
     </main>
   );
 }

@@ -232,6 +232,33 @@ export const useGameplay = create<GameState>((set, get) => ({
     const dx = dir.x / dl, dz = dir.z / dl;
     const endX = origin.x + dx * w.range;
     const endZ = origin.z + dz * w.range;
+    const dmgMul = s.boost?.label.includes("Damage") ? 2 : 1;
+
+    // -------- Wave Cannon: AoE cone sweep (neutralizes waves of bad-data) --------
+    if (w.id === "wave") {
+      const coneCos = Math.cos((Math.PI / 180) * 55); // ~110° cone
+      let kills = s.kills, cleaned = s.cleaned, bounty = 0;
+      const shots: ShotFx[] = [];
+      const badData = s.badData.flatMap((b) => {
+        const vx = b.x - origin.x, vz = b.z - origin.z;
+        const d = Math.hypot(vx, vz) || 1;
+        if (d > w.range) return [b];
+        const cos = (vx * dx + vz * dz) / d;
+        if (cos < coneCos) return [b];
+        // tracer per hit
+        shots.push({ id: _shotSeq++, x1: origin.x, z1: origin.z, x2: b.x, z2: b.z, bornAt: now, hue: w.tint });
+        const nhp = b.hp - w.damage * dmgMul;
+        if (nhp <= 0) { kills += 1; cleaned += 1; bounty += b.bounty; return []; }
+        return [{ ...b, hp: nhp }];
+      });
+      if (bounty > 0) {
+        creditDat(bounty);
+        logLedger("tokens", `+${bounty} $DAT · wave sweep`, { weapon: w.id });
+      }
+      const lastFire = { ...s.lastFire, [w.id]: now };
+      set({ badData, kills, cleaned, lastFire, shots: [...s.shots, ...shots] });
+      return true;
+    }
 
     // hit detection — line vs circle (r=0.8)
     let hitId: string | null = null;
@@ -244,7 +271,6 @@ export const useGameplay = create<GameState>((set, get) => ({
       if (d2 < 1.2 && t < bestT) { bestT = t; hitId = b.id; }
     }
 
-    const dmgMul = s.boost?.label.includes("Damage") ? 2 : 1;
     let badData = s.badData;
     let kills = s.kills, cleaned = s.cleaned;
     let bounty = 0;

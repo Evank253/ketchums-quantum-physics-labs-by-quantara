@@ -9,7 +9,9 @@ import { useWorld, nextCost, getBreakthrough, getOfflineCapHours, setOfflineCapH
 import { useGameplay, type InventoryEntry } from "@/lib/world-gameplay";
 import { readDat, subscribeDat, creditDat, writeDat } from "@/lib/dat-tokens";
 import { TouchJoystick, TouchButton, useIsTouch } from "@/components/touch-joystick";
-import { ingestFile, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
+import { ingestFile, enqueueUpload, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
+import { useQuality, type QualityTier } from "@/lib/quality";
+import { ThreatWatch } from "@/components/threat-watch";
 
 export const Route = createFileRoute("/world")({
   component: WorldPage,

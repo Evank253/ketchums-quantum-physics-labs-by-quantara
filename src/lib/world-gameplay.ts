@@ -169,7 +169,7 @@ export const useGameplay = create<GameState>((set, get) => ({
   shots: [],
   weapons: WEAPONS_INIT,
   activeWeapon: "pulse",
-  lastFire: { pulse: 0, lattice: 0, phase: 0 },
+  lastFire: { pulse: 0, lattice: 0, phase: 0, wave: 0 },
   boost: null,
   kills: 0,
   cleaned: 0,
@@ -353,7 +353,7 @@ export const useGameplay = create<GameState>((set, get) => ({
     set({
       badData: [], pickups: [], inventory: [], shots: [],
       weapons: WEAPONS_INIT, activeWeapon: "pulse",
-      lastFire: { pulse: 0, lattice: 0, phase: 0 },
+      lastFire: { pulse: 0, lattice: 0, phase: 0, wave: 0 },
       boost: null, kills: 0, cleaned: 0, collected: 0,
     });
   },

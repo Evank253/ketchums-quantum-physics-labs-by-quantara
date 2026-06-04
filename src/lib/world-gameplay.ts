@@ -9,7 +9,7 @@ import { logLedger } from "./learning-ledger";
 
 const KEY = "quantara.gameplay.v1";
 
-export type WeaponId = "pulse" | "lattice" | "phase";
+export type WeaponId = "pulse" | "lattice" | "phase" | "wave";
 export type PickupKind = "artifact" | "contract" | "boost";
 
 export interface BadData {
@@ -96,6 +96,7 @@ const WEAPONS_INIT: Weapon[] = [
   { id: "pulse",   name: "Pulse Lance",   damage: 28, cooldownMs: 220, range: 14, color: "#22d3ee", tint: 190, unlocked: true,  cost: 0 },
   { id: "lattice", name: "Lattice Beam",  damage: 60, cooldownMs: 520, range: 22, color: "#a78bfa", tint: 270, unlocked: false, cost: 90 },
   { id: "phase",   name: "Phase Cleaver", damage: 140, cooldownMs: 900, range: 30, color: "#f472b6", tint: 320, unlocked: false, cost: 240 },
+  { id: "wave",    name: "Wave Cannon",   damage: 55,  cooldownMs: 1400, range: 18, color: "#34d399", tint: 150, unlocked: false, cost: 320 },
 ];
 
 interface Persisted {

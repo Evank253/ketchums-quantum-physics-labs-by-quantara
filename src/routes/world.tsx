@@ -9,7 +9,7 @@ import { useWorld, nextCost, getBreakthrough, getOfflineCapHours, setOfflineCapH
 import { useGameplay, type InventoryEntry } from "@/lib/world-gameplay";
 import { readDat, subscribeDat, creditDat, writeDat } from "@/lib/dat-tokens";
 import { TouchJoystick, TouchButton, useIsTouch } from "@/components/touch-joystick";
-import { ingestFile, enqueueUpload, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
+import { enqueueUpload, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
 import { useQuality, type QualityTier } from "@/lib/quality";
 import { ThreatWatch } from "@/components/threat-watch";
 
@@ -442,7 +442,7 @@ function WorldPage() {
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black text-white">
-      <Canvas shadows dpr={[1, 2]} camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
+      <Canvas shadows={qualitySettings.shadows} dpr={qualitySettings.dpr} camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2, powerPreference: "high-performance" }}>
         <Suspense fallback={null}>
           <Scene

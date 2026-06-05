@@ -13,6 +13,8 @@ import { Route as WorldRouteImport } from './routes/world'
 import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
+import { Route as InterstellarRouteImport } from './routes/interstellar'
+import { Route as CernRouteImport } from './routes/cern'
 import { Route as BenchmarksRouteImport } from './routes/benchmarks'
 import { Route as AtlasRouteImport } from './routes/atlas'
 import { Route as AnnexRouteImport } from './routes/annex'
@@ -47,6 +49,16 @@ const LegalRoute = LegalRouteImport.update({
 const LedgerRoute = LedgerRouteImport.update({
   id: '/ledger',
   path: '/ledger',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InterstellarRoute = InterstellarRouteImport.update({
+  id: '/interstellar',
+  path: '/interstellar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CernRoute = CernRouteImport.update({
+  id: '/cern',
+  path: '/cern',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BenchmarksRoute = BenchmarksRouteImport.update({
@@ -130,6 +142,8 @@ export interface FileRoutesByFullPath {
   '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/cern': typeof CernRoute
+  '/interstellar': typeof InterstellarRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
@@ -151,6 +165,8 @@ export interface FileRoutesByTo {
   '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/cern': typeof CernRoute
+  '/interstellar': typeof InterstellarRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
@@ -173,6 +189,8 @@ export interface FileRoutesById {
   '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/cern': typeof CernRoute
+  '/interstellar': typeof InterstellarRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
@@ -196,6 +214,8 @@ export interface FileRouteTypes {
     | '/annex'
     | '/atlas'
     | '/benchmarks'
+    | '/cern'
+    | '/interstellar'
     | '/ledger'
     | '/legal'
     | '/synthesis'
@@ -217,6 +237,8 @@ export interface FileRouteTypes {
     | '/annex'
     | '/atlas'
     | '/benchmarks'
+    | '/cern'
+    | '/interstellar'
     | '/ledger'
     | '/legal'
     | '/synthesis'
@@ -238,6 +260,8 @@ export interface FileRouteTypes {
     | '/annex'
     | '/atlas'
     | '/benchmarks'
+    | '/cern'
+    | '/interstellar'
     | '/ledger'
     | '/legal'
     | '/synthesis'
@@ -260,6 +284,8 @@ export interface RootRouteChildren {
   AnnexRoute: typeof AnnexRoute
   AtlasRoute: typeof AtlasRoute
   BenchmarksRoute: typeof BenchmarksRoute
+  CernRoute: typeof CernRoute
+  InterstellarRoute: typeof InterstellarRoute
   LedgerRoute: typeof LedgerRoute
   LegalRoute: typeof LegalRouteWithChildren
   SynthesisRoute: typeof SynthesisRoute
@@ -298,6 +324,20 @@ declare module '@tanstack/react-router' {
       path: '/ledger'
       fullPath: '/ledger'
       preLoaderRoute: typeof LedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interstellar': {
+      id: '/interstellar'
+      path: '/interstellar'
+      fullPath: '/interstellar'
+      preLoaderRoute: typeof InterstellarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cern': {
+      id: '/cern'
+      path: '/cern'
+      fullPath: '/cern'
+      preLoaderRoute: typeof CernRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/benchmarks': {
@@ -443,6 +483,8 @@ const rootRouteChildren: RootRouteChildren = {
   AnnexRoute: AnnexRoute,
   AtlasRoute: AtlasRoute,
   BenchmarksRoute: BenchmarksRoute,
+  CernRoute: CernRoute,
+  InterstellarRoute: InterstellarRoute,
   LedgerRoute: LedgerRoute,
   LegalRoute: LegalRouteWithChildren,
   SynthesisRoute: SynthesisRoute,

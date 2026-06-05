@@ -322,11 +322,24 @@ function Nav() {
           Ledger
         </Link>
         <Link
+          to="/cern"
+          className="surface-glass glow-cyan px-2.5 py-1 text-white/90 hover:text-white"
+        >
+          CERN
+        </Link>
+        <Link
+          to="/interstellar"
+          className="surface-glass glow-violet px-2.5 py-1 text-white/90 hover:text-white"
+        >
+          Interstellar
+        </Link>
+        <Link
           to="/world"
           className="surface-glass glow-violet px-2.5 py-1 text-white hover:text-white"
         >
           Enter World →
         </Link>
+
       </div>
     </nav>
   );

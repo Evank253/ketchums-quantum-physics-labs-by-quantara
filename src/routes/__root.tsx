@@ -73,18 +73,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Quantara-Core Quantum electrodynamics systems DNA" },
+      { title: "Ketchums Cyber security and quantum physics labs by Quantara" },
       { name: "description", content: "Quantara is a synthetic reality platform for evolving AI civilizations using human digital artifacts." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Quantara-Core Quantum electrodynamics systems DNA" },
+      { property: "og:title", content: "Ketchums Cyber security and quantum physics labs by Quantara" },
       { property: "og:description", content: "Quantara is a synthetic reality platform for evolving AI civilizations using human digital artifacts." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Quantara-Core Quantum electrodynamics systems DNA" },
+      { name: "twitter:title", content: "Ketchums Cyber security and quantum physics labs by Quantara" },
       { name: "twitter:description", content: "Quantara is a synthetic reality platform for evolving AI civilizations using human digital artifacts." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c2f3093d-55c4-45ae-8dd3-e5fed458892c" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c2f3093d-55c4-45ae-8dd3-e5fed458892c" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/931a4f90-3cd7-4039-918f-f3faf85ec67b" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/931a4f90-3cd7-4039-918f-f3faf85ec67b" },
     ],
     links: [
       {

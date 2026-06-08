@@ -131,21 +131,29 @@ export function QuantumCircuit() {
   const probs = useMemo(() => {
     const p = probabilities(state);
     if (noise <= 0) return p;
-    // depolarizing-ish noise: blend with uniform
     const u = 1 / p.length;
     return p.map((x) => (1 - noise) * x + noise * u);
   }, [state, noise]);
 
-  const place = (q: number) => {
-    if (picked === "CNOT") {
+  // Memoize bloch vectors per qubit (was recomputed every render).
+  const blochs = useMemo(
+    () => Array.from({ length: n }, (_, q) => blochOf(state, n, q)),
+    [state, n],
+  );
+
+  const [hoverWire, setHoverWire] = useState<number | null>(null);
+
+  const place = (q: number, gateOverride?: Gate) => {
+    const g = gateOverride ?? picked;
+    if (g === "CNOT") {
       if (control === null) { setControl(q); return; }
       if (control === q) { setControl(null); return; }
       setOps((o) => [...o, { gate: "CNOT", control, target: q }]);
       logLedger("kernel", `Q-Circuit · CNOT q${control}→q${q}`);
       setControl(null);
     } else {
-      setOps((o) => [...o, { gate: picked, target: q }]);
-      logLedger("kernel", `Q-Circuit · ${picked} q${q}`);
+      setOps((o) => [...o, { gate: g, target: q }]);
+      logLedger("kernel", `Q-Circuit · ${g} q${q}`);
     }
     setCollapsed(null);
   };

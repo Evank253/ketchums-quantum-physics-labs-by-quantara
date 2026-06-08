@@ -723,6 +723,13 @@ qreg q[${n}];
                   >
                     ⤓ PNG
                   </button>
+                  <button
+                    onClick={() => enqueueJob("png")}
+                    title="Queue PNG with current settings"
+                    className="rounded-sm border border-cyan-300/30 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-100/80 hover:bg-cyan-400/15"
+                  >
+                    + Q
+                  </button>
                 </div>
               </div>
 

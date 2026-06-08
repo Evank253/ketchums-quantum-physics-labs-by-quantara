@@ -764,6 +764,13 @@ qreg q[${n}];
                   >
                     {exporting === "gif" ? "ENC…" : "⤓ GIF"}
                   </button>
+                  <button
+                    onClick={() => enqueueJob("gif")}
+                    title="Queue GIF with current settings"
+                    className="rounded-sm border border-amber-300/30 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-100/80 hover:bg-amber-400/15"
+                  >
+                    + Q
+                  </button>
                 </div>
               </div>
 

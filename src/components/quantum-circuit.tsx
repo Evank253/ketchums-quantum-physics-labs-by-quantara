@@ -458,32 +458,92 @@ qreg q[${n}];
                 <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent opacity-70" />
               </button>
 
-              <div className="grid grid-cols-3 gap-1">
-                <button
-                  onClick={() => exportFrame(1)}
-                  disabled={!!exporting}
-                  className="rounded-sm border border-cyan-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-100 hover:bg-cyan-400/10 disabled:opacity-50"
-                >
-                  {exporting === "png" ? "…" : "⤓ PNG"}
-                </button>
-                <button
-                  onClick={() => exportFrame(3)}
-                  disabled={!!exporting}
-                  className="rounded-sm border border-fuchsia-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-fuchsia-100 hover:bg-fuchsia-400/10 disabled:opacity-50"
-                >
-                  {exporting === "4k" ? "…" : "⤓ 4K"}
-                </button>
-                <button
-                  onClick={exportGif}
-                  disabled={!!exporting}
-                  className="rounded-sm border border-amber-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-amber-100 hover:bg-amber-400/10 disabled:opacity-50"
-                >
-                  {exporting === "gif" ? "ENC…" : "⤓ GIF"}
-                </button>
+              {/* PNG export preset */}
+              <div className="space-y-1 rounded-sm border border-cyan-300/25 bg-black/50 p-2">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-cyan-200/80">
+                  <span>PNG Frame · Preset</span>
+                  <label className="flex cursor-pointer items-center gap-1 text-white/55 normal-case tracking-normal">
+                    <input
+                      type="checkbox"
+                      checked={pngTransparent}
+                      onChange={(e) => setPngTransparent(e.target.checked)}
+                      className="h-3 w-3 accent-cyan-400"
+                    />
+                    <span className="text-[9px] uppercase tracking-widest">α bg</span>
+                  </label>
+                </div>
+                <div className="flex gap-1">
+                  <select
+                    value={pngPreset}
+                    onChange={(e) => setPngPreset(e.target.value as PngPreset)}
+                    className="flex-1 rounded-sm border border-cyan-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-cyan-100 outline-none focus:border-cyan-300"
+                  >
+                    {(Object.keys(PNG_PRESETS) as PngPreset[]).map((k) => (
+                      <option key={k} value={k} className="bg-black">{PNG_PRESETS[k].label}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={exportFrame}
+                    disabled={!!exporting}
+                    className="rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25 disabled:opacity-50"
+                  >
+                    ⤓ PNG
+                  </button>
+                </div>
               </div>
 
+              {/* GIF export preset */}
+              <div className="space-y-1 rounded-sm border border-amber-300/25 bg-black/50 p-2">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-amber-200/80">
+                  <span>GIF Animation · Preset</span>
+                  <label className="flex cursor-pointer items-center gap-1 text-white/55 normal-case tracking-normal">
+                    <input
+                      type="checkbox"
+                      checked={gifTransparent}
+                      onChange={(e) => setGifTransparent(e.target.checked)}
+                      className="h-3 w-3 accent-amber-400"
+                    />
+                    <span className="text-[9px] uppercase tracking-widest">α bg</span>
+                  </label>
+                </div>
+                <div className="flex gap-1">
+                  <select
+                    value={gifPreset}
+                    onChange={(e) => setGifPreset(e.target.value as GifPreset)}
+                    className="flex-1 rounded-sm border border-amber-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-amber-100 outline-none focus:border-amber-300"
+                  >
+                    {(Object.keys(GIF_PRESETS) as GifPreset[]).map((k) => (
+                      <option key={k} value={k} className="bg-black">{GIF_PRESETS[k].label}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={exportGif}
+                    disabled={!!exporting}
+                    className="rounded-sm border border-amber-300/50 bg-amber-400/15 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-100 hover:bg-amber-400/25 disabled:opacity-50"
+                  >
+                    {exporting === "gif" ? "ENC…" : "⤓ GIF"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Export progress */}
+              {exporting && (
+                <div className="space-y-1 rounded-sm border border-emerald-300/30 bg-black/60 p-2">
+                  <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-emerald-200/90">
+                    <span>{exportLabel}</span>
+                    <span className="text-emerald-100">{Math.round(exportProgress * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-emerald-400/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-300 via-cyan-200 to-fuchsia-300 transition-[width] duration-150 ease-out shadow-[0_0_10px_rgba(110,231,183,0.6)]"
+                      style={{ width: `${Math.min(100, Math.max(2, exportProgress * 100))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">
-                Status: <span className={cascading ? "text-amber-300" : "text-emerald-300"}>{cascading ? "CASCADING" : "READY"}</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>
+                Status: <span className={exporting ? "text-amber-300" : cascading ? "text-amber-300" : "text-emerald-300"}>{exporting ? "EXPORTING" : cascading ? "CASCADING" : "READY"}</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>
               </div>
             </div>
           </GlassPane>

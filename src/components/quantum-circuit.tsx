@@ -187,24 +187,53 @@ export function QuantumCircuit() {
     setTimeout(() => { measure(); setCascading(false); }, 1100);
   };
 
-  // Draw a frame into a canvas at a given pixel scale. Used by both the
-  // PNG export (1× / 4×) and the GIF encoder (low-res, multi-frame).
+  // Export presets ---------------------------------------------------------
+  const PNG_PRESETS = {
+    hd:  { label: "HD 1280×720",       w: 1280, h: 720,  badge: "[1280×720]"   },
+    fhd: { label: "FHD 1920×1080",     w: 1920, h: 1080, badge: "[1920×1080]"  },
+    qhd: { label: "2K 2560×1440",      w: 2560, h: 1440, badge: "[2560×1440]"  },
+    uhd: { label: "4K 3840×2160",      w: 3840, h: 2160, badge: "[3840×2160 · 4K]" },
+    sq:  { label: "Square 2048×2048",  w: 2048, h: 2048, badge: "[2048² · social]" },
+  } as const;
+  type PngPreset = keyof typeof PNG_PRESETS;
+
+  const GIF_PRESETS = {
+    sm: { label: "Small · 480p · 12 fps · 2.5s", w: 480,  h: 270, fps: 12, dur: 2.5 },
+    md: { label: "Medium · 640p · 20 fps · 3s",  w: 640,  h: 360, fps: 20, dur: 3.0 },
+    lg: { label: "Large · 960p · 24 fps · 4s",   w: 960,  h: 540, fps: 24, dur: 4.0 },
+    sq: { label: "Square · 540² · 18 fps · 3s",  w: 540,  h: 540, fps: 18, dur: 3.0 },
+  } as const;
+  type GifPreset = keyof typeof GIF_PRESETS;
+
+  const [pngPreset, setPngPreset] = useState<PngPreset>("fhd");
+  const [gifPreset, setGifPreset] = useState<GifPreset>("md");
+  const [pngTransparent, setPngTransparent] = useState(false);
+  const [gifTransparent, setGifTransparent] = useState(false);
+  const [exporting, setExporting] = useState<null | "png" | "gif">(null);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportLabel, setExportLabel] = useState("");
+
+  // Draw a frame into a canvas. Used by both PNG and GIF paths.
   const drawFrameInto = (
     ctx: CanvasRenderingContext2D,
     W: number,
     H: number,
     probsOverride: number[],
     collapsedOverride: number | null,
-    badge?: string,
+    badge: string | undefined,
+    transparent: boolean,
   ) => {
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, "#06070c"); bg.addColorStop(1, "#03040a");
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-    const S = W / 1280; // scale factor relative to 1280-wide base layout
+    ctx.clearRect(0, 0, W, H);
+    if (!transparent) {
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, "#06070c"); bg.addColorStop(1, "#03040a");
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    }
+    const S = W / 1280;
     ctx.fillStyle = "#a5f3fc";
     ctx.font = `bold ${28*S}px ui-monospace, monospace`;
     ctx.fillText("QUANTARA · QUANTUM CIRCUIT FRAME", 48*S, 64*S);
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = transparent ? "#cbd5e1" : "#94a3b8";
     ctx.font = `${14*S}px ui-monospace, monospace`;
     ctx.fillText(`n=${n} · ops=${ops.length} · noise=${(noise*100).toFixed(0)}%${badge ? "  " + badge : ""}`, 48*S, 92*S);
     const padL = 80*S, padR = 80*S, padT = 160*S, padB = 140*S;
@@ -222,10 +251,10 @@ export function QuantumCircuit() {
       const grd = ctx.createLinearGradient(x, y, x, y + h);
       if (isC) { grd.addColorStop(0, "#fde68a"); grd.addColorStop(1, "#f59e0b"); }
       else if (isPeak) { grd.addColorStop(0, "#fdf4ff"); grd.addColorStop(0.5, "#e879f9"); grd.addColorStop(1, "#86198f"); }
-      else { grd.addColorStop(0, "rgba(167,139,250,0.5)"); grd.addColorStop(1, "rgba(91,33,182,0.15)"); }
+      else { grd.addColorStop(0, "rgba(167,139,250,0.65)"); grd.addColorStop(1, "rgba(91,33,182,0.25)"); }
       ctx.fillStyle = grd;
       ctx.fillRect(x, y, w, h);
-      ctx.fillStyle = "#64748b";
+      ctx.fillStyle = transparent ? "#94a3b8" : "#64748b";
       ctx.font = `${11*S}px ui-monospace, monospace`;
       ctx.fillText(`|${i.toString(2).padStart(n, "0")}⟩`, x, H - padB + 18*S);
       ctx.fillText(`${(p*100).toFixed(1)}%`, x, H - padB + 34*S);
@@ -236,47 +265,55 @@ export function QuantumCircuit() {
     ctx.fillStyle = "#f0abfc";
     ctx.font = `bold ${18*S}px ui-monospace, monospace`;
     ctx.fillText(`SOLUTION STABILITY: ${(stab*100).toFixed(2)}%   Λ = ${lMan} × 10^${lExp}`, 48*S, H - 60*S);
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = transparent ? "#cbd5e1" : "#94a3b8";
     ctx.font = `${12*S}px ui-monospace, monospace`;
     ctx.fillText(collapsedOverride !== null ? `collapsed → |${collapsedOverride.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48*S, H - 38*S);
   };
 
-  const [exporting, setExporting] = useState<null | "png" | "4k" | "gif">(null);
-
-  const exportFrame = (scale: 1 | 3 = 1) => {
-    const W = 1280 * scale, H = 720 * scale;
-    const c = document.createElement("canvas");
-    c.width = W; c.height = H;
-    const ctx = c.getContext("2d")!;
-    setExporting(scale === 3 ? "4k" : "png");
-    drawFrameInto(ctx, W, H, probs, collapsed, scale === 3 ? "[3840×2160 · 4K]" : undefined);
-    c.toBlob((blob) => {
-      setExporting(null);
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `quantara-frame${scale === 3 ? "-4k" : ""}-${Date.now()}.png`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }, "image/png");
-    logLedger("kernel", `Q-Circuit · render frame ${scale === 3 ? "4K " : ""}n=${n}`);
-    creditDat(scale === 3 ? 16 : 4);
+  const exportFrame = () => {
+    if (exporting) return;
+    const preset = PNG_PRESETS[pngPreset];
+    const { w: W, h: H, badge } = preset;
+    setExporting("png");
+    setExportLabel(`PNG · ${preset.label}${pngTransparent ? " · alpha" : ""}`);
+    setExportProgress(0.15);
+    // give the UI a tick to repaint
+    requestAnimationFrame(() => {
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const ctx = c.getContext("2d")!;
+      drawFrameInto(ctx, W, H, probs, collapsed, badge, pngTransparent);
+      setExportProgress(0.7);
+      c.toBlob((blob) => {
+        setExportProgress(1);
+        setTimeout(() => { setExporting(null); setExportProgress(0); }, 350);
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `quantara-frame-${pngPreset}${pngTransparent ? "-alpha" : ""}-${Date.now()}.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }, "image/png");
+      logLedger("kernel", `Q-Circuit · render frame ${pngPreset} n=${n}`);
+      creditDat(pngPreset === "uhd" ? 16 : pngPreset === "qhd" ? 10 : pngPreset === "fhd" ? 6 : 4);
+    });
   };
 
   const exportGif = async () => {
     if (exporting) return;
+    const preset = GIF_PRESETS[gifPreset];
+    const { w: W, h: H, fps, dur } = preset;
+    const FRAMES = Math.max(6, Math.round(fps * dur));
+    const DELAY = Math.round(1000 / fps);
     setExporting("gif");
-    // Defer so the UI can update before the heavy encode work begins.
+    setExportLabel(`GIF · ${preset.label}${gifTransparent ? " · alpha" : ""}`);
+    setExportProgress(0.02);
     await new Promise((r) => setTimeout(r, 30));
-    const W = 640, H = 360;
-    const FRAMES = 36;
-    const DELAY = 60; // ms per frame
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const ctx = c.getContext("2d")!;
     const gif = GIFEncoder();
-    // Pick the collapse target now so the gif visually resolves to a real outcome.
     const r = Math.random();
     let acc = 0; let target = 0;
     for (let i = 0; i < probs.length; i++) {
@@ -288,24 +325,28 @@ export function QuantumCircuit() {
       let frameProbs: number[];
       let frameCollapsed: number | null = null;
       if (t < 0.45) {
-        // Cascade: uniform → current probability distribution
         const k = t / 0.45;
         frameProbs = probs.map((p, i) => uniform[i] * (1 - k) + p * k);
       } else if (t < 0.7) {
         frameProbs = probs.slice();
       } else {
-        // Collapse: distribution → delta on target
         const k = (t - 0.7) / 0.3;
         frameProbs = probs.map((p, i) => (i === target ? p * (1 - k) + 1 * k : p * (1 - k)));
         if (k > 0.7) frameCollapsed = target;
       }
-      drawFrameInto(ctx, W, H, frameProbs, frameCollapsed, `[ANIMATED · t=${t.toFixed(2)}]`);
+      drawFrameInto(ctx, W, H, frameProbs, frameCollapsed, `[${fps}fps · t=${t.toFixed(2)}]`, gifTransparent);
       const data = ctx.getImageData(0, 0, W, H).data;
-      const palette = quantize(data, 256, { format: "rgb444" });
+      // Transparent GIF: quantize with one-bit alpha so fully clear pixels stay clear.
+      const palette = quantize(data, gifTransparent ? 255 : 256, {
+        format: "rgb444",
+        oneBitAlpha: gifTransparent,
+        clearAlpha: gifTransparent,
+        clearAlphaThreshold: 32,
+      });
       const index = applyPalette(data, palette, "rgb444");
-      gif.writeFrame(index, W, H, { palette, delay: DELAY });
-      // Yield occasionally to keep the page responsive.
-      if (f % 6 === 5) await new Promise((r2) => setTimeout(r2, 0));
+      gif.writeFrame(index, W, H, { palette, delay: DELAY, transparent: gifTransparent });
+      setExportProgress(0.05 + 0.9 * ((f + 1) / FRAMES));
+      if (f % 4 === 3) await new Promise((r2) => setTimeout(r2, 0));
     }
     gif.finish();
     const bytes = gif.bytesView();
@@ -314,12 +355,13 @@ export function QuantumCircuit() {
     const blob = new Blob([buf], { type: "image/gif" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `quantara-collapse-${Date.now()}.gif`;
+    a.href = url; a.download = `quantara-collapse-${gifPreset}${gifTransparent ? "-alpha" : ""}-${Date.now()}.gif`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
-    setExporting(null);
-    logLedger("kernel", `Q-Circuit · render gif n=${n}`);
-    creditDat(12);
+    setExportProgress(1);
+    setTimeout(() => { setExporting(null); setExportProgress(0); }, 400);
+    logLedger("kernel", `Q-Circuit · render gif ${gifPreset} n=${n}`);
+    creditDat(gifPreset === "lg" ? 24 : gifPreset === "md" ? 14 : 8);
   };
 
   const maxP = Math.max(...probs, 0.001);

@@ -8,6 +8,12 @@ import { QedEngineOverview } from "@/components/qed-engine-overview";
 import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
 import { SolvedTheories } from "@/components/solved-theories";
 import { FoundationalEquations } from "@/components/foundational-equations";
+import { DatHud } from "@/components/dat-hud";
+import { AchievementsPanel } from "@/components/achievements-panel";
+import { LedgerViz } from "@/components/ledger-viz";
+import { QuantumCircuit } from "@/components/quantum-circuit";
+import { CernEmbed } from "@/components/cern-embed";
+import { WorldGameEmbed } from "@/components/world-game-embed";
 
 
 import entityHero from "@/assets/entity-hero.jpg";
@@ -61,9 +67,15 @@ function Index() {
   return (
     <main className="grain relative min-h-screen overflow-x-hidden scroll-smooth bg-background text-foreground">
       <Nav />
+      <DatHud />
       <div id="genesis"><Hero /></div>
       <SolvedTheories />
       <FoundationalEquations />
+      <QuantumCircuit />
+      <CernEmbed />
+      <WorldGameEmbed />
+      <AchievementsPanel />
+      <LedgerViz />
       <UniverseFilm />
       <Principle />
       <DossierGrid />

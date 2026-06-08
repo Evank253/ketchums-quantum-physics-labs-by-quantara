@@ -9,6 +9,7 @@ import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
 import { SolvedTheories } from "@/components/solved-theories";
 import { FoundationalEquations } from "@/components/foundational-equations";
 import { DatHud } from "@/components/dat-hud";
+import { DatWallet } from "@/components/dat-wallet";
 import { AchievementsPanel } from "@/components/achievements-panel";
 import { LedgerViz } from "@/components/ledger-viz";
 import { QuantumCircuit } from "@/components/quantum-circuit";

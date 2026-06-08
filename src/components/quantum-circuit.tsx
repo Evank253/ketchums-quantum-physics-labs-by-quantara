@@ -596,6 +596,19 @@ qreg q[${n}];
         </div>
       </div>
 
+      {/* SVG refraction filter shared by all GlassPane wrappers */}
+      <svg aria-hidden width="0" height="0" style={{ position: "absolute" }}>
+        <defs>
+          <filter id="qc-glass-refraction" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves={2} seed={7} result="t" />
+            <feDisplacementMap in="SourceGraphic" in2="t" scale={8} xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <filter id="qc-glass-edge" x="-5%" y="-5%" width="110%" height="110%">
+            <feGaussianBlur stdDeviation="0.8" />
+          </filter>
+        </defs>
+      </svg>
+
       <style>{`
         @keyframes qpulse {
           0%   { transform: translateX(-100%); }
@@ -606,6 +619,25 @@ qreg q[${n}];
           25%  { opacity: 1; }
           100% { transform: translateY(-100%); opacity: 0; }
         }
+        @keyframes cascadeSweep {
+          0%   { transform: scaleX(0); opacity: 0.9; }
+          100% { transform: scaleX(1); opacity: 0.1; }
+        }
+        @keyframes qstatic {
+          0%   { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+          100% { background-position: 3px -2px, -4px 3px, 2px 4px, -3px -3px, 0 0; }
+        }
+        @keyframes spikeCollapse {
+          0%   { transform: scaleY(0.2); filter: brightness(2.4); }
+          40%  { transform: scaleY(1.25); filter: brightness(1.4); }
+          70%  { transform: scaleY(0.92); }
+          100% { transform: scaleY(1); filter: brightness(1); }
+        }
+        @keyframes shockRing {
+          0%   { transform: scale(0.2); opacity: 0.9; }
+          100% { transform: scale(2.6); opacity: 0; }
+        }
+
         .quantara-slider {
           -webkit-appearance: none;
           appearance: none;

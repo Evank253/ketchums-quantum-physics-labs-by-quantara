@@ -469,7 +469,8 @@ export function QuantumCircuit() {
     cancelRef.current = false;
     setExporting("gif");
     setExportLabel(`GIF · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""} · t[${rs.toFixed(2)}–${re.toFixed(2)}]${gifTransparent ? " · alpha" : ""}`);
-    setExportProgress(0.02);
+    exportStartRef.current = performance.now();
+    tickProgress(0.02);
     await new Promise((r) => setTimeout(r, 30));
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
@@ -495,12 +496,13 @@ export function QuantumCircuit() {
       });
       const index = applyPalette(data, palette, "rgb444");
       gif.writeFrame(index, W, H, { palette, delay: DELAY, transparent: gifTransparent });
-      setExportProgress(0.05 + 0.9 * ((f + 1) / FRAMES));
+      tickProgress(0.05 + 0.9 * ((f + 1) / FRAMES));
       if (f % 4 === 3) await new Promise((r2) => setTimeout(r2, 0));
     }
     if (cancelled) {
       setExportLabel("GIF · cancelled");
       setExportProgress(0);
+      setExportEtaMs(null);
       setTimeout(() => { setExporting(null); }, 300);
       cancelRef.current = false;
       return;
@@ -515,8 +517,8 @@ export function QuantumCircuit() {
     a.href = url; a.download = `quantara-collapse-${gifPreset}${gifTransparent ? "-alpha" : ""}-${Date.now()}.gif`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
-    setExportProgress(1);
-    setTimeout(() => { setExporting(null); setExportProgress(0); }, 400);
+    tickProgress(1);
+    setTimeout(() => { setExporting(null); setExportProgress(0); setExportEtaMs(null); }, 400);
     logLedger("kernel", `Q-Circuit · render gif ${gifPreset} n=${n}`);
     creditDat(gifPreset === "lg" ? 24 : gifPreset === "md" ? 14 : 8);
   };

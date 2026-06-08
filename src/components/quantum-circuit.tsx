@@ -1,6 +1,6 @@
 // Compact quantum circuit simulator: 1-3 qubits, gates H/X/Y/Z/S/T/CNOT/Measure
 // Visualizes Bloch vectors (single-qubit reduced) + probability histogram.
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { GIFEncoder, quantize, applyPalette } from "gifenc";
 import { logLedger } from "@/lib/learning-ledger";
 import { creditDat } from "@/lib/dat-tokens";
@@ -217,12 +217,19 @@ export function QuantumCircuit() {
   const [resScale, setResScale] = useState(1);             // 0.5 .. 2
   const [watermarkOn, setWatermarkOn] = useState(true);
   const [watermarkText, setWatermarkText] = useState("QUANTARA · quantara.app");
+  type WmPos = "br" | "bl" | "tr" | "tl";
+  const [watermarkPos, setWatermarkPos] = useState<WmPos>("br");
+  const [watermarkColor, setWatermarkColor] = useState("#e9d5ff");
+  const [watermarkSize, setWatermarkSize] = useState(12);   // px @ 1280-wide
+  const [watermarkOpacity, setWatermarkOpacity] = useState(0.9);
   const [gifStart, setGifStart] = useState(0);             // 0 .. 1
   const [gifEnd, setGifEnd] = useState(1);                 // 0 .. 1
+  const cancelRef = useRef(false);
   type ExportProfile = {
     name: string; pngPreset: PngPreset; gifPreset: GifPreset;
     pngTransparent: boolean; gifTransparent: boolean;
     resScale: number; watermarkOn: boolean; watermarkText: string;
+    watermarkPos?: WmPos; watermarkColor?: string; watermarkSize?: number; watermarkOpacity?: number;
     gifStart: number; gifEnd: number;
   };
   const PROFILE_KEY = "quantara.exportProfiles.v1";
@@ -231,6 +238,7 @@ export function QuantumCircuit() {
     try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]"); } catch { return []; }
   });
   const [profileName, setProfileName] = useState("");
+  const profileFileRef = useRef<HTMLInputElement | null>(null);
   const persistProfiles = (next: ExportProfile[]) => {
     setProfiles(next);
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(next)); } catch {}
@@ -239,7 +247,8 @@ export function QuantumCircuit() {
     const name = profileName.trim() || `Preset ${profiles.length + 1}`;
     const p: ExportProfile = {
       name, pngPreset, gifPreset, pngTransparent, gifTransparent,
-      resScale, watermarkOn, watermarkText, gifStart, gifEnd,
+      resScale, watermarkOn, watermarkText, watermarkPos, watermarkColor, watermarkSize, watermarkOpacity,
+      gifStart, gifEnd,
     };
     const next = [...profiles.filter((x) => x.name !== name), p];
     persistProfiles(next);
@@ -251,9 +260,35 @@ export function QuantumCircuit() {
     setPngPreset(p.pngPreset); setGifPreset(p.gifPreset);
     setPngTransparent(p.pngTransparent); setGifTransparent(p.gifTransparent);
     setResScale(p.resScale); setWatermarkOn(p.watermarkOn);
-    setWatermarkText(p.watermarkText); setGifStart(p.gifStart); setGifEnd(p.gifEnd);
+    setWatermarkText(p.watermarkText);
+    if (p.watermarkPos) setWatermarkPos(p.watermarkPos);
+    if (p.watermarkColor) setWatermarkColor(p.watermarkColor);
+    if (typeof p.watermarkSize === "number") setWatermarkSize(p.watermarkSize);
+    if (typeof p.watermarkOpacity === "number") setWatermarkOpacity(p.watermarkOpacity);
+    setGifStart(p.gifStart); setGifEnd(p.gifEnd);
   };
   const deleteProfile = (name: string) => persistProfiles(profiles.filter((x) => x.name !== name));
+  const exportProfilesFile = () => {
+    const blob = new Blob([JSON.stringify(profiles, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `quantara-export-profiles-${Date.now()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const importProfilesFile = async (file: File) => {
+    try {
+      const txt = await file.text();
+      const parsed = JSON.parse(txt);
+      if (!Array.isArray(parsed)) return;
+      const byName = new Map(profiles.map((p) => [p.name, p]));
+      for (const p of parsed) {
+        if (p && typeof p.name === "string") byName.set(p.name, p as ExportProfile);
+      }
+      persistProfiles(Array.from(byName.values()));
+    } catch {}
+  };
+  const cancelExport = () => { cancelRef.current = true; };
 
   // Draw a frame into a canvas. Used by both PNG and GIF paths.
   const drawFrameInto = (
@@ -311,19 +346,23 @@ export function QuantumCircuit() {
     ctx.font = `${12*S}px ui-monospace, monospace`;
     ctx.fillText(collapsedOverride !== null ? `collapsed → |${collapsedOverride.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48*S, H - 38*S);
 
-    // Watermark — bottom-right, subtle
+    // Watermark — configurable position, color, size, opacity
     if (watermarkOn && watermarkText.trim()) {
       const txt = watermarkText.trim();
       ctx.save();
-      ctx.font = `${12*S}px ui-monospace, monospace`;
+      const sz = Math.max(6, watermarkSize) * S;
+      ctx.font = `${sz}px ui-monospace, monospace`;
       const tw = ctx.measureText(txt).width;
-      const px = W - tw - 24*S;
-      const py = H - 22*S;
-      ctx.globalAlpha = 0.55;
+      const padX = 24 * S, padY = 22 * S;
+      let px = W - tw - padX, py = H - padY;
+      if (watermarkPos === "bl") { px = padX; py = H - padY; }
+      else if (watermarkPos === "tr") { px = W - tw - padX; py = padY + sz; }
+      else if (watermarkPos === "tl") { px = padX; py = padY + sz; }
+      ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity)) * 0.6;
       ctx.fillStyle = "#0a0a0f";
-      ctx.fillRect(px - 8*S, py - 14*S, tw + 16*S, 20*S);
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = "#e9d5ff";
+      ctx.fillRect(px - 8*S, py - sz - 2*S, tw + 16*S, sz + 8*S);
+      ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity));
+      ctx.fillStyle = watermarkColor;
       ctx.fillText(txt, px, py);
       ctx.restore();
     }
@@ -361,6 +400,21 @@ export function QuantumCircuit() {
     });
   };
 
+  // Compute frame-probs along the collapse timeline at t∈[0,1]. Used by GIF and preview.
+  const computeFrameAt = (t: number, target: number): { probs: number[]; collapsed: number | null } => {
+    const uniform = probs.map(() => 1 / probs.length);
+    if (t < 0.45) {
+      const k = t / 0.45;
+      return { probs: probs.map((p, i) => uniform[i] * (1 - k) + p * k), collapsed: null };
+    } else if (t < 0.7) {
+      return { probs: probs.slice(), collapsed: null };
+    } else {
+      const k = (t - 0.7) / 0.3;
+      const fp = probs.map((p, i) => (i === target ? p * (1 - k) + 1 * k : p * (1 - k)));
+      return { probs: fp, collapsed: k > 0.7 ? target : null };
+    }
+  };
+
   const exportGif = async () => {
     if (exporting) return;
     const preset = GIF_PRESETS[gifPreset];
@@ -373,6 +427,7 @@ export function QuantumCircuit() {
     const re = Math.min(1, Math.max(rs + 0.05, gifEnd));
     const FRAMES = Math.max(6, Math.round(fps * dur * (re - rs)));
     const DELAY = Math.round(1000 / fps);
+    cancelRef.current = false;
     setExporting("gif");
     setExportLabel(`GIF · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""} · t[${rs.toFixed(2)}–${re.toFixed(2)}]${gifTransparent ? " · alpha" : ""}`);
     setExportProgress(0.02);
@@ -386,24 +441,13 @@ export function QuantumCircuit() {
     for (let i = 0; i < probs.length; i++) {
       acc += probs[i]; if (r <= acc) { target = i; break; }
     }
-    const uniform = probs.map(() => 1 / probs.length);
+    let cancelled = false;
     for (let f = 0; f < FRAMES; f++) {
+      if (cancelRef.current) { cancelled = true; break; }
       const t = rs + (re - rs) * (f / Math.max(1, FRAMES - 1));
-      let frameProbs: number[];
-      let frameCollapsed: number | null = null;
-      if (t < 0.45) {
-        const k = t / 0.45;
-        frameProbs = probs.map((p, i) => uniform[i] * (1 - k) + p * k);
-      } else if (t < 0.7) {
-        frameProbs = probs.slice();
-      } else {
-        const k = (t - 0.7) / 0.3;
-        frameProbs = probs.map((p, i) => (i === target ? p * (1 - k) + 1 * k : p * (1 - k)));
-        if (k > 0.7) frameCollapsed = target;
-      }
+      const { probs: frameProbs, collapsed: frameCollapsed } = computeFrameAt(t, target);
       drawFrameInto(ctx, W, H, frameProbs, frameCollapsed, `[${fps}fps · t=${t.toFixed(2)}]`, gifTransparent);
       const data = ctx.getImageData(0, 0, W, H).data;
-      // Transparent GIF: quantize with one-bit alpha so fully clear pixels stay clear.
       const palette = quantize(data, gifTransparent ? 255 : 256, {
         format: "rgb444",
         oneBitAlpha: gifTransparent,
@@ -414,6 +458,13 @@ export function QuantumCircuit() {
       gif.writeFrame(index, W, H, { palette, delay: DELAY, transparent: gifTransparent });
       setExportProgress(0.05 + 0.9 * ((f + 1) / FRAMES));
       if (f % 4 === 3) await new Promise((r2) => setTimeout(r2, 0));
+    }
+    if (cancelled) {
+      setExportLabel("GIF · cancelled");
+      setExportProgress(0);
+      setTimeout(() => { setExporting(null); }, 300);
+      cancelRef.current = false;
+      return;
     }
     gif.finish();
     const bytes = gif.bytesView();
@@ -431,7 +482,27 @@ export function QuantumCircuit() {
     creditDat(gifPreset === "lg" ? 24 : gifPreset === "md" ? 14 : 8);
   };
 
+  // Live preview thumbnails of GIF frame range (start / mid / end)
+  const previewRefs = [useRef<HTMLCanvasElement | null>(null), useRef<HTMLCanvasElement | null>(null), useRef<HTMLCanvasElement | null>(null)];
+  useEffect(() => {
+    const rs = Math.min(0.99, Math.max(0, gifStart));
+    const re = Math.min(1, Math.max(rs + 0.05, gifEnd));
+    const ts = [rs, (rs + re) / 2, re];
+    const maxI = probs.indexOf(Math.max(...probs));
+    ts.forEach((t, idx) => {
+      const cv = previewRefs[idx].current;
+      if (!cv) return;
+      const W = cv.width, H = cv.height;
+      const ctx = cv.getContext("2d");
+      if (!ctx) return;
+      const { probs: fp, collapsed } = computeFrameAt(t, maxI);
+      drawFrameInto(ctx, W, H, fp, collapsed, undefined, false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gifStart, gifEnd, probs, collapsed, n, noise, watermarkOn, watermarkText, watermarkPos, watermarkColor, watermarkSize, watermarkOpacity]);
+
   const maxP = Math.max(...probs, 0.001);
+
 
   const maxIdx = probs.indexOf(Math.max(...probs));
   const peakStability = (probs[maxIdx] || 0) * (1 - noise);
@@ -633,6 +704,19 @@ qreg q[${n}];
                       className="w-full accent-amber-400" />
                   </label>
                 </div>
+                <div className="mt-1 grid grid-cols-3 gap-1">
+                  {["start", "mid", "end"].map((lbl, i) => (
+                    <div key={lbl} className="overflow-hidden rounded-sm border border-amber-300/15 bg-black/70">
+                      <canvas
+                        ref={previewRefs[i]}
+                        width={160}
+                        height={90}
+                        className="block w-full"
+                      />
+                      <div className="px-1 py-0.5 font-mono text-[8px] uppercase tracking-widest text-amber-200/60">{lbl}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Watermark */}
@@ -657,12 +741,96 @@ qreg q[${n}];
                   placeholder="QUANTARA · your-name"
                   className="w-full rounded-sm border border-violet-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-violet-100 outline-none focus:border-violet-300 disabled:opacity-40"
                 />
+                <div className="grid grid-cols-4 gap-1">
+                  {(["tl","tr","bl","br"] as WmPos[]).map((pos) => (
+                    <button
+                      key={pos}
+                      type="button"
+                      disabled={!watermarkOn}
+                      onClick={() => setWatermarkPos(pos)}
+                      className={`rounded-sm border px-1 py-1 font-mono text-[9px] uppercase tracking-widest transition-colors disabled:opacity-40 ${
+                        watermarkPos === pos
+                          ? "border-violet-300 bg-violet-400/20 text-violet-100"
+                          : "border-white/10 bg-black/40 text-white/55 hover:border-violet-300/40"
+                      }`}
+                      title={`Anchor ${pos.toUpperCase()}`}
+                    >
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={watermarkColor}
+                    onChange={(e) => setWatermarkColor(e.target.value)}
+                    disabled={!watermarkOn}
+                    className="h-7 w-9 cursor-pointer rounded-sm border border-violet-400/20 bg-black/40 disabled:opacity-40"
+                    aria-label="Watermark color"
+                  />
+                  <label className="flex-1">
+                    <div className="flex items-center justify-between font-mono text-[8px] uppercase tracking-widest text-violet-200/70">
+                      <span>size</span><span>{watermarkSize}px</span>
+                    </div>
+                    <input
+                      type="range" min={6} max={42} step={1}
+                      value={watermarkSize}
+                      onChange={(e) => setWatermarkSize(parseInt(e.target.value, 10))}
+                      disabled={!watermarkOn}
+                      className="w-full accent-violet-400 disabled:opacity-40"
+                    />
+                  </label>
+                  <label className="flex-1">
+                    <div className="flex items-center justify-between font-mono text-[8px] uppercase tracking-widest text-violet-200/70">
+                      <span>α</span><span>{watermarkOpacity.toFixed(2)}</span>
+                    </div>
+                    <input
+                      type="range" min={0.1} max={1} step={0.05}
+                      value={watermarkOpacity}
+                      onChange={(e) => setWatermarkOpacity(parseFloat(e.target.value))}
+                      disabled={!watermarkOn}
+                      className="w-full accent-violet-400 disabled:opacity-40"
+                    />
+                  </label>
+                </div>
               </div>
+
+
 
               {/* Saved export profiles */}
               <div className="space-y-2 rounded-sm border border-emerald-300/25 bg-black/50 p-2">
-                <div className="font-mono text-[9px] uppercase tracking-widest text-emerald-200/80">
-                  Export Profiles
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-emerald-200/80">
+                  <span>Export Profiles</span>
+                  <span className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={exportProfilesFile}
+                      disabled={profiles.length === 0}
+                      className="rounded-sm border border-emerald-300/40 px-2 py-0.5 text-[9px] uppercase tracking-widest text-emerald-100 hover:bg-emerald-400/15 disabled:opacity-40"
+                      title="Download all profiles as JSON"
+                    >
+                      ⤓ json
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => profileFileRef.current?.click()}
+                      className="rounded-sm border border-emerald-300/40 px-2 py-0.5 text-[9px] uppercase tracking-widest text-emerald-100 hover:bg-emerald-400/15"
+                      title="Import profiles from JSON"
+                    >
+                      ⤒ json
+                    </button>
+                    <input
+                      ref={profileFileRef}
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) importProfilesFile(f);
+                        e.target.value = "";
+                      }}
+                    />
+                  </span>
                 </div>
                 <div className="flex gap-1">
                   <input
@@ -709,14 +877,21 @@ qreg q[${n}];
                 )}
               </div>
 
-
-
               {/* Export progress */}
               {exporting && (
                 <div className="space-y-1 rounded-sm border border-emerald-300/30 bg-black/60 p-2">
                   <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-emerald-200/90">
-                    <span>{exportLabel}</span>
-                    <span className="text-emerald-100">{Math.round(exportProgress * 100)}%</span>
+                    <span className="truncate">{exportLabel}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-emerald-100">{Math.round(exportProgress * 100)}%</span>
+                      <button
+                        type="button"
+                        onClick={cancelExport}
+                        className="rounded-sm border border-rose-300/40 bg-rose-400/10 px-2 py-0.5 text-[9px] uppercase tracking-widest text-rose-200 hover:bg-rose-400/20"
+                      >
+                        cancel
+                      </button>
+                    </span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-emerald-400/10">
                     <div
@@ -726,6 +901,7 @@ qreg q[${n}];
                   </div>
                 </div>
               )}
+
 
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">
                 Status: <span className={exporting ? "text-amber-300" : cascading ? "text-amber-300" : "text-emerald-300"}>{exporting ? "EXPORTING" : cascading ? "CASCADING" : "READY"}</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>

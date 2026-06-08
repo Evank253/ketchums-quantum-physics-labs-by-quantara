@@ -133,7 +133,28 @@ const DOMAINS: Domain[] = [
   },
 ];
 
+import { useMemo, useState } from "react";
+
 export function FoundationalEquations() {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!q) return DOMAINS.map((d) => ({ domain: d, equations: d.equations, matched: false }));
+    return DOMAINS
+      .map((d) => {
+        const dHit = d.heading.toLowerCase().includes(q) || d.label.toLowerCase().includes(q) || d.blurb.toLowerCase().includes(q);
+        const equations = d.equations.filter((eq) =>
+          eq.title.toLowerCase().includes(q) ||
+          eq.tex.toLowerCase().includes(q) ||
+          eq.note.toLowerCase().includes(q) ||
+          eq.id.toLowerCase().includes(q),
+        );
+        if (!dHit && equations.length === 0) return null;
+        return { domain: d, equations: dHit && equations.length === 0 ? d.equations : equations, matched: true };
+      })
+      .filter((x): x is { domain: Domain; equations: Eq[]; matched: boolean } => x !== null);
+  }, [q]);
+  const totalHits = filtered.reduce((n, x) => n + x.equations.length, 0);
   return (
     <section id="equations" className="relative overflow-hidden border-t border-white/5 px-6 py-24">
       {/* atmosphere */}
@@ -171,12 +192,46 @@ export function FoundationalEquations() {
         </div>
 
 
+        {/* search bar */}
+        <div className="mb-8 flex flex-wrap items-center gap-3 rounded-sm border border-white/10 bg-card/30 px-4 py-3">
+          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-violet-200/80">Search</div>
+          <div className="relative flex-1 min-w-[180px]">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="qed, graviton, λ, vertex, veneziano…"
+              className="w-full rounded-sm border border-violet-400/20 bg-black/60 px-3 py-2 pr-8 font-mono text-[12px] text-white placeholder:text-white/30 outline-none focus:border-violet-300"
+              aria-label="Search foundational equations"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm px-1 font-mono text-[12px] text-white/50 hover:text-white"
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome/70">
+            {q ? `${totalHits} hit${totalHits === 1 ? "" : "s"} · ${filtered.length} / ${DOMAINS.length} domains` : `${DOMAINS.length} domains · ${DOMAINS.reduce((n, d) => n + d.equations.length, 0)} equations`}
+          </div>
+        </div>
+
         {/* domain stack */}
         <div className="space-y-4">
-          {DOMAINS.map((d, di) => (
+          {filtered.length === 0 && (
+            <div className="rounded-sm border border-white/10 bg-card/20 px-6 py-10 text-center font-mono text-[12px] text-white/55">
+              No equations match <span className="text-white">"{query}"</span>.
+            </div>
+          )}
+          {filtered.map(({ domain: d, equations: eqs }, di) => (
             <details
               key={d.id}
               id={`canon-${d.id}`}
+              open={!!q}
               className="group relative overflow-hidden border border-white/10 bg-card/20 transition-colors open:bg-card/40 [&_summary::-webkit-details-marker]:hidden"
             >
               <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-4 px-6 py-5 hover:bg-white/[0.03]">
@@ -196,14 +251,14 @@ export function FoundationalEquations() {
                   </div>
                 </div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome/60">
-                  {String(di + 1).padStart(2, "0")} / {String(DOMAINS.length).padStart(2, "0")} · {d.equations.length} eqs
+                  {String(di + 1).padStart(2, "0")} / {String(filtered.length).padStart(2, "0")} · {eqs.length}{q && eqs.length !== d.equations.length ? `/${d.equations.length}` : ""} eqs
                 </div>
               </summary>
 
               <div className="border-t border-white/5 px-6 pb-8 pt-6">
                 <p className="mb-6 max-w-2xl font-mono text-[11px] leading-relaxed text-muted-foreground">{d.blurb}</p>
                 <div className="grid gap-px md:grid-cols-2">
-                  {d.equations.map((eq, i) => (
+                  {eqs.map((eq, i) => (
                     <article
                       key={eq.id}
                       className="group/eq relative overflow-hidden border border-white/5 bg-card/30 p-7 transition-colors hover:bg-card/60"
@@ -215,7 +270,7 @@ export function FoundationalEquations() {
 
                       <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em]">
                         <span className={d.accent}>{eq.id}</span>
-                        <span className="text-chrome/60">{String(i + 1).padStart(2, "0")} / {String(d.equations.length).padStart(2, "0")}</span>
+                        <span className="text-chrome/60">{String(i + 1).padStart(2, "0")} / {String(eqs.length).padStart(2, "0")}</span>
                       </div>
 
                       <h4 className="mt-3 text-balance text-base font-bold leading-tight tracking-[-0.01em] text-white">

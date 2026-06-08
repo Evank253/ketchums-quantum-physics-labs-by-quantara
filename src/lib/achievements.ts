@@ -40,23 +40,47 @@ function writeUnlocked(map: Record<string, number>) {
   window.dispatchEvent(new CustomEvent(EVT, { detail: map }));
 }
 
+let evaluating = false;
+let scheduled = false;
+
 export function evaluateAchievements(): Record<string, number> {
-  const unlocked = readUnlocked();
-  const ctx = { dat: readDat(), ledger: readLedger() };
-  let changed = false;
-  for (const a of ACHIEVEMENTS) {
-    if (unlocked[a.id]) continue;
-    try {
-      if (a.test(ctx)) {
-        unlocked[a.id] = Date.now();
-        changed = true;
-        logLedger("unlock", `Achievement · ${a.title}`, { id: a.id, reward: a.reward });
-        if (a.reward) creditDat(a.reward);
-      }
-    } catch {}
+  // Re-entrancy guard — logLedger/creditDat below dispatch events that the
+  // subscriber wires back into here. Without this guard we recurse until the
+  // call stack explodes (RangeError: Maximum call stack size exceeded).
+  if (evaluating) return readUnlocked();
+  evaluating = true;
+  try {
+    const unlocked = readUnlocked();
+    const ctx = { dat: readDat(), ledger: readLedger() };
+    let changed = false;
+    for (const a of ACHIEVEMENTS) {
+      if (unlocked[a.id]) continue;
+      try {
+        if (a.test(ctx)) {
+          unlocked[a.id] = Date.now();
+          changed = true;
+          // Persist immediately so re-entrant readers see the unlock.
+          writeUnlocked(unlocked);
+          logLedger("unlock", `Achievement · ${a.title}`, { id: a.id, reward: a.reward });
+          if (a.reward) creditDat(a.reward);
+        }
+      } catch {}
+    }
+    if (changed) writeUnlocked(unlocked);
+    return unlocked;
+  } finally {
+    evaluating = false;
   }
-  if (changed) writeUnlocked(unlocked);
-  return unlocked;
+}
+
+function scheduleEvaluate() {
+  if (scheduled) return;
+  scheduled = true;
+  // Coalesce bursts of ledger/DAT events into a single eval per frame.
+  (typeof window !== "undefined" ? window.requestAnimationFrame : setTimeout)(
+    () => { scheduled = false; evaluateAchievements(); },
+    16 as never,
+  );
 }
 
 export function getUnlocked(): Record<string, number> { return readUnlocked(); }
@@ -65,11 +89,9 @@ export function subscribeAchievements(cb: (map: Record<string, number>) => void)
   if (typeof window === "undefined") return () => {};
   const h = (e: Event) => cb((e as CustomEvent<Record<string, number>>).detail ?? readUnlocked());
   window.addEventListener(EVT, h);
-  // Also re-evaluate on ledger/DAT changes
-  const offL = subscribeLedger(() => { evaluateAchievements(); });
-  const offD = subscribeDat(() => { evaluateAchievements(); });
-  // Initial pass
-  setTimeout(() => evaluateAchievements(), 0);
+  const offL = subscribeLedger(() => { scheduleEvaluate(); });
+  const offD = subscribeDat(() => { scheduleEvaluate(); });
+  scheduleEvaluate();
   return () => {
     window.removeEventListener(EVT, h);
     offL(); offD();

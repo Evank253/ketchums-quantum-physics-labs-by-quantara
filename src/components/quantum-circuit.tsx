@@ -364,11 +364,17 @@ export function QuantumCircuit() {
   const exportGif = async () => {
     if (exporting) return;
     const preset = GIF_PRESETS[gifPreset];
-    const { w: W, h: H, fps, dur } = preset;
-    const FRAMES = Math.max(6, Math.round(fps * dur));
+    const W = Math.max(160, Math.round(preset.w * resScale));
+    const H = Math.max(90, Math.round(preset.h * resScale));
+    const fps = preset.fps;
+    const dur = preset.dur;
+    // Frame range — clamp to [0,1], ensure end > start
+    const rs = Math.min(0.99, Math.max(0, gifStart));
+    const re = Math.min(1, Math.max(rs + 0.05, gifEnd));
+    const FRAMES = Math.max(6, Math.round(fps * dur * (re - rs)));
     const DELAY = Math.round(1000 / fps);
     setExporting("gif");
-    setExportLabel(`GIF · ${preset.label}${gifTransparent ? " · alpha" : ""}`);
+    setExportLabel(`GIF · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""} · t[${rs.toFixed(2)}–${re.toFixed(2)}]${gifTransparent ? " · alpha" : ""}`);
     setExportProgress(0.02);
     await new Promise((r) => setTimeout(r, 30));
     const c = document.createElement("canvas");
@@ -382,7 +388,7 @@ export function QuantumCircuit() {
     }
     const uniform = probs.map(() => 1 / probs.length);
     for (let f = 0; f < FRAMES; f++) {
-      const t = f / (FRAMES - 1);
+      const t = rs + (re - rs) * (f / Math.max(1, FRAMES - 1));
       let frameProbs: number[];
       let frameCollapsed: number | null = null;
       if (t < 0.45) {

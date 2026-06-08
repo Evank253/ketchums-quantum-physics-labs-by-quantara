@@ -217,12 +217,19 @@ export function QuantumCircuit() {
   const [resScale, setResScale] = useState(1);             // 0.5 .. 2
   const [watermarkOn, setWatermarkOn] = useState(true);
   const [watermarkText, setWatermarkText] = useState("QUANTARA · quantara.app");
+  type WmPos = "br" | "bl" | "tr" | "tl";
+  const [watermarkPos, setWatermarkPos] = useState<WmPos>("br");
+  const [watermarkColor, setWatermarkColor] = useState("#e9d5ff");
+  const [watermarkSize, setWatermarkSize] = useState(12);   // px @ 1280-wide
+  const [watermarkOpacity, setWatermarkOpacity] = useState(0.9);
   const [gifStart, setGifStart] = useState(0);             // 0 .. 1
   const [gifEnd, setGifEnd] = useState(1);                 // 0 .. 1
+  const cancelRef = useRef(false);
   type ExportProfile = {
     name: string; pngPreset: PngPreset; gifPreset: GifPreset;
     pngTransparent: boolean; gifTransparent: boolean;
     resScale: number; watermarkOn: boolean; watermarkText: string;
+    watermarkPos?: WmPos; watermarkColor?: string; watermarkSize?: number; watermarkOpacity?: number;
     gifStart: number; gifEnd: number;
   };
   const PROFILE_KEY = "quantara.exportProfiles.v1";
@@ -231,6 +238,7 @@ export function QuantumCircuit() {
     try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]"); } catch { return []; }
   });
   const [profileName, setProfileName] = useState("");
+  const profileFileRef = useRef<HTMLInputElement | null>(null);
   const persistProfiles = (next: ExportProfile[]) => {
     setProfiles(next);
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(next)); } catch {}
@@ -239,7 +247,8 @@ export function QuantumCircuit() {
     const name = profileName.trim() || `Preset ${profiles.length + 1}`;
     const p: ExportProfile = {
       name, pngPreset, gifPreset, pngTransparent, gifTransparent,
-      resScale, watermarkOn, watermarkText, gifStart, gifEnd,
+      resScale, watermarkOn, watermarkText, watermarkPos, watermarkColor, watermarkSize, watermarkOpacity,
+      gifStart, gifEnd,
     };
     const next = [...profiles.filter((x) => x.name !== name), p];
     persistProfiles(next);
@@ -251,9 +260,35 @@ export function QuantumCircuit() {
     setPngPreset(p.pngPreset); setGifPreset(p.gifPreset);
     setPngTransparent(p.pngTransparent); setGifTransparent(p.gifTransparent);
     setResScale(p.resScale); setWatermarkOn(p.watermarkOn);
-    setWatermarkText(p.watermarkText); setGifStart(p.gifStart); setGifEnd(p.gifEnd);
+    setWatermarkText(p.watermarkText);
+    if (p.watermarkPos) setWatermarkPos(p.watermarkPos);
+    if (p.watermarkColor) setWatermarkColor(p.watermarkColor);
+    if (typeof p.watermarkSize === "number") setWatermarkSize(p.watermarkSize);
+    if (typeof p.watermarkOpacity === "number") setWatermarkOpacity(p.watermarkOpacity);
+    setGifStart(p.gifStart); setGifEnd(p.gifEnd);
   };
   const deleteProfile = (name: string) => persistProfiles(profiles.filter((x) => x.name !== name));
+  const exportProfilesFile = () => {
+    const blob = new Blob([JSON.stringify(profiles, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `quantara-export-profiles-${Date.now()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const importProfilesFile = async (file: File) => {
+    try {
+      const txt = await file.text();
+      const parsed = JSON.parse(txt);
+      if (!Array.isArray(parsed)) return;
+      const byName = new Map(profiles.map((p) => [p.name, p]));
+      for (const p of parsed) {
+        if (p && typeof p.name === "string") byName.set(p.name, p as ExportProfile);
+      }
+      persistProfiles(Array.from(byName.values()));
+    } catch {}
+  };
+  const cancelExport = () => { cancelRef.current = true; };
 
   // Draw a frame into a canvas. Used by both PNG and GIF paths.
   const drawFrameInto = (

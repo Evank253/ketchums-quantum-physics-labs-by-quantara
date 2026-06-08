@@ -793,6 +793,9 @@ qreg q[${n}];
                     />
                   </label>
                 </div>
+              </div>
+
+
 
               {/* Saved export profiles */}
               <div className="space-y-2 rounded-sm border border-emerald-300/25 bg-black/50 p-2">

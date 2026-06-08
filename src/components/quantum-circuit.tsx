@@ -142,6 +142,8 @@ export function QuantumCircuit() {
   );
 
   const [hoverWire, setHoverWire] = useState<number | null>(null);
+  const [cascading, setCascading] = useState(false);
+  const [collapseTick, setCollapseTick] = useState(0);
 
   const place = (q: number, gateOverride?: Gate) => {
     const g = gateOverride ?? picked;
@@ -163,12 +165,81 @@ export function QuantumCircuit() {
   const measure = () => {
     const r = Math.random();
     let acc = 0;
+    let picked2 = 0;
     for (let i = 0; i < probs.length; i++) {
       acc += probs[i];
-      if (r <= acc) { setCollapsed(i); break; }
+      if (r <= acc) { picked2 = i; break; }
     }
+    setCollapsed(picked2);
+    setCollapseTick((t) => t + 1);
     creditDat(8);
     logLedger("benchmark", `Q-Circuit · Measure n=${n} ops=${ops.length}`, { probs });
+  };
+
+  const parseAndInitialize = () => {
+    if (cascading) return;
+    setCascading(true);
+    setCollapsed(null);
+    // staged cascade: parse → calibrate → collapse
+    setTimeout(() => { measure(); setCascading(false); }, 1100);
+  };
+
+  const exportFrame = () => {
+    const W = 1280, H = 720;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d")!;
+    // background
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, "#06070c"); bg.addColorStop(1, "#03040a");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    // title
+    ctx.fillStyle = "#a5f3fc";
+    ctx.font = "bold 28px ui-monospace, monospace";
+    ctx.fillText("QUANTARA · QUANTUM CIRCUIT FRAME", 48, 64);
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "14px ui-monospace, monospace";
+    ctx.fillText(`n=${n} · ops=${ops.length} · noise=${(noise*100).toFixed(0)}%`, 48, 92);
+    // histogram
+    const padL = 80, padR = 80, padT = 160, padB = 140;
+    const gw = W - padL - padR;
+    const gh = H - padT - padB;
+    const bw = gw / probs.length;
+    probs.forEach((p, i) => {
+      const h = Math.max(2, p * gh);
+      const x = padL + i * bw + bw * 0.12;
+      const y = padT + (gh - h);
+      const w = bw * 0.76;
+      const isPeak = i === maxIdx && p > 0.04;
+      const isC = collapsed === i;
+      const grd = ctx.createLinearGradient(x, y, x, y + h);
+      if (isC) { grd.addColorStop(0, "#fde68a"); grd.addColorStop(1, "#f59e0b"); }
+      else if (isPeak) { grd.addColorStop(0, "#fdf4ff"); grd.addColorStop(0.5, "#e879f9"); grd.addColorStop(1, "#86198f"); }
+      else { grd.addColorStop(0, "rgba(167,139,250,0.5)"); grd.addColorStop(1, "rgba(91,33,182,0.15)"); }
+      ctx.fillStyle = grd;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "11px ui-monospace, monospace";
+      ctx.fillText(`|${i.toString(2).padStart(n, "0")}⟩`, x, H - padB + 18);
+      ctx.fillText(`${(p*100).toFixed(1)}%`, x, H - padB + 34);
+    });
+    // readout
+    ctx.fillStyle = "#f0abfc";
+    ctx.font = "bold 18px ui-monospace, monospace";
+    ctx.fillText(`SOLUTION STABILITY: ${(peakStability*100).toFixed(2)}%   Λ = ${lambdaMantissa} × 10^${lambdaExp}`, 48, H - 60);
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "12px ui-monospace, monospace";
+    ctx.fillText(collapsed !== null ? `collapsed → |${collapsed.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48, H - 38);
+    c.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `quantara-frame-${Date.now()}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
+    logLedger("kernel", `Q-Circuit · render frame n=${n}`);
+    creditDat(4);
   };
 
   const maxP = Math.max(...probs, 0.001);
@@ -252,15 +323,28 @@ qreg q[${n}];
               </div>
 
               <button
-                onClick={measure}
-                className="group relative w-full overflow-hidden rounded-sm border border-emerald-300/60 bg-gradient-to-b from-emerald-400/30 to-emerald-600/20 px-3 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-emerald-100 shadow-[0_0_22px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all hover:from-emerald-400/45 hover:to-emerald-600/30"
+                onClick={parseAndInitialize}
+                disabled={cascading}
+                className="group relative w-full overflow-hidden rounded-sm border border-emerald-300/60 bg-gradient-to-b from-emerald-400/30 to-emerald-600/20 px-3 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-emerald-100 shadow-[0_0_22px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all hover:from-emerald-400/45 hover:to-emerald-600/30 disabled:opacity-80"
               >
-                <span className="relative z-10">Parse &amp; Initialize</span>
+                <span className="relative z-10">{cascading ? "Cascading…" : "Parse & Initialize"}</span>
+                {cascading && (
+                  <span aria-hidden className="absolute inset-0 overflow-hidden">
+                    <span className="absolute inset-y-0 left-0 w-full origin-left animate-[cascadeSweep_1.1s_ease-out_forwards] bg-gradient-to-r from-emerald-300/60 via-cyan-200/40 to-fuchsia-300/60" />
+                  </span>
+                )}
                 <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent opacity-70" />
               </button>
 
+              <button
+                onClick={exportFrame}
+                className="w-full rounded-sm border border-cyan-300/40 bg-black/50 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-100 hover:bg-cyan-400/10"
+              >
+                ⤓ Export Render Frame (PNG)
+              </button>
+
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">
-                Status: <span className="text-emerald-300">READY</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>
+                Status: <span className={cascading ? "text-amber-300" : "text-emerald-300"}>{cascading ? "CASCADING" : "READY"}</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>
               </div>
             </div>
           </GlassPane>
@@ -288,6 +372,23 @@ qreg q[${n}];
                     "0 0 12px rgba(125,211,252,0.7), 0 0 24px rgba(125,211,252,0.35)",
                 }}
               />
+
+              {/* Decoherence speckle — TV-static artifacts that intensify with noise */}
+              {noise > 0 && (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 mix-blend-screen"
+                  style={{
+                    opacity: Math.min(0.85, noise * 1.4),
+                    backgroundImage:
+                      "radial-gradient(circle at 17% 22%, rgba(232,121,249,0.7) 0 1px, transparent 1.5px), radial-gradient(circle at 73% 41%, rgba(125,211,252,0.6) 0 1px, transparent 1.5px), radial-gradient(circle at 38% 78%, rgba(252,211,77,0.55) 0 1px, transparent 1.5px), radial-gradient(circle at 88% 86%, rgba(167,139,250,0.6) 0 1px, transparent 1.5px), repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 3px)",
+                    backgroundSize: "7px 7px, 11px 11px, 13px 13px, 9px 9px, auto",
+                    animation: "qstatic 0.18s steps(4) infinite",
+                    filter: `blur(${noise * 0.6}px)`,
+                  }}
+                />
+              )}
+
 
               <div className="space-y-3">
                 {Array.from({ length: n }).map((_, q) => {
@@ -490,10 +591,24 @@ qreg q[${n}];
               peakStability={peakStability}
               lambdaMantissa={lambdaMantissa}
               lambdaExp={lambdaExp}
+              collapseTick={collapseTick}
             />
           </GlassPane>
         </div>
       </div>
+
+      {/* SVG refraction filter shared by all GlassPane wrappers */}
+      <svg aria-hidden width="0" height="0" style={{ position: "absolute" }}>
+        <defs>
+          <filter id="qc-glass-refraction" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves={2} seed={7} result="t" />
+            <feDisplacementMap in="SourceGraphic" in2="t" scale={8} xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <filter id="qc-glass-edge" x="-5%" y="-5%" width="110%" height="110%">
+            <feGaussianBlur stdDeviation="0.8" />
+          </filter>
+        </defs>
+      </svg>
 
       <style>{`
         @keyframes qpulse {
@@ -505,6 +620,25 @@ qreg q[${n}];
           25%  { opacity: 1; }
           100% { transform: translateY(-100%); opacity: 0; }
         }
+        @keyframes cascadeSweep {
+          0%   { transform: scaleX(0); opacity: 0.9; }
+          100% { transform: scaleX(1); opacity: 0.1; }
+        }
+        @keyframes qstatic {
+          0%   { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+          100% { background-position: 3px -2px, -4px 3px, 2px 4px, -3px -3px, 0 0; }
+        }
+        @keyframes spikeCollapse {
+          0%   { transform: scaleY(0.2); filter: brightness(2.4); }
+          40%  { transform: scaleY(1.25); filter: brightness(1.4); }
+          70%  { transform: scaleY(0.92); }
+          100% { transform: scaleY(1); filter: brightness(1); }
+        }
+        @keyframes shockRing {
+          0%   { transform: scale(0.2); opacity: 0.9; }
+          100% { transform: scale(2.6); opacity: 0; }
+        }
+
         .quantara-slider {
           -webkit-appearance: none;
           appearance: none;
@@ -563,6 +697,17 @@ function GlassPane({
         backdropFilter: "blur(6px)",
       }}
     >
+      {/* Refracted glass corner caustics — SVG turbulence displacement */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-px overflow-hidden rounded-md"
+        style={{
+          filter: "url(#qc-glass-refraction)",
+          background: `radial-gradient(120px 80px at 10% 0%, ${edge}, transparent 70%), radial-gradient(140px 90px at 100% 100%, ${edge}, transparent 70%)`,
+          opacity: 0.55,
+          mixBlendMode: "screen",
+        }}
+      />
       {/* refractive edge highlight */}
       <span
         aria-hidden
@@ -595,6 +740,7 @@ function ExponentMetric({
   peakStability,
   lambdaMantissa,
   lambdaExp,
+  collapseTick,
 }: {
   probs: number[];
   n: number;
@@ -603,6 +749,7 @@ function ExponentMetric({
   peakStability: number;
   lambdaMantissa: string;
   lambdaExp: number;
+  collapseTick: number;
 }) {
   // Particle density on the dominant bin (the magenta spike).
   const peakHeight = Math.max(8, Math.min(100, peakStability * 100));
@@ -646,7 +793,8 @@ function ExponentMetric({
               <div key={i} className="relative flex flex-1 flex-col items-center justify-end gap-1">
                 {/* the actual bar */}
                 <div
-                  className="w-full rounded-t-sm"
+                  key={`bar-${i}-${collapseTick}`}
+                  className="w-full origin-bottom rounded-t-sm"
                   style={{
                     height: `${isPeak ? peakHeight : h}%`,
                     background: isCollapsed
@@ -659,8 +807,22 @@ function ExponentMetric({
                       : isCollapsed
                       ? "0 0 14px rgba(252,211,77,0.7)"
                       : "none",
+                    animation: isCollapsed ? "spikeCollapse 900ms cubic-bezier(.2,.9,.25,1)" : undefined,
                   }}
                 />
+                {/* shock ring when this bin collapses */}
+                {isCollapsed && (
+                  <span
+                    key={`ring-${collapseTick}`}
+                    aria-hidden
+                    className="pointer-events-none absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                    style={{
+                      border: "1.5px solid rgba(253,224,71,0.85)",
+                      boxShadow: "0 0 18px rgba(253,224,71,0.7)",
+                      animation: "shockRing 700ms ease-out forwards",
+                    }}
+                  />
+                )}
                 {/* particle plume on the dominant spike */}
                 {isPeak && (
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-full overflow-hidden">

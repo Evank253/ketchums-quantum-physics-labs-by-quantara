@@ -400,6 +400,21 @@ export function QuantumCircuit() {
     });
   };
 
+  // Compute frame-probs along the collapse timeline at t∈[0,1]. Used by GIF and preview.
+  const computeFrameAt = (t: number, target: number): { probs: number[]; collapsed: number | null } => {
+    const uniform = probs.map(() => 1 / probs.length);
+    if (t < 0.45) {
+      const k = t / 0.45;
+      return { probs: probs.map((p, i) => uniform[i] * (1 - k) + p * k), collapsed: null };
+    } else if (t < 0.7) {
+      return { probs: probs.slice(), collapsed: null };
+    } else {
+      const k = (t - 0.7) / 0.3;
+      const fp = probs.map((p, i) => (i === target ? p * (1 - k) + 1 * k : p * (1 - k)));
+      return { probs: fp, collapsed: k > 0.7 ? target : null };
+    }
+  };
+
   const exportGif = async () => {
     if (exporting) return;
     const preset = GIF_PRESETS[gifPreset];
@@ -412,6 +427,7 @@ export function QuantumCircuit() {
     const re = Math.min(1, Math.max(rs + 0.05, gifEnd));
     const FRAMES = Math.max(6, Math.round(fps * dur * (re - rs)));
     const DELAY = Math.round(1000 / fps);
+    cancelRef.current = false;
     setExporting("gif");
     setExportLabel(`GIF · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""} · t[${rs.toFixed(2)}–${re.toFixed(2)}]${gifTransparent ? " · alpha" : ""}`);
     setExportProgress(0.02);
@@ -425,24 +441,13 @@ export function QuantumCircuit() {
     for (let i = 0; i < probs.length; i++) {
       acc += probs[i]; if (r <= acc) { target = i; break; }
     }
-    const uniform = probs.map(() => 1 / probs.length);
+    let cancelled = false;
     for (let f = 0; f < FRAMES; f++) {
+      if (cancelRef.current) { cancelled = true; break; }
       const t = rs + (re - rs) * (f / Math.max(1, FRAMES - 1));
-      let frameProbs: number[];
-      let frameCollapsed: number | null = null;
-      if (t < 0.45) {
-        const k = t / 0.45;
-        frameProbs = probs.map((p, i) => uniform[i] * (1 - k) + p * k);
-      } else if (t < 0.7) {
-        frameProbs = probs.slice();
-      } else {
-        const k = (t - 0.7) / 0.3;
-        frameProbs = probs.map((p, i) => (i === target ? p * (1 - k) + 1 * k : p * (1 - k)));
-        if (k > 0.7) frameCollapsed = target;
-      }
+      const { probs: frameProbs, collapsed: frameCollapsed } = computeFrameAt(t, target);
       drawFrameInto(ctx, W, H, frameProbs, frameCollapsed, `[${fps}fps · t=${t.toFixed(2)}]`, gifTransparent);
       const data = ctx.getImageData(0, 0, W, H).data;
-      // Transparent GIF: quantize with one-bit alpha so fully clear pixels stay clear.
       const palette = quantize(data, gifTransparent ? 255 : 256, {
         format: "rgb444",
         oneBitAlpha: gifTransparent,
@@ -453,6 +458,13 @@ export function QuantumCircuit() {
       gif.writeFrame(index, W, H, { palette, delay: DELAY, transparent: gifTransparent });
       setExportProgress(0.05 + 0.9 * ((f + 1) / FRAMES));
       if (f % 4 === 3) await new Promise((r2) => setTimeout(r2, 0));
+    }
+    if (cancelled) {
+      setExportLabel("GIF · cancelled");
+      setExportProgress(0);
+      setTimeout(() => { setExporting(null); }, 300);
+      cancelRef.current = false;
+      return;
     }
     gif.finish();
     const bytes = gif.bytesView();
@@ -470,7 +482,27 @@ export function QuantumCircuit() {
     creditDat(gifPreset === "lg" ? 24 : gifPreset === "md" ? 14 : 8);
   };
 
+  // Live preview thumbnails of GIF frame range (start / mid / end)
+  const previewRefs = [useRef<HTMLCanvasElement | null>(null), useRef<HTMLCanvasElement | null>(null), useRef<HTMLCanvasElement | null>(null)];
+  useEffect(() => {
+    const rs = Math.min(0.99, Math.max(0, gifStart));
+    const re = Math.min(1, Math.max(rs + 0.05, gifEnd));
+    const ts = [rs, (rs + re) / 2, re];
+    const maxI = probs.indexOf(Math.max(...probs));
+    ts.forEach((t, idx) => {
+      const cv = previewRefs[idx].current;
+      if (!cv) return;
+      const W = cv.width, H = cv.height;
+      const ctx = cv.getContext("2d");
+      if (!ctx) return;
+      const { probs: fp, collapsed } = computeFrameAt(t, maxI);
+      drawFrameInto(ctx, W, H, fp, collapsed, undefined, false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gifStart, gifEnd, probs, collapsed, n, noise, watermarkOn, watermarkText, watermarkPos, watermarkColor, watermarkSize, watermarkOpacity]);
+
   const maxP = Math.max(...probs, 0.001);
+
 
   const maxIdx = probs.indexOf(Math.max(...probs));
   const peakStability = (probs[maxIdx] || 0) * (1 - noise);

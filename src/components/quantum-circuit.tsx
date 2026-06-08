@@ -843,14 +843,28 @@ qreg q[${n}];
                     <span className="text-[9px] uppercase tracking-widest">on</span>
                   </label>
                 </div>
-                <input
-                  type="text"
+                <textarea
                   value={watermarkText}
                   onChange={(e) => setWatermarkText(e.target.value)}
                   disabled={!watermarkOn}
-                  placeholder="QUANTARA · your-name"
-                  className="w-full rounded-sm border border-violet-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-violet-100 outline-none focus:border-violet-300 disabled:opacity-40"
+                  placeholder={"QUANTARA · your-name\n(newlines allowed)"}
+                  rows={2}
+                  className="w-full resize-y rounded-sm border border-violet-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] leading-relaxed text-violet-100 outline-none focus:border-violet-300 disabled:opacity-40"
                 />
+                {/* Live mini preview of rendered watermark */}
+                <div className="rounded-sm border border-white/10 bg-black/60 px-2 py-1.5">
+                  <div className="font-mono text-[8px] uppercase tracking-widest text-white/40">preview</div>
+                  <div
+                    className="mt-0.5 whitespace-pre font-mono leading-tight"
+                    style={{
+                      color: watermarkColor,
+                      opacity: watermarkOn ? Math.max(0.1, watermarkOpacity) : 0.25,
+                      fontSize: `${Math.min(14, Math.max(8, watermarkSize * 0.7))}px`,
+                    }}
+                  >
+                    {watermarkText.trim() || "—"}
+                  </div>
+                </div>
                 <div className="grid grid-cols-4 gap-1">
                   {(["tl","tr","bl","br"] as WmPos[]).map((pos) => (
                     <button

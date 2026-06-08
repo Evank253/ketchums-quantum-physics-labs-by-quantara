@@ -131,21 +131,29 @@ export function QuantumCircuit() {
   const probs = useMemo(() => {
     const p = probabilities(state);
     if (noise <= 0) return p;
-    // depolarizing-ish noise: blend with uniform
     const u = 1 / p.length;
     return p.map((x) => (1 - noise) * x + noise * u);
   }, [state, noise]);
 
-  const place = (q: number) => {
-    if (picked === "CNOT") {
+  // Memoize bloch vectors per qubit (was recomputed every render).
+  const blochs = useMemo(
+    () => Array.from({ length: n }, (_, q) => blochOf(state, n, q)),
+    [state, n],
+  );
+
+  const [hoverWire, setHoverWire] = useState<number | null>(null);
+
+  const place = (q: number, gateOverride?: Gate) => {
+    const g = gateOverride ?? picked;
+    if (g === "CNOT") {
       if (control === null) { setControl(q); return; }
       if (control === q) { setControl(null); return; }
       setOps((o) => [...o, { gate: "CNOT", control, target: q }]);
       logLedger("kernel", `Q-Circuit · CNOT q${control}→q${q}`);
       setControl(null);
     } else {
-      setOps((o) => [...o, { gate: picked, target: q }]);
-      logLedger("kernel", `Q-Circuit · ${picked} q${q}`);
+      setOps((o) => [...o, { gate: g, target: q }]);
+      logLedger("kernel", `Q-Circuit · ${g} q${q}`);
     }
     setCollapsed(null);
   };
@@ -191,7 +199,19 @@ export function QuantumCircuit() {
                     <div className="w-10 font-mono text-[11px] text-white/70">q{q}</div>
                     <button
                       onClick={() => place(q)}
-                      className="relative flex-1 h-10 rounded border border-white/10 bg-white/[0.02] hover:bg-cyan-400/5 transition-colors"
+                      onDragOver={(e) => { e.preventDefault(); setHoverWire(q); }}
+                      onDragLeave={() => setHoverWire((h) => (h === q ? null : h))}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setHoverWire(null);
+                        const g = e.dataTransfer.getData("text/quantara-gate") as Gate;
+                        if (g) place(q, g);
+                      }}
+                      className={`relative flex-1 h-10 rounded border transition-colors ${
+                        hoverWire === q
+                          ? "border-fuchsia-400 bg-fuchsia-400/10"
+                          : "border-white/10 bg-white/[0.02] hover:bg-cyan-400/5"
+                      }`}
                     >
                       <div className="absolute inset-y-1/2 left-2 right-2 h-px bg-gradient-to-r from-cyan-400/30 via-white/30 to-fuchsia-400/30" />
                       <div className="absolute inset-0 flex items-center gap-1 px-2">
@@ -220,10 +240,9 @@ export function QuantumCircuit() {
             {/* Bloch spheres */}
             <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/5 pt-4">
               <div className="font-mono text-[10px] uppercase tracking-widest text-white/60">Bloch</div>
-              {Array.from({length: n}).map((_, q) => {
-                const b = blochOf(state, n, q);
-                return <BlochSphere key={q} {...b} label={`q${q}`} />;
-              })}
+              {blochs.map((b, q) => (
+                <BlochSphere key={q} {...b} label={`q${q}`} />
+              ))}
             </div>
 
             {/* Histogram */}
@@ -269,11 +288,17 @@ export function QuantumCircuit() {
               </div>
             </div>
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-white/60">Gate Palette</div>
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-white/60">
+                <span>Gate Palette</span>
+                <span className="text-white/40">tap or drag →</span>
+              </div>
               <div className="mt-2 grid grid-cols-4 gap-1">
                 {(["H","X","Y","Z","S","T","CNOT"] as Gate[]).map((g) => (
-                  <button key={g} onClick={() => { setPicked(g); setControl(null); }}
-                    className={`rounded border px-2 py-2 text-[11px] font-mono font-bold ${picked===g?"border-fuchsia-400 bg-fuchsia-400/10 text-fuchsia-200":"border-white/15 text-white/80 hover:bg-white/5"}`}>
+                  <button key={g}
+                    draggable
+                    onDragStart={(e) => { e.dataTransfer.setData("text/quantara-gate", g); e.dataTransfer.effectAllowed = "copy"; }}
+                    onClick={() => { setPicked(g); setControl(null); }}
+                    className={`cursor-grab active:cursor-grabbing rounded border px-2 py-2 text-[11px] font-mono font-bold ${picked===g?"border-fuchsia-400 bg-fuchsia-400/10 text-fuchsia-200":"border-white/15 text-white/80 hover:bg-white/5"}`}>
                     {g}
                   </button>
                 ))}

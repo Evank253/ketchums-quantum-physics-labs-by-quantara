@@ -12,19 +12,22 @@ export type Achievement = {
 };
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: "first_credit",  title: "First Credit",        desc: "Earn your first $DAT.",                  tier: "bronze", reward: 5,   test: ({ dat }) => dat >= 1 },
-  { id: "dat_100",       title: "Centurion",           desc: "Accumulate 100 $DAT.",                   tier: "bronze", reward: 25,  test: ({ dat }) => dat >= 100 },
-  { id: "dat_1k",        title: "Kilo-DAT",            desc: "Accumulate 1,000 $DAT.",                 tier: "silver", reward: 100, test: ({ dat }) => dat >= 1_000 },
-  { id: "dat_10k",       title: "Sovereign Wallet",    desc: "Accumulate 10,000 $DAT.",                tier: "gold",   reward: 500, test: ({ dat }) => dat >= 10_000 },
-  { id: "cern_runner",   title: "Hadron Initiate",     desc: "Complete a CERN run.",                   tier: "bronze", reward: 15,  test: ({ ledger }) => ledger.some(e => e.label.startsWith("CERN run")) },
-  { id: "cern_master",   title: "Beamline Architect",  desc: "Complete 10 CERN runs.",                 tier: "silver", reward: 60,  test: ({ ledger }) => ledger.filter(e => e.label.startsWith("CERN run")).length >= 10 },
-  { id: "quantum_lab",   title: "Wavefunction Tamer",  desc: "Measure a quantum circuit.",             tier: "bronze", reward: 20,  test: ({ ledger }) => ledger.some(e => e.label.startsWith("Q-Circuit")) },
-  { id: "entangler",     title: "Entangler",           desc: "Place a CNOT gate.",                     tier: "silver", reward: 40,  test: ({ ledger }) => ledger.some(e => e.label.includes("CNOT")) },
-  { id: "ledger_50",     title: "Memory Keeper",       desc: "Record 50 ledger entries.",              tier: "silver", reward: 50,  test: ({ ledger }) => ledger.length >= 50 },
-  { id: "ledger_500",    title: "Archivist",           desc: "Record 500 ledger entries.",             tier: "gold",   reward: 250, test: ({ ledger }) => ledger.length >= 500 },
-  { id: "city_dawn",     title: "Horizon Dawn",        desc: "Grow the horizon city to 25%.",          tier: "bronze", reward: 20,  test: ({ ledger }) => ledger.some(e => e.kind === "unlock" && e.label.includes("city:25")) },
-  { id: "city_meridian", title: "Meridian Skyline",    desc: "Grow the horizon city to 50%.",          tier: "silver", reward: 75,  test: ({ ledger }) => ledger.some(e => e.kind === "unlock" && e.label.includes("city:50")) },
-  { id: "city_apex",     title: "Aurora Apex",         desc: "Grow the horizon city to 100%.",         tier: "mythic", reward: 750, test: ({ ledger }) => ledger.some(e => e.kind === "unlock" && e.label.includes("city:100")) },
+  { id: "first_credit",  title: "First Credit",        desc: "Earn your first $DAT.",                  tier: "bronze", reward: 5,    test: ({ dat }) => dat >= 1 },
+  { id: "dat_100",       title: "Centurion",           desc: "Accumulate 100 $DAT.",                   tier: "bronze", reward: 25,   test: ({ dat }) => dat >= 100 },
+  { id: "dat_1k",        title: "Kilo-DAT",            desc: "Accumulate 1,000 $DAT.",                 tier: "silver", reward: 150,  test: ({ dat }) => dat >= 1_000 },
+  { id: "dat_10k",       title: "Sovereign Wallet",    desc: "Accumulate 10,000 $DAT.",                tier: "gold",   reward: 750,  test: ({ dat }) => dat >= 10_000 },
+  { id: "dat_100k",      title: "DAT Singularity",     desc: "Accumulate 100,000 $DAT.",               tier: "mythic", reward: 5000, test: ({ dat }) => dat >= 100_000 },
+  { id: "cern_runner",   title: "Hadron Initiate",     desc: "Complete a CERN run.",                   tier: "bronze", reward: 15,   test: ({ ledger }) => ledger.some(e => e.label.startsWith("CERN run")) },
+  { id: "cern_master",   title: "Beamline Architect",  desc: "Complete 10 CERN runs.",                 tier: "silver", reward: 80,   test: ({ ledger }) => ledger.filter(e => e.label.startsWith("CERN run")).length >= 10 },
+  { id: "cern_legend",   title: "Collision Cartographer", desc: "Complete 50 CERN runs.",              tier: "gold",   reward: 400,  test: ({ ledger }) => ledger.filter(e => e.label.startsWith("CERN run")).length >= 50 },
+  { id: "quantum_lab",   title: "Wavefunction Tamer",  desc: "Measure a quantum circuit.",             tier: "bronze", reward: 20,   test: ({ ledger }) => ledger.some(e => e.label.startsWith("Q-Circuit · Measure")) },
+  { id: "entangler",     title: "Entangler",           desc: "Place a CNOT gate.",                     tier: "silver", reward: 50,   test: ({ ledger }) => ledger.some(e => e.label.includes("CNOT")) },
+  { id: "gate_smith",    title: "Gate Smith",          desc: "Place 25 quantum gates.",                tier: "silver", reward: 100,  test: ({ ledger }) => ledger.filter(e => e.kind === "kernel" && e.label.startsWith("Q-Circuit")).length >= 25 },
+  { id: "ledger_50",     title: "Memory Keeper",       desc: "Record 50 ledger entries.",              tier: "silver", reward: 50,   test: ({ ledger }) => ledger.length >= 50 },
+  { id: "ledger_500",    title: "Archivist",           desc: "Record 500 ledger entries.",             tier: "gold",   reward: 300,  test: ({ ledger }) => ledger.length >= 500 },
+  { id: "city_dawn",     title: "Horizon Dawn",        desc: "Grow the horizon city to 25%.",          tier: "bronze", reward: 25,   test: ({ ledger }) => ledger.some(e => e.kind === "unlock" && e.label.includes("city:25")) },
+  { id: "city_meridian", title: "Meridian Skyline",    desc: "Grow the horizon city to 50%.",          tier: "silver", reward: 100,  test: ({ ledger }) => ledger.some(e => e.kind === "unlock" && e.label.includes("city:50")) },
+  { id: "city_apex",     title: "Aurora Apex",         desc: "Grow the horizon city to 100%.",         tier: "mythic", reward: 1000, test: ({ ledger }) => ledger.some(e => e.kind === "unlock" && e.label.includes("city:100")) },
 ];
 
 const KEY = "quantara.achievements.v1";

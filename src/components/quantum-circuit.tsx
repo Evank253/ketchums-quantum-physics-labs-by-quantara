@@ -609,6 +609,21 @@ qreg q[${n}];
                 />
               </div>
 
+              {/* Shader intensity — performance vs. visual fidelity */}
+              <div className="mt-2 rounded-sm border border-white/10 bg-black/60 p-3">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest">
+                  <span className="text-white/55">Shader Intensity · GPU Load</span>
+                  <span className={shaderIntensity < 0.2 ? "text-emerald-300" : shaderIntensity > 0.8 ? "text-fuchsia-300" : "text-cyan-300"}>
+                    {shaderIntensity < 0.05 ? "PERF" : `${Math.round(shaderIntensity*100)}%`}
+                  </span>
+                </div>
+                <input
+                  type="range" min={0} max={1} step={0.01} value={shaderIntensity}
+                  onChange={(e) => setShaderIntensity(parseFloat(e.target.value))}
+                  className="quantara-slider mt-2 w-full"
+                />
+              </div>
+
               {/* Bloch micro-displays */}
               <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/5 pt-3">
                 <div className="font-mono text-[9px] uppercase tracking-widest text-white/55">Bloch Telemetry</div>

@@ -14,7 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      dat_claims: {
+        Row: {
+          amount: number
+          block_number: number | null
+          created_at: string
+          error: string | null
+          id: string
+          reason: string
+          reason_key: string | null
+          status: string
+          tx_hash: string | null
+          updated_at: string
+          wallet: string
+        }
+        Insert: {
+          amount: number
+          block_number?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          reason: string
+          reason_key?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          wallet: string
+        }
+        Update: {
+          amount?: number
+          block_number?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          reason?: string
+          reason_key?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          wallet?: string
+        }
+        Relationships: []
+      }
+      dat_mint_audit: {
+        Row: {
+          action: string
+          created_at: string
+          error: string | null
+          id: string
+          ip: string | null
+          payload: Json | null
+          result: Json | null
+          status: string
+          wallet: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          ip?: string | null
+          payload?: Json | null
+          result?: Json | null
+          status: string
+          wallet?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          ip?: string | null
+          payload?: Json | null
+          result?: Json | null
+          status?: string
+          wallet?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -371,10 +371,6 @@ export function QuantumCircuit() {
       ctx.restore();
     }
   };
-      ctx.fillText(txt, px, py);
-      ctx.restore();
-    }
-  };
 
   const exportFrame = () => {
     if (exporting) return;

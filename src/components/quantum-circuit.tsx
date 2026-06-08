@@ -1,6 +1,7 @@
 // Compact quantum circuit simulator: 1-3 qubits, gates H/X/Y/Z/S/T/CNOT/Measure
 // Visualizes Bloch vectors (single-qubit reduced) + probability histogram.
 import { useMemo, useState, type ReactNode } from "react";
+import { GIFEncoder, quantize, applyPalette } from "gifenc";
 import { logLedger } from "@/lib/learning-ledger";
 import { creditDat } from "@/lib/dat-tokens";
 
@@ -144,6 +145,8 @@ export function QuantumCircuit() {
   const [hoverWire, setHoverWire] = useState<number | null>(null);
   const [cascading, setCascading] = useState(false);
   const [collapseTick, setCollapseTick] = useState(0);
+  // 0 = perf mode (no particles / static refraction), 1 = full FX.
+  const [shaderIntensity, setShaderIntensity] = useState(0.75);
 
   const place = (q: number, gateOverride?: Gate) => {
     const g = gateOverride ?? picked;
@@ -184,34 +187,38 @@ export function QuantumCircuit() {
     setTimeout(() => { measure(); setCascading(false); }, 1100);
   };
 
-  const exportFrame = () => {
-    const W = 1280, H = 720;
-    const c = document.createElement("canvas");
-    c.width = W; c.height = H;
-    const ctx = c.getContext("2d")!;
-    // background
+  // Draw a frame into a canvas at a given pixel scale. Used by both the
+  // PNG export (1× / 4×) and the GIF encoder (low-res, multi-frame).
+  const drawFrameInto = (
+    ctx: CanvasRenderingContext2D,
+    W: number,
+    H: number,
+    probsOverride: number[],
+    collapsedOverride: number | null,
+    badge?: string,
+  ) => {
     const bg = ctx.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0, "#06070c"); bg.addColorStop(1, "#03040a");
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-    // title
+    const S = W / 1280; // scale factor relative to 1280-wide base layout
     ctx.fillStyle = "#a5f3fc";
-    ctx.font = "bold 28px ui-monospace, monospace";
-    ctx.fillText("QUANTARA · QUANTUM CIRCUIT FRAME", 48, 64);
+    ctx.font = `bold ${28*S}px ui-monospace, monospace`;
+    ctx.fillText("QUANTARA · QUANTUM CIRCUIT FRAME", 48*S, 64*S);
     ctx.fillStyle = "#94a3b8";
-    ctx.font = "14px ui-monospace, monospace";
-    ctx.fillText(`n=${n} · ops=${ops.length} · noise=${(noise*100).toFixed(0)}%`, 48, 92);
-    // histogram
-    const padL = 80, padR = 80, padT = 160, padB = 140;
+    ctx.font = `${14*S}px ui-monospace, monospace`;
+    ctx.fillText(`n=${n} · ops=${ops.length} · noise=${(noise*100).toFixed(0)}%${badge ? "  " + badge : ""}`, 48*S, 92*S);
+    const padL = 80*S, padR = 80*S, padT = 160*S, padB = 140*S;
     const gw = W - padL - padR;
     const gh = H - padT - padB;
-    const bw = gw / probs.length;
-    probs.forEach((p, i) => {
-      const h = Math.max(2, p * gh);
+    const bw = gw / probsOverride.length;
+    const localMax = probsOverride.indexOf(Math.max(...probsOverride));
+    probsOverride.forEach((p, i) => {
+      const h = Math.max(2*S, p * gh);
       const x = padL + i * bw + bw * 0.12;
       const y = padT + (gh - h);
       const w = bw * 0.76;
-      const isPeak = i === maxIdx && p > 0.04;
-      const isC = collapsed === i;
+      const isPeak = i === localMax && p > 0.04;
+      const isC = collapsedOverride === i;
       const grd = ctx.createLinearGradient(x, y, x, y + h);
       if (isC) { grd.addColorStop(0, "#fde68a"); grd.addColorStop(1, "#f59e0b"); }
       else if (isPeak) { grd.addColorStop(0, "#fdf4ff"); grd.addColorStop(0.5, "#e879f9"); grd.addColorStop(1, "#86198f"); }
@@ -219,27 +226,100 @@ export function QuantumCircuit() {
       ctx.fillStyle = grd;
       ctx.fillRect(x, y, w, h);
       ctx.fillStyle = "#64748b";
-      ctx.font = "11px ui-monospace, monospace";
-      ctx.fillText(`|${i.toString(2).padStart(n, "0")}⟩`, x, H - padB + 18);
-      ctx.fillText(`${(p*100).toFixed(1)}%`, x, H - padB + 34);
+      ctx.font = `${11*S}px ui-monospace, monospace`;
+      ctx.fillText(`|${i.toString(2).padStart(n, "0")}⟩`, x, H - padB + 18*S);
+      ctx.fillText(`${(p*100).toFixed(1)}%`, x, H - padB + 34*S);
     });
-    // readout
+    const stab = (probsOverride[localMax] || 0) * (1 - noise);
+    const lExp = Math.round(-12 - stab * 110);
+    const lMan = (1 + stab * 0.9).toFixed(4);
     ctx.fillStyle = "#f0abfc";
-    ctx.font = "bold 18px ui-monospace, monospace";
-    ctx.fillText(`SOLUTION STABILITY: ${(peakStability*100).toFixed(2)}%   Λ = ${lambdaMantissa} × 10^${lambdaExp}`, 48, H - 60);
+    ctx.font = `bold ${18*S}px ui-monospace, monospace`;
+    ctx.fillText(`SOLUTION STABILITY: ${(stab*100).toFixed(2)}%   Λ = ${lMan} × 10^${lExp}`, 48*S, H - 60*S);
     ctx.fillStyle = "#94a3b8";
-    ctx.font = "12px ui-monospace, monospace";
-    ctx.fillText(collapsed !== null ? `collapsed → |${collapsed.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48, H - 38);
+    ctx.font = `${12*S}px ui-monospace, monospace`;
+    ctx.fillText(collapsedOverride !== null ? `collapsed → |${collapsedOverride.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48*S, H - 38*S);
+  };
+
+  const [exporting, setExporting] = useState<null | "png" | "4k" | "gif">(null);
+
+  const exportFrame = (scale: 1 | 3 = 1) => {
+    const W = 1280 * scale, H = 720 * scale;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d")!;
+    setExporting(scale === 3 ? "4k" : "png");
+    drawFrameInto(ctx, W, H, probs, collapsed, scale === 3 ? "[3840×2160 · 4K]" : undefined);
     c.toBlob((blob) => {
+      setExporting(null);
       if (!blob) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `quantara-frame-${Date.now()}.png`;
+      a.href = url;
+      a.download = `quantara-frame${scale === 3 ? "-4k" : ""}-${Date.now()}.png`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, "image/png");
-    logLedger("kernel", `Q-Circuit · render frame n=${n}`);
-    creditDat(4);
+    logLedger("kernel", `Q-Circuit · render frame ${scale === 3 ? "4K " : ""}n=${n}`);
+    creditDat(scale === 3 ? 16 : 4);
+  };
+
+  const exportGif = async () => {
+    if (exporting) return;
+    setExporting("gif");
+    // Defer so the UI can update before the heavy encode work begins.
+    await new Promise((r) => setTimeout(r, 30));
+    const W = 640, H = 360;
+    const FRAMES = 36;
+    const DELAY = 60; // ms per frame
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d")!;
+    const gif = GIFEncoder();
+    // Pick the collapse target now so the gif visually resolves to a real outcome.
+    const r = Math.random();
+    let acc = 0; let target = 0;
+    for (let i = 0; i < probs.length; i++) {
+      acc += probs[i]; if (r <= acc) { target = i; break; }
+    }
+    const uniform = probs.map(() => 1 / probs.length);
+    for (let f = 0; f < FRAMES; f++) {
+      const t = f / (FRAMES - 1);
+      let frameProbs: number[];
+      let frameCollapsed: number | null = null;
+      if (t < 0.45) {
+        // Cascade: uniform → current probability distribution
+        const k = t / 0.45;
+        frameProbs = probs.map((p, i) => uniform[i] * (1 - k) + p * k);
+      } else if (t < 0.7) {
+        frameProbs = probs.slice();
+      } else {
+        // Collapse: distribution → delta on target
+        const k = (t - 0.7) / 0.3;
+        frameProbs = probs.map((p, i) => (i === target ? p * (1 - k) + 1 * k : p * (1 - k)));
+        if (k > 0.7) frameCollapsed = target;
+      }
+      drawFrameInto(ctx, W, H, frameProbs, frameCollapsed, `[ANIMATED · t=${t.toFixed(2)}]`);
+      const data = ctx.getImageData(0, 0, W, H).data;
+      const palette = quantize(data, 256, { format: "rgb444" });
+      const index = applyPalette(data, palette, "rgb444");
+      gif.writeFrame(index, W, H, { palette, delay: DELAY });
+      // Yield occasionally to keep the page responsive.
+      if (f % 6 === 5) await new Promise((r2) => setTimeout(r2, 0));
+    }
+    gif.finish();
+    const bytes = gif.bytesView();
+    const buf = new Uint8Array(bytes.byteLength);
+    buf.set(bytes);
+    const blob = new Blob([buf], { type: "image/gif" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `quantara-collapse-${Date.now()}.gif`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    setExporting(null);
+    logLedger("kernel", `Q-Circuit · render gif n=${n}`);
+    creditDat(12);
   };
 
   const maxP = Math.max(...probs, 0.001);
@@ -336,12 +416,29 @@ qreg q[${n}];
                 <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent opacity-70" />
               </button>
 
-              <button
-                onClick={exportFrame}
-                className="w-full rounded-sm border border-cyan-300/40 bg-black/50 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-100 hover:bg-cyan-400/10"
-              >
-                ⤓ Export Render Frame (PNG)
-              </button>
+              <div className="grid grid-cols-3 gap-1">
+                <button
+                  onClick={() => exportFrame(1)}
+                  disabled={!!exporting}
+                  className="rounded-sm border border-cyan-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-100 hover:bg-cyan-400/10 disabled:opacity-50"
+                >
+                  {exporting === "png" ? "…" : "⤓ PNG"}
+                </button>
+                <button
+                  onClick={() => exportFrame(3)}
+                  disabled={!!exporting}
+                  className="rounded-sm border border-fuchsia-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-fuchsia-100 hover:bg-fuchsia-400/10 disabled:opacity-50"
+                >
+                  {exporting === "4k" ? "…" : "⤓ 4K"}
+                </button>
+                <button
+                  onClick={exportGif}
+                  disabled={!!exporting}
+                  className="rounded-sm border border-amber-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-amber-100 hover:bg-amber-400/10 disabled:opacity-50"
+                >
+                  {exporting === "gif" ? "ENC…" : "⤓ GIF"}
+                </button>
+              </div>
 
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">
                 Status: <span className={cascading ? "text-amber-300" : "text-emerald-300"}>{cascading ? "CASCADING" : "READY"}</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>
@@ -374,17 +471,17 @@ qreg q[${n}];
               />
 
               {/* Decoherence speckle — TV-static artifacts that intensify with noise */}
-              {noise > 0 && (
+              {noise > 0 && shaderIntensity > 0.05 && (
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0 mix-blend-screen"
                   style={{
-                    opacity: Math.min(0.85, noise * 1.4),
+                    opacity: Math.min(0.85, noise * 1.4) * shaderIntensity,
                     backgroundImage:
                       "radial-gradient(circle at 17% 22%, rgba(232,121,249,0.7) 0 1px, transparent 1.5px), radial-gradient(circle at 73% 41%, rgba(125,211,252,0.6) 0 1px, transparent 1.5px), radial-gradient(circle at 38% 78%, rgba(252,211,77,0.55) 0 1px, transparent 1.5px), radial-gradient(circle at 88% 86%, rgba(167,139,250,0.6) 0 1px, transparent 1.5px), repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 3px)",
                     backgroundSize: "7px 7px, 11px 11px, 13px 13px, 9px 9px, auto",
-                    animation: "qstatic 0.18s steps(4) infinite",
-                    filter: `blur(${noise * 0.6}px)`,
+                    animation: shaderIntensity > 0.5 ? "qstatic 0.18s steps(4) infinite" : undefined,
+                    filter: `blur(${noise * 0.6 * shaderIntensity}px)`,
                   }}
                 />
               )}
@@ -432,21 +529,24 @@ qreg q[${n}];
                               "0 0 8px rgba(125,211,252,0.7), 0 0 20px rgba(232,121,249,0.35)",
                           }}
                         />
-                        {/* pulse traveling along the wire */}
-                        <span
-                          aria-hidden
-                          className="pointer-events-none absolute left-3 right-3 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full"
-                        >
+                        {/* pulse traveling along the wire (skipped in perf mode) */}
+                        {shaderIntensity > 0.1 && (
                           <span
-                            className="block h-full w-1/4 rounded-full"
-                            style={{
-                              background:
-                                "linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent)",
-                              animation: "qpulse 3.4s linear infinite",
-                              animationDelay: `${q * 0.6}s`,
-                            }}
-                          />
-                        </span>
+                            aria-hidden
+                            className="pointer-events-none absolute left-3 right-3 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full"
+                          >
+                            <span
+                              className="block h-full w-1/4 rounded-full"
+                              style={{
+                                background:
+                                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent)",
+                                animation: `qpulse ${4.4 - shaderIntensity * 1.6}s linear infinite`,
+                                animationDelay: `${q * 0.6}s`,
+                                opacity: 0.4 + shaderIntensity * 0.6,
+                              }}
+                            />
+                          </span>
+                        )}
 
                         <div className="absolute inset-0 flex items-center gap-1.5 px-3">
                           {wireOps.map(({ o, i }) => {
@@ -508,6 +608,21 @@ qreg q[${n}];
                 <input
                   type="range" min={0} max={0.6} step={0.01} value={noise}
                   onChange={(e) => setNoise(parseFloat(e.target.value))}
+                  className="quantara-slider mt-2 w-full"
+                />
+              </div>
+
+              {/* Shader intensity — performance vs. visual fidelity */}
+              <div className="mt-2 rounded-sm border border-white/10 bg-black/60 p-3">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest">
+                  <span className="text-white/55">Shader Intensity · GPU Load</span>
+                  <span className={shaderIntensity < 0.2 ? "text-emerald-300" : shaderIntensity > 0.8 ? "text-fuchsia-300" : "text-cyan-300"}>
+                    {shaderIntensity < 0.05 ? "PERF" : `${Math.round(shaderIntensity*100)}%`}
+                  </span>
+                </div>
+                <input
+                  type="range" min={0} max={1} step={0.01} value={shaderIntensity}
+                  onChange={(e) => setShaderIntensity(parseFloat(e.target.value))}
                   className="quantara-slider mt-2 w-full"
                 />
               </div>
@@ -592,6 +707,7 @@ qreg q[${n}];
               lambdaMantissa={lambdaMantissa}
               lambdaExp={lambdaExp}
               collapseTick={collapseTick}
+              shaderIntensity={shaderIntensity}
             />
           </GlassPane>
         </div>
@@ -741,6 +857,7 @@ function ExponentMetric({
   lambdaMantissa,
   lambdaExp,
   collapseTick,
+  shaderIntensity,
 }: {
   probs: number[];
   n: number;
@@ -750,10 +867,12 @@ function ExponentMetric({
   lambdaMantissa: string;
   lambdaExp: number;
   collapseTick: number;
+  shaderIntensity: number;
 }) {
   // Particle density on the dominant bin (the magenta spike).
   const peakHeight = Math.max(8, Math.min(100, peakStability * 100));
-  const peakParticles = Math.round(14 + peakStability * 26);
+  // Particle count scales with shader intensity; perf mode → 0 particles.
+  const peakParticles = shaderIntensity < 0.05 ? 0 : Math.round((6 + peakStability * 30) * shaderIntensity);
 
   return (
     <div className="flex flex-col gap-3">

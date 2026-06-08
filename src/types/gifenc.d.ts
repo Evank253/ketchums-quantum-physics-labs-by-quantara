@@ -22,4 +22,12 @@ declare module "gifenc" {
     palette: number[][],
     format?: "rgb444" | "rgb565" | "rgba4444",
   ): Uint8Array;
+
+  // CJS default export for Vite SSR interop
+  const _default: {
+    GIFEncoder: typeof GIFEncoder;
+    quantize: typeof quantize;
+    applyPalette: typeof applyPalette;
+  };
+  export default _default;
 }

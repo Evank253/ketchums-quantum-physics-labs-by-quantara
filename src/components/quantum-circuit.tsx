@@ -1,7 +1,8 @@
 // Compact quantum circuit simulator: 1-3 qubits, gates H/X/Y/Z/S/T/CNOT/Measure
 // Visualizes Bloch vectors (single-qubit reduced) + probability histogram.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { GIFEncoder, quantize, applyPalette } from "gifenc";
+import gifenc from "gifenc";
+const { GIFEncoder, quantize, applyPalette } = gifenc;
 import { logLedger } from "@/lib/learning-ledger";
 import { creditDat } from "@/lib/dat-tokens";
 
@@ -212,6 +213,40 @@ export function QuantumCircuit() {
   const [exporting, setExporting] = useState<null | "png" | "gif">(null);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportLabel, setExportLabel] = useState("");
+  const exportStartRef = useRef<number>(0);
+  const [exportEtaMs, setExportEtaMs] = useState<number | null>(null);
+  // Queue of pending jobs (run serially after the current export)
+  type QueueJob = { id: string; kind: "png" | "gif"; label: string; snapshot: ExportSnapshot };
+  type ExportSnapshot = {
+    pngPreset: PngPreset; gifPreset: GifPreset;
+    pngTransparent: boolean; gifTransparent: boolean;
+    resScale: number;
+    watermarkOn: boolean; watermarkText: string;
+    watermarkPos: "br" | "bl" | "tr" | "tl";
+    watermarkColor: string; watermarkSize: number; watermarkOpacity: number;
+    gifStart: number; gifEnd: number;
+  };
+  const [queue, setQueue] = useState<QueueJob[]>([]);
+  const queueRef = useRef<QueueJob[]>([]);
+  const processingRef = useRef(false);
+  useEffect(() => { queueRef.current = queue; }, [queue]);
+  const tickProgress = (p: number) => {
+    setExportProgress(p);
+    if (p > 0.01 && p < 1) {
+      const el = performance.now() - exportStartRef.current;
+      const eta = (el / p) * (1 - p);
+      setExportEtaMs(Math.max(0, Math.round(eta)));
+    } else {
+      setExportEtaMs(null);
+    }
+  };
+  const fmtEta = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`;
+    const s = Math.round(ms / 1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60), r = s % 60;
+    return `${m}m${r.toString().padStart(2, "0")}s`;
+  };
 
   // New: resolution multiplier, watermark, GIF frame range, saved profiles
   const [resScale, setResScale] = useState(1);             // 0.5 .. 2
@@ -346,24 +381,27 @@ export function QuantumCircuit() {
     ctx.font = `${12*S}px ui-monospace, monospace`;
     ctx.fillText(collapsedOverride !== null ? `collapsed → |${collapsedOverride.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48*S, H - 38*S);
 
-    // Watermark — configurable position, color, size, opacity
+    // Watermark — configurable position, color, size, opacity, multi-line
     if (watermarkOn && watermarkText.trim()) {
-      const txt = watermarkText.trim();
+      const lines = watermarkText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       ctx.save();
       const sz = Math.max(6, watermarkSize) * S;
       ctx.font = `${sz}px ui-monospace, monospace`;
-      const tw = ctx.measureText(txt).width;
+      const lh = sz * 1.25;
+      const widths = lines.map((l) => ctx.measureText(l).width);
+      const tw = Math.max(...widths, 0);
+      const th = lh * lines.length;
       const padX = 24 * S, padY = 22 * S;
-      let px = W - tw - padX, py = H - padY;
-      if (watermarkPos === "bl") { px = padX; py = H - padY; }
-      else if (watermarkPos === "tr") { px = W - tw - padX; py = padY + sz; }
-      else if (watermarkPos === "tl") { px = padX; py = padY + sz; }
-      ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity)) * 0.6;
+      let bx = W - tw - padX, by = H - th - padY * 0.4;
+      if (watermarkPos === "bl") { bx = padX; by = H - th - padY * 0.4; }
+      else if (watermarkPos === "tr") { bx = W - tw - padX; by = padY * 0.5; }
+      else if (watermarkPos === "tl") { bx = padX; by = padY * 0.5; }
+      ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity)) * 0.55;
       ctx.fillStyle = "#0a0a0f";
-      ctx.fillRect(px - 8*S, py - sz - 2*S, tw + 16*S, sz + 8*S);
+      ctx.fillRect(bx - 8*S, by - 2*S, tw + 16*S, th + 8*S);
       ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity));
       ctx.fillStyle = watermarkColor;
-      ctx.fillText(txt, px, py);
+      lines.forEach((l, i) => ctx.fillText(l, bx, by + lh * i + sz));
       ctx.restore();
     }
   };
@@ -376,17 +414,18 @@ export function QuantumCircuit() {
     const badge = `[${W}×${H}${resScale !== 1 ? ` · ${resScale.toFixed(2)}x` : ""}]`;
     setExporting("png");
     setExportLabel(`PNG · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""}${pngTransparent ? " · alpha" : ""}`);
-    setExportProgress(0.15);
+    exportStartRef.current = performance.now();
+    tickProgress(0.15);
     // give the UI a tick to repaint
     requestAnimationFrame(() => {
       const c = document.createElement("canvas");
       c.width = W; c.height = H;
       const ctx = c.getContext("2d")!;
       drawFrameInto(ctx, W, H, probs, collapsed, badge, pngTransparent);
-      setExportProgress(0.7);
+      tickProgress(0.7);
       c.toBlob((blob) => {
-        setExportProgress(1);
-        setTimeout(() => { setExporting(null); setExportProgress(0); }, 350);
+        tickProgress(1);
+        setTimeout(() => { setExporting(null); setExportProgress(0); setExportEtaMs(null); }, 350);
         if (!blob) return;
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -430,7 +469,8 @@ export function QuantumCircuit() {
     cancelRef.current = false;
     setExporting("gif");
     setExportLabel(`GIF · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""} · t[${rs.toFixed(2)}–${re.toFixed(2)}]${gifTransparent ? " · alpha" : ""}`);
-    setExportProgress(0.02);
+    exportStartRef.current = performance.now();
+    tickProgress(0.02);
     await new Promise((r) => setTimeout(r, 30));
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
@@ -456,12 +496,13 @@ export function QuantumCircuit() {
       });
       const index = applyPalette(data, palette, "rgb444");
       gif.writeFrame(index, W, H, { palette, delay: DELAY, transparent: gifTransparent });
-      setExportProgress(0.05 + 0.9 * ((f + 1) / FRAMES));
+      tickProgress(0.05 + 0.9 * ((f + 1) / FRAMES));
       if (f % 4 === 3) await new Promise((r2) => setTimeout(r2, 0));
     }
     if (cancelled) {
       setExportLabel("GIF · cancelled");
       setExportProgress(0);
+      setExportEtaMs(null);
       setTimeout(() => { setExporting(null); }, 300);
       cancelRef.current = false;
       return;
@@ -476,11 +517,66 @@ export function QuantumCircuit() {
     a.href = url; a.download = `quantara-collapse-${gifPreset}${gifTransparent ? "-alpha" : ""}-${Date.now()}.gif`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
-    setExportProgress(1);
-    setTimeout(() => { setExporting(null); setExportProgress(0); }, 400);
+    tickProgress(1);
+    setTimeout(() => { setExporting(null); setExportProgress(0); setExportEtaMs(null); }, 400);
     logLedger("kernel", `Q-Circuit · render gif ${gifPreset} n=${n}`);
     creditDat(gifPreset === "lg" ? 24 : gifPreset === "md" ? 14 : 8);
   };
+
+  // ===== Export queue =====
+  const captureSnapshot = (): ExportSnapshot => ({
+    pngPreset, gifPreset, pngTransparent, gifTransparent, resScale,
+    watermarkOn, watermarkText, watermarkPos, watermarkColor, watermarkSize, watermarkOpacity,
+    gifStart, gifEnd,
+  });
+  const applySnapshot = (s: ExportSnapshot) => {
+    setPngPreset(s.pngPreset); setGifPreset(s.gifPreset);
+    setPngTransparent(s.pngTransparent); setGifTransparent(s.gifTransparent);
+    setResScale(s.resScale);
+    setWatermarkOn(s.watermarkOn); setWatermarkText(s.watermarkText);
+    setWatermarkPos(s.watermarkPos); setWatermarkColor(s.watermarkColor);
+    setWatermarkSize(s.watermarkSize); setWatermarkOpacity(s.watermarkOpacity);
+    setGifStart(s.gifStart); setGifEnd(s.gifEnd);
+  };
+  const enqueueJob = (kind: "png" | "gif") => {
+    const snap = captureSnapshot();
+    const label = kind === "png"
+      ? `PNG · ${PNG_PRESETS[snap.pngPreset].label}${snap.resScale !== 1 ? ` @${snap.resScale.toFixed(2)}x` : ""}${snap.pngTransparent ? " · α" : ""}`
+      : `GIF · ${GIF_PRESETS[snap.gifPreset].label}${snap.resScale !== 1 ? ` @${snap.resScale.toFixed(2)}x` : ""}${snap.gifTransparent ? " · α" : ""}`;
+    const job: QueueJob = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, label, snapshot: snap };
+    setQueue((q) => [...q, job]);
+    // Auto-start processor (no-op if already running)
+    void processQueue();
+  };
+  const removeJob = (id: string) => setQueue((q) => q.filter((j) => j.id !== id));
+  const clearQueue = () => setQueue([]);
+  const processQueue = async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    try {
+      // wait if a manual export is in flight
+      while (exporting) await new Promise((r) => setTimeout(r, 120));
+      while (queueRef.current.length > 0) {
+        const next = queueRef.current[0];
+        applySnapshot(next.snapshot);
+        // give state a tick to flush before reading via captured globals
+        await new Promise((r) => setTimeout(r, 30));
+        if (next.kind === "png") {
+          exportFrame();
+          // wait for PNG to finish (it's quick + async via toBlob)
+          await new Promise((r) => setTimeout(r, 800));
+        } else {
+          await exportGif();
+        }
+        setQueue((q) => q.filter((j) => j.id !== next.id));
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    } finally {
+      processingRef.current = false;
+    }
+  };
+
+
 
   // Live preview thumbnails of GIF frame range (start / mid / end)
   const previewRefs = [useRef<HTMLCanvasElement | null>(null), useRef<HTMLCanvasElement | null>(null), useRef<HTMLCanvasElement | null>(null)];
@@ -627,6 +723,13 @@ qreg q[${n}];
                   >
                     ⤓ PNG
                   </button>
+                  <button
+                    onClick={() => enqueueJob("png")}
+                    title="Queue PNG with current settings"
+                    className="rounded-sm border border-cyan-300/30 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-100/80 hover:bg-cyan-400/15"
+                  >
+                    + Q
+                  </button>
                 </div>
               </div>
 
@@ -660,6 +763,13 @@ qreg q[${n}];
                     className="rounded-sm border border-amber-300/50 bg-amber-400/15 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-100 hover:bg-amber-400/25 disabled:opacity-50"
                   >
                     {exporting === "gif" ? "ENC…" : "⤓ GIF"}
+                  </button>
+                  <button
+                    onClick={() => enqueueJob("gif")}
+                    title="Queue GIF with current settings"
+                    className="rounded-sm border border-amber-300/30 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-100/80 hover:bg-amber-400/15"
+                  >
+                    + Q
                   </button>
                 </div>
               </div>
@@ -733,14 +843,28 @@ qreg q[${n}];
                     <span className="text-[9px] uppercase tracking-widest">on</span>
                   </label>
                 </div>
-                <input
-                  type="text"
+                <textarea
                   value={watermarkText}
                   onChange={(e) => setWatermarkText(e.target.value)}
                   disabled={!watermarkOn}
-                  placeholder="QUANTARA · your-name"
-                  className="w-full rounded-sm border border-violet-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-violet-100 outline-none focus:border-violet-300 disabled:opacity-40"
+                  placeholder={"QUANTARA · your-name\n(newlines allowed)"}
+                  rows={2}
+                  className="w-full resize-y rounded-sm border border-violet-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] leading-relaxed text-violet-100 outline-none focus:border-violet-300 disabled:opacity-40"
                 />
+                {/* Live mini preview of rendered watermark */}
+                <div className="rounded-sm border border-white/10 bg-black/60 px-2 py-1.5">
+                  <div className="font-mono text-[8px] uppercase tracking-widest text-white/40">preview</div>
+                  <div
+                    className="mt-0.5 whitespace-pre font-mono leading-tight"
+                    style={{
+                      color: watermarkColor,
+                      opacity: watermarkOn ? Math.max(0.1, watermarkOpacity) : 0.25,
+                      fontSize: `${Math.min(14, Math.max(8, watermarkSize * 0.7))}px`,
+                    }}
+                  >
+                    {watermarkText.trim() || "—"}
+                  </div>
+                </div>
                 <div className="grid grid-cols-4 gap-1">
                   {(["tl","tr","bl","br"] as WmPos[]).map((pos) => (
                     <button
@@ -884,6 +1008,9 @@ qreg q[${n}];
                     <span className="truncate">{exportLabel}</span>
                     <span className="flex items-center gap-2">
                       <span className="text-emerald-100">{Math.round(exportProgress * 100)}%</span>
+                      {exportEtaMs !== null && (
+                        <span className="text-emerald-200/70" title="Estimated time remaining">~{fmtEta(exportEtaMs)}</span>
+                      )}
                       <button
                         type="button"
                         onClick={cancelExport}
@@ -901,6 +1028,40 @@ qreg q[${n}];
                   </div>
                 </div>
               )}
+
+              {/* Export queue */}
+              {queue.length > 0 && (
+                <div className="space-y-1 rounded-sm border border-sky-300/25 bg-black/50 p-2">
+                  <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-sky-200/80">
+                    <span>Queue · {queue.length} job{queue.length === 1 ? "" : "s"}</span>
+                    <button
+                      type="button"
+                      onClick={clearQueue}
+                      className="rounded-sm border border-rose-300/30 px-2 py-0.5 text-[9px] uppercase tracking-widest text-rose-200/80 hover:bg-rose-400/15"
+                    >
+                      clear
+                    </button>
+                  </div>
+                  <ul className="space-y-1">
+                    {queue.map((j, i) => (
+                      <li key={j.id} className="flex items-center justify-between gap-1 rounded-sm border border-white/10 bg-black/40 px-2 py-1 font-mono text-[10px]">
+                        <span className="truncate text-sky-100/90">
+                          <span className="text-white/40">{String(i + 1).padStart(2, "0")}.</span> {j.label}
+                        </span>
+                        <button
+                          onClick={() => removeJob(j.id)}
+                          className="rounded-sm border border-rose-300/30 px-1.5 py-0.5 text-[9px] uppercase tracking-widest text-rose-200/80 hover:bg-rose-400/15"
+                          aria-label={`Remove ${j.label}`}
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+
 
 
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">

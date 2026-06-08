@@ -165,12 +165,81 @@ export function QuantumCircuit() {
   const measure = () => {
     const r = Math.random();
     let acc = 0;
+    let picked2 = 0;
     for (let i = 0; i < probs.length; i++) {
       acc += probs[i];
-      if (r <= acc) { setCollapsed(i); break; }
+      if (r <= acc) { picked2 = i; break; }
     }
+    setCollapsed(picked2);
+    setCollapseTick((t) => t + 1);
     creditDat(8);
     logLedger("benchmark", `Q-Circuit · Measure n=${n} ops=${ops.length}`, { probs });
+  };
+
+  const parseAndInitialize = () => {
+    if (cascading) return;
+    setCascading(true);
+    setCollapsed(null);
+    // staged cascade: parse → calibrate → collapse
+    setTimeout(() => { measure(); setCascading(false); }, 1100);
+  };
+
+  const exportFrame = () => {
+    const W = 1280, H = 720;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d")!;
+    // background
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, "#06070c"); bg.addColorStop(1, "#03040a");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    // title
+    ctx.fillStyle = "#a5f3fc";
+    ctx.font = "bold 28px ui-monospace, monospace";
+    ctx.fillText("QUANTARA · QUANTUM CIRCUIT FRAME", 48, 64);
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "14px ui-monospace, monospace";
+    ctx.fillText(`n=${n} · ops=${ops.length} · noise=${(noise*100).toFixed(0)}%`, 48, 92);
+    // histogram
+    const padL = 80, padR = 80, padT = 160, padB = 140;
+    const gw = W - padL - padR;
+    const gh = H - padT - padB;
+    const bw = gw / probs.length;
+    probs.forEach((p, i) => {
+      const h = Math.max(2, p * gh);
+      const x = padL + i * bw + bw * 0.12;
+      const y = padT + (gh - h);
+      const w = bw * 0.76;
+      const isPeak = i === maxIdx && p > 0.04;
+      const isC = collapsed === i;
+      const grd = ctx.createLinearGradient(x, y, x, y + h);
+      if (isC) { grd.addColorStop(0, "#fde68a"); grd.addColorStop(1, "#f59e0b"); }
+      else if (isPeak) { grd.addColorStop(0, "#fdf4ff"); grd.addColorStop(0.5, "#e879f9"); grd.addColorStop(1, "#86198f"); }
+      else { grd.addColorStop(0, "rgba(167,139,250,0.5)"); grd.addColorStop(1, "rgba(91,33,182,0.15)"); }
+      ctx.fillStyle = grd;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "11px ui-monospace, monospace";
+      ctx.fillText(`|${i.toString(2).padStart(n, "0")}⟩`, x, H - padB + 18);
+      ctx.fillText(`${(p*100).toFixed(1)}%`, x, H - padB + 34);
+    });
+    // readout
+    ctx.fillStyle = "#f0abfc";
+    ctx.font = "bold 18px ui-monospace, monospace";
+    ctx.fillText(`SOLUTION STABILITY: ${(peakStability*100).toFixed(2)}%   Λ = ${lambdaMantissa} × 10^${lambdaExp}`, 48, H - 60);
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "12px ui-monospace, monospace";
+    ctx.fillText(collapsed !== null ? `collapsed → |${collapsed.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48, H - 38);
+    c.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `quantara-frame-${Date.now()}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
+    logLedger("export", `Q-Circuit · render frame n=${n}`);
+    creditDat(4);
   };
 
   const maxP = Math.max(...probs, 0.001);

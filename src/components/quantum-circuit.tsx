@@ -238,7 +238,7 @@ export function QuantumCircuit() {
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, "image/png");
-    logLedger("export", `Q-Circuit · render frame n=${n}`);
+    logLedger("kernel", `Q-Circuit · render frame n=${n}`);
     creditDat(4);
   };
 

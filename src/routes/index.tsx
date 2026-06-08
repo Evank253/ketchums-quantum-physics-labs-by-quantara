@@ -69,6 +69,7 @@ function Index() {
     <main className="grain relative min-h-screen overflow-x-hidden scroll-smooth bg-background text-foreground">
       <Nav />
       <DatHud />
+      <DatWallet />
       <div id="genesis"><Hero /></div>
       <SolvedTheories />
       <FoundationalEquations />

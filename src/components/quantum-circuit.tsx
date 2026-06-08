@@ -213,6 +213,48 @@ export function QuantumCircuit() {
   const [exportProgress, setExportProgress] = useState(0);
   const [exportLabel, setExportLabel] = useState("");
 
+  // New: resolution multiplier, watermark, GIF frame range, saved profiles
+  const [resScale, setResScale] = useState(1);             // 0.5 .. 2
+  const [watermarkOn, setWatermarkOn] = useState(true);
+  const [watermarkText, setWatermarkText] = useState("QUANTARA · quantara.app");
+  const [gifStart, setGifStart] = useState(0);             // 0 .. 1
+  const [gifEnd, setGifEnd] = useState(1);                 // 0 .. 1
+  type ExportProfile = {
+    name: string; pngPreset: PngPreset; gifPreset: GifPreset;
+    pngTransparent: boolean; gifTransparent: boolean;
+    resScale: number; watermarkOn: boolean; watermarkText: string;
+    gifStart: number; gifEnd: number;
+  };
+  const PROFILE_KEY = "quantara.exportProfiles.v1";
+  const [profiles, setProfiles] = useState<ExportProfile[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]"); } catch { return []; }
+  });
+  const [profileName, setProfileName] = useState("");
+  const persistProfiles = (next: ExportProfile[]) => {
+    setProfiles(next);
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(next)); } catch {}
+  };
+  const saveProfile = () => {
+    const name = profileName.trim() || `Preset ${profiles.length + 1}`;
+    const p: ExportProfile = {
+      name, pngPreset, gifPreset, pngTransparent, gifTransparent,
+      resScale, watermarkOn, watermarkText, gifStart, gifEnd,
+    };
+    const next = [...profiles.filter((x) => x.name !== name), p];
+    persistProfiles(next);
+    setProfileName("");
+  };
+  const loadProfile = (name: string) => {
+    const p = profiles.find((x) => x.name === name);
+    if (!p) return;
+    setPngPreset(p.pngPreset); setGifPreset(p.gifPreset);
+    setPngTransparent(p.pngTransparent); setGifTransparent(p.gifTransparent);
+    setResScale(p.resScale); setWatermarkOn(p.watermarkOn);
+    setWatermarkText(p.watermarkText); setGifStart(p.gifStart); setGifEnd(p.gifEnd);
+  };
+  const deleteProfile = (name: string) => persistProfiles(profiles.filter((x) => x.name !== name));
+
   // Draw a frame into a canvas. Used by both PNG and GIF paths.
   const drawFrameInto = (
     ctx: CanvasRenderingContext2D,

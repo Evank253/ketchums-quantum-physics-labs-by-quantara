@@ -142,6 +142,8 @@ export function QuantumCircuit() {
   );
 
   const [hoverWire, setHoverWire] = useState<number | null>(null);
+  const [cascading, setCascading] = useState(false);
+  const [collapseTick, setCollapseTick] = useState(0);
 
   const place = (q: number, gateOverride?: Gate) => {
     const g = gateOverride ?? picked;

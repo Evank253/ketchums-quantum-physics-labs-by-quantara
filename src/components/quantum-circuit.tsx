@@ -741,7 +741,58 @@ qreg q[${n}];
                   placeholder="QUANTARA · your-name"
                   className="w-full rounded-sm border border-violet-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-violet-100 outline-none focus:border-violet-300 disabled:opacity-40"
                 />
-              </div>
+                <div className="grid grid-cols-4 gap-1">
+                  {(["tl","tr","bl","br"] as WmPos[]).map((pos) => (
+                    <button
+                      key={pos}
+                      type="button"
+                      disabled={!watermarkOn}
+                      onClick={() => setWatermarkPos(pos)}
+                      className={`rounded-sm border px-1 py-1 font-mono text-[9px] uppercase tracking-widest transition-colors disabled:opacity-40 ${
+                        watermarkPos === pos
+                          ? "border-violet-300 bg-violet-400/20 text-violet-100"
+                          : "border-white/10 bg-black/40 text-white/55 hover:border-violet-300/40"
+                      }`}
+                      title={`Anchor ${pos.toUpperCase()}`}
+                    >
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={watermarkColor}
+                    onChange={(e) => setWatermarkColor(e.target.value)}
+                    disabled={!watermarkOn}
+                    className="h-7 w-9 cursor-pointer rounded-sm border border-violet-400/20 bg-black/40 disabled:opacity-40"
+                    aria-label="Watermark color"
+                  />
+                  <label className="flex-1">
+                    <div className="flex items-center justify-between font-mono text-[8px] uppercase tracking-widest text-violet-200/70">
+                      <span>size</span><span>{watermarkSize}px</span>
+                    </div>
+                    <input
+                      type="range" min={6} max={42} step={1}
+                      value={watermarkSize}
+                      onChange={(e) => setWatermarkSize(parseInt(e.target.value, 10))}
+                      disabled={!watermarkOn}
+                      className="w-full accent-violet-400 disabled:opacity-40"
+                    />
+                  </label>
+                  <label className="flex-1">
+                    <div className="flex items-center justify-between font-mono text-[8px] uppercase tracking-widest text-violet-200/70">
+                      <span>α</span><span>{watermarkOpacity.toFixed(2)}</span>
+                    </div>
+                    <input
+                      type="range" min={0.1} max={1} step={0.05}
+                      value={watermarkOpacity}
+                      onChange={(e) => setWatermarkOpacity(parseFloat(e.target.value))}
+                      disabled={!watermarkOn}
+                      className="w-full accent-violet-400 disabled:opacity-40"
+                    />
+                  </label>
+                </div>
 
               {/* Saved export profiles */}
               <div className="space-y-2 rounded-sm border border-emerald-300/25 bg-black/50 p-2">

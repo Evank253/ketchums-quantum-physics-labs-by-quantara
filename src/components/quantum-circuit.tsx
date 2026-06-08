@@ -230,6 +230,23 @@ export function QuantumCircuit() {
   const queueRef = useRef<QueueJob[]>([]);
   const processingRef = useRef(false);
   useEffect(() => { queueRef.current = queue; }, [queue]);
+  const tickProgress = (p: number) => {
+    setExportProgress(p);
+    if (p > 0.01 && p < 1) {
+      const el = performance.now() - exportStartRef.current;
+      const eta = (el / p) * (1 - p);
+      setExportEtaMs(Math.max(0, Math.round(eta)));
+    } else {
+      setExportEtaMs(null);
+    }
+  };
+  const fmtEta = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`;
+    const s = Math.round(ms / 1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60), r = s % 60;
+    return `${m}m${r.toString().padStart(2, "0")}s`;
+  };
 
   // New: resolution multiplier, watermark, GIF frame range, saved profiles
   const [resScale, setResScale] = useState(1);             // 0.5 .. 2

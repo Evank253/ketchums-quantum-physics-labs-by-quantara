@@ -323,15 +323,28 @@ qreg q[${n}];
               </div>
 
               <button
-                onClick={measure}
-                className="group relative w-full overflow-hidden rounded-sm border border-emerald-300/60 bg-gradient-to-b from-emerald-400/30 to-emerald-600/20 px-3 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-emerald-100 shadow-[0_0_22px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all hover:from-emerald-400/45 hover:to-emerald-600/30"
+                onClick={parseAndInitialize}
+                disabled={cascading}
+                className="group relative w-full overflow-hidden rounded-sm border border-emerald-300/60 bg-gradient-to-b from-emerald-400/30 to-emerald-600/20 px-3 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-emerald-100 shadow-[0_0_22px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] transition-all hover:from-emerald-400/45 hover:to-emerald-600/30 disabled:opacity-80"
               >
-                <span className="relative z-10">Parse &amp; Initialize</span>
+                <span className="relative z-10">{cascading ? "Cascading…" : "Parse & Initialize"}</span>
+                {cascading && (
+                  <span aria-hidden className="absolute inset-0 overflow-hidden">
+                    <span className="absolute inset-y-0 left-0 w-full origin-left animate-[cascadeSweep_1.1s_ease-out_forwards] bg-gradient-to-r from-emerald-300/60 via-cyan-200/40 to-fuchsia-300/60" />
+                  </span>
+                )}
                 <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent opacity-70" />
               </button>
 
+              <button
+                onClick={exportFrame}
+                className="w-full rounded-sm border border-cyan-300/40 bg-black/50 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-100 hover:bg-cyan-400/10"
+              >
+                ⤓ Export Render Frame (PNG)
+              </button>
+
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">
-                Status: <span className="text-emerald-300">READY</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>
+                Status: <span className={cascading ? "text-amber-300" : "text-emerald-300"}>{cascading ? "CASCADING" : "READY"}</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>
               </div>
             </div>
           </GlassPane>

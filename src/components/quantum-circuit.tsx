@@ -310,14 +310,33 @@ export function QuantumCircuit() {
     ctx.fillStyle = transparent ? "#cbd5e1" : "#94a3b8";
     ctx.font = `${12*S}px ui-monospace, monospace`;
     ctx.fillText(collapsedOverride !== null ? `collapsed → |${collapsedOverride.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48*S, H - 38*S);
+
+    // Watermark — bottom-right, subtle
+    if (watermarkOn && watermarkText.trim()) {
+      const txt = watermarkText.trim();
+      ctx.save();
+      ctx.font = `${12*S}px ui-monospace, monospace`;
+      const tw = ctx.measureText(txt).width;
+      const px = W - tw - 24*S;
+      const py = H - 22*S;
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "#0a0a0f";
+      ctx.fillRect(px - 8*S, py - 14*S, tw + 16*S, 20*S);
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = "#e9d5ff";
+      ctx.fillText(txt, px, py);
+      ctx.restore();
+    }
   };
 
   const exportFrame = () => {
     if (exporting) return;
     const preset = PNG_PRESETS[pngPreset];
-    const { w: W, h: H, badge } = preset;
+    const W = Math.max(320, Math.round(preset.w * resScale));
+    const H = Math.max(180, Math.round(preset.h * resScale));
+    const badge = `[${W}×${H}${resScale !== 1 ? ` · ${resScale.toFixed(2)}x` : ""}]`;
     setExporting("png");
-    setExportLabel(`PNG · ${preset.label}${pngTransparent ? " · alpha" : ""}`);
+    setExportLabel(`PNG · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""}${pngTransparent ? " · alpha" : ""}`);
     setExportProgress(0.15);
     // give the UI a tick to repaint
     requestAnimationFrame(() => {
@@ -333,11 +352,11 @@ export function QuantumCircuit() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `quantara-frame-${pngPreset}${pngTransparent ? "-alpha" : ""}-${Date.now()}.png`;
+        a.download = `quantara-frame-${pngPreset}-${W}x${H}${pngTransparent ? "-alpha" : ""}-${Date.now()}.png`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }, "image/png");
-      logLedger("kernel", `Q-Circuit · render frame ${pngPreset} n=${n}`);
+      logLedger("kernel", `Q-Circuit · render frame ${pngPreset} @${resScale.toFixed(2)}x n=${n}`);
       creditDat(pngPreset === "uhd" ? 16 : pngPreset === "qhd" ? 10 : pngPreset === "fhd" ? 6 : 4);
     });
   };

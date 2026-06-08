@@ -529,21 +529,24 @@ qreg q[${n}];
                               "0 0 8px rgba(125,211,252,0.7), 0 0 20px rgba(232,121,249,0.35)",
                           }}
                         />
-                        {/* pulse traveling along the wire */}
-                        <span
-                          aria-hidden
-                          className="pointer-events-none absolute left-3 right-3 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full"
-                        >
+                        {/* pulse traveling along the wire (skipped in perf mode) */}
+                        {shaderIntensity > 0.1 && (
                           <span
-                            className="block h-full w-1/4 rounded-full"
-                            style={{
-                              background:
-                                "linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent)",
-                              animation: "qpulse 3.4s linear infinite",
-                              animationDelay: `${q * 0.6}s`,
-                            }}
-                          />
-                        </span>
+                            aria-hidden
+                            className="pointer-events-none absolute left-3 right-3 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full"
+                          >
+                            <span
+                              className="block h-full w-1/4 rounded-full"
+                              style={{
+                                background:
+                                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent)",
+                                animation: `qpulse ${4.4 - shaderIntensity * 1.6}s linear infinite`,
+                                animationDelay: `${q * 0.6}s`,
+                                opacity: 0.4 + shaderIntensity * 0.6,
+                              }}
+                            />
+                          </span>
+                        )}
 
                         <div className="absolute inset-0 flex items-center gap-1.5 px-3">
                           {wireOps.map(({ o, i }) => {

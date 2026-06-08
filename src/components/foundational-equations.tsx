@@ -133,7 +133,28 @@ const DOMAINS: Domain[] = [
   },
 ];
 
+import { useMemo, useState } from "react";
+
 export function FoundationalEquations() {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!q) return DOMAINS.map((d) => ({ domain: d, equations: d.equations, matched: false }));
+    return DOMAINS
+      .map((d) => {
+        const dHit = d.heading.toLowerCase().includes(q) || d.label.toLowerCase().includes(q) || d.blurb.toLowerCase().includes(q);
+        const equations = d.equations.filter((eq) =>
+          eq.title.toLowerCase().includes(q) ||
+          eq.tex.toLowerCase().includes(q) ||
+          eq.note.toLowerCase().includes(q) ||
+          eq.id.toLowerCase().includes(q),
+        );
+        if (!dHit && equations.length === 0) return null;
+        return { domain: d, equations: dHit && equations.length === 0 ? d.equations : equations, matched: true };
+      })
+      .filter((x): x is { domain: Domain; equations: Eq[]; matched: boolean } => x !== null);
+  }, [q]);
+  const totalHits = filtered.reduce((n, x) => n + x.equations.length, 0);
   return (
     <section id="equations" className="relative overflow-hidden border-t border-white/5 px-6 py-24">
       {/* atmosphere */}

@@ -23,3 +23,13 @@ declare module "gifenc" {
     format?: "rgb444" | "rgb565" | "rgba4444",
   ): Uint8Array;
 }
+
+// Default export for CJS interop (Vite SSR named-export bridge)
+declare module "gifenc" {
+  const _default: {
+    GIFEncoder: typeof GIFEncoder;
+    quantize: typeof quantize;
+    applyPalette: typeof applyPalette;
+  };
+  export default _default;
+}

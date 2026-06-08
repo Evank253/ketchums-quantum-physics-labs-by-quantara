@@ -288,11 +288,17 @@ export function QuantumCircuit() {
               </div>
             </div>
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-white/60">Gate Palette</div>
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-white/60">
+                <span>Gate Palette</span>
+                <span className="text-white/40">tap or drag →</span>
+              </div>
               <div className="mt-2 grid grid-cols-4 gap-1">
                 {(["H","X","Y","Z","S","T","CNOT"] as Gate[]).map((g) => (
-                  <button key={g} onClick={() => { setPicked(g); setControl(null); }}
-                    className={`rounded border px-2 py-2 text-[11px] font-mono font-bold ${picked===g?"border-fuchsia-400 bg-fuchsia-400/10 text-fuchsia-200":"border-white/15 text-white/80 hover:bg-white/5"}`}>
+                  <button key={g}
+                    draggable
+                    onDragStart={(e) => { e.dataTransfer.setData("text/quantara-gate", g); e.dataTransfer.effectAllowed = "copy"; }}
+                    onClick={() => { setPicked(g); setControl(null); }}
+                    className={`cursor-grab active:cursor-grabbing rounded border px-2 py-2 text-[11px] font-mono font-bold ${picked===g?"border-fuchsia-400 bg-fuchsia-400/10 text-fuchsia-200":"border-white/15 text-white/80 hover:bg-white/5"}`}>
                     {g}
                   </button>
                 ))}

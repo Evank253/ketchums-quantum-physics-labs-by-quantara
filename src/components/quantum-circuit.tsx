@@ -782,7 +782,8 @@ function ExponentMetric({
               <div key={i} className="relative flex flex-1 flex-col items-center justify-end gap-1">
                 {/* the actual bar */}
                 <div
-                  className="w-full rounded-t-sm"
+                  key={`bar-${i}-${collapseTick}`}
+                  className="w-full origin-bottom rounded-t-sm"
                   style={{
                     height: `${isPeak ? peakHeight : h}%`,
                     background: isCollapsed
@@ -795,8 +796,22 @@ function ExponentMetric({
                       : isCollapsed
                       ? "0 0 14px rgba(252,211,77,0.7)"
                       : "none",
+                    animation: isCollapsed ? "spikeCollapse 900ms cubic-bezier(.2,.9,.25,1)" : undefined,
                   }}
                 />
+                {/* shock ring when this bin collapses */}
+                {isCollapsed && (
+                  <span
+                    key={`ring-${collapseTick}`}
+                    aria-hidden
+                    className="pointer-events-none absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                    style={{
+                      border: "1.5px solid rgba(253,224,71,0.85)",
+                      boxShadow: "0 0 18px rgba(253,224,71,0.7)",
+                      animation: "shockRing 700ms ease-out forwards",
+                    }}
+                  />
+                )}
                 {/* particle plume on the dominant spike */}
                 {isPeak && (
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-full overflow-hidden">

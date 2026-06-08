@@ -145,6 +145,8 @@ export function QuantumCircuit() {
   const [hoverWire, setHoverWire] = useState<number | null>(null);
   const [cascading, setCascading] = useState(false);
   const [collapseTick, setCollapseTick] = useState(0);
+  // 0 = perf mode (no particles / static refraction), 1 = full FX.
+  const [shaderIntensity, setShaderIntensity] = useState(0.75);
 
   const place = (q: number, gateOverride?: Gate) => {
     const g = gateOverride ?? picked;

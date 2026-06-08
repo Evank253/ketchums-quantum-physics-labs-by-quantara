@@ -346,19 +346,23 @@ export function QuantumCircuit() {
     ctx.font = `${12*S}px ui-monospace, monospace`;
     ctx.fillText(collapsedOverride !== null ? `collapsed → |${collapsedOverride.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48*S, H - 38*S);
 
-    // Watermark — bottom-right, subtle
+    // Watermark — configurable position, color, size, opacity
     if (watermarkOn && watermarkText.trim()) {
       const txt = watermarkText.trim();
       ctx.save();
-      ctx.font = `${12*S}px ui-monospace, monospace`;
+      const sz = Math.max(6, watermarkSize) * S;
+      ctx.font = `${sz}px ui-monospace, monospace`;
       const tw = ctx.measureText(txt).width;
-      const px = W - tw - 24*S;
-      const py = H - 22*S;
-      ctx.globalAlpha = 0.55;
+      const padX = 24 * S, padY = 22 * S;
+      let px = W - tw - padX, py = H - padY;
+      if (watermarkPos === "bl") { px = padX; py = H - padY; }
+      else if (watermarkPos === "tr") { px = W - tw - padX; py = padY + sz; }
+      else if (watermarkPos === "tl") { px = padX; py = padY + sz; }
+      ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity)) * 0.6;
       ctx.fillStyle = "#0a0a0f";
-      ctx.fillRect(px - 8*S, py - 14*S, tw + 16*S, 20*S);
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = "#e9d5ff";
+      ctx.fillRect(px - 8*S, py - sz - 2*S, tw + 16*S, sz + 8*S);
+      ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity));
+      ctx.fillStyle = watermarkColor;
       ctx.fillText(txt, px, py);
       ctx.restore();
     }

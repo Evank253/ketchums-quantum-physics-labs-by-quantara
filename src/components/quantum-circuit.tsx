@@ -704,6 +704,7 @@ qreg q[${n}];
               lambdaMantissa={lambdaMantissa}
               lambdaExp={lambdaExp}
               collapseTick={collapseTick}
+              shaderIntensity={shaderIntensity}
             />
           </GlassPane>
         </div>

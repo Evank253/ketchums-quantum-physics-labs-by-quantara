@@ -77,10 +77,12 @@ function scheduleEvaluate() {
   if (scheduled) return;
   scheduled = true;
   // Coalesce bursts of ledger/DAT events into a single eval per frame.
-  (typeof window !== "undefined" ? window.requestAnimationFrame : setTimeout)(
-    () => { scheduled = false; evaluateAchievements(); },
-    16 as never,
-  );
+  const run = () => { scheduled = false; evaluateAchievements(); };
+  if (typeof window !== "undefined" && window.requestAnimationFrame) {
+    window.requestAnimationFrame(run);
+  } else {
+    setTimeout(run, 16);
+  }
 }
 
 export function getUnlocked(): Record<string, number> { return readUnlocked(); }

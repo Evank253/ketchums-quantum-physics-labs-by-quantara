@@ -799,8 +799,38 @@ qreg q[${n}];
 
               {/* Saved export profiles */}
               <div className="space-y-2 rounded-sm border border-emerald-300/25 bg-black/50 p-2">
-                <div className="font-mono text-[9px] uppercase tracking-widest text-emerald-200/80">
-                  Export Profiles
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-emerald-200/80">
+                  <span>Export Profiles</span>
+                  <span className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={exportProfilesFile}
+                      disabled={profiles.length === 0}
+                      className="rounded-sm border border-emerald-300/40 px-2 py-0.5 text-[9px] uppercase tracking-widest text-emerald-100 hover:bg-emerald-400/15 disabled:opacity-40"
+                      title="Download all profiles as JSON"
+                    >
+                      ⤓ json
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => profileFileRef.current?.click()}
+                      className="rounded-sm border border-emerald-300/40 px-2 py-0.5 text-[9px] uppercase tracking-widest text-emerald-100 hover:bg-emerald-400/15"
+                      title="Import profiles from JSON"
+                    >
+                      ⤒ json
+                    </button>
+                    <input
+                      ref={profileFileRef}
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) importProfilesFile(f);
+                        e.target.value = "";
+                      }}
+                    />
+                  </span>
                 </div>
                 <div className="flex gap-1">
                   <input
@@ -847,14 +877,21 @@ qreg q[${n}];
                 )}
               </div>
 
-
-
               {/* Export progress */}
               {exporting && (
                 <div className="space-y-1 rounded-sm border border-emerald-300/30 bg-black/60 p-2">
                   <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-emerald-200/90">
-                    <span>{exportLabel}</span>
-                    <span className="text-emerald-100">{Math.round(exportProgress * 100)}%</span>
+                    <span className="truncate">{exportLabel}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-emerald-100">{Math.round(exportProgress * 100)}%</span>
+                      <button
+                        type="button"
+                        onClick={cancelExport}
+                        className="rounded-sm border border-rose-300/40 bg-rose-400/10 px-2 py-0.5 text-[9px] uppercase tracking-widest text-rose-200 hover:bg-rose-400/20"
+                      >
+                        cancel
+                      </button>
+                    </span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-emerald-400/10">
                     <div
@@ -864,6 +901,7 @@ qreg q[${n}];
                   </div>
                 </div>
               )}
+
 
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">
                 Status: <span className={exporting ? "text-amber-300" : cascading ? "text-amber-300" : "text-emerald-300"}>{exporting ? "EXPORTING" : cascading ? "CASCADING" : "READY"}</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>

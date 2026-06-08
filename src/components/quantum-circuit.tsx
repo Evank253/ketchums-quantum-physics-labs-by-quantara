@@ -471,17 +471,17 @@ qreg q[${n}];
               />
 
               {/* Decoherence speckle — TV-static artifacts that intensify with noise */}
-              {noise > 0 && (
+              {noise > 0 && shaderIntensity > 0.05 && (
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0 mix-blend-screen"
                   style={{
-                    opacity: Math.min(0.85, noise * 1.4),
+                    opacity: Math.min(0.85, noise * 1.4) * shaderIntensity,
                     backgroundImage:
                       "radial-gradient(circle at 17% 22%, rgba(232,121,249,0.7) 0 1px, transparent 1.5px), radial-gradient(circle at 73% 41%, rgba(125,211,252,0.6) 0 1px, transparent 1.5px), radial-gradient(circle at 38% 78%, rgba(252,211,77,0.55) 0 1px, transparent 1.5px), radial-gradient(circle at 88% 86%, rgba(167,139,250,0.6) 0 1px, transparent 1.5px), repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 3px)",
                     backgroundSize: "7px 7px, 11px 11px, 13px 13px, 9px 9px, auto",
-                    animation: "qstatic 0.18s steps(4) infinite",
-                    filter: `blur(${noise * 0.6}px)`,
+                    animation: shaderIntensity > 0.5 ? "qstatic 0.18s steps(4) infinite" : undefined,
+                    filter: `blur(${noise * 0.6 * shaderIntensity}px)`,
                   }}
                 />
               )}

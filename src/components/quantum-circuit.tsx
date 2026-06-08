@@ -697,6 +697,17 @@ function GlassPane({
         backdropFilter: "blur(6px)",
       }}
     >
+      {/* Refracted glass corner caustics — SVG turbulence displacement */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-px overflow-hidden rounded-md"
+        style={{
+          filter: "url(#qc-glass-refraction)",
+          background: `radial-gradient(120px 80px at 10% 0%, ${edge}, transparent 70%), radial-gradient(140px 90px at 100% 100%, ${edge}, transparent 70%)`,
+          opacity: 0.55,
+          mixBlendMode: "screen",
+        }}
+      />
       {/* refractive edge highlight */}
       <span
         aria-hidden

@@ -1008,6 +1008,9 @@ qreg q[${n}];
                     <span className="truncate">{exportLabel}</span>
                     <span className="flex items-center gap-2">
                       <span className="text-emerald-100">{Math.round(exportProgress * 100)}%</span>
+                      {exportEtaMs !== null && (
+                        <span className="text-emerald-200/70" title="Estimated time remaining">~{fmtEta(exportEtaMs)}</span>
+                      )}
                       <button
                         type="button"
                         onClick={cancelExport}
@@ -1025,6 +1028,40 @@ qreg q[${n}];
                   </div>
                 </div>
               )}
+
+              {/* Export queue */}
+              {queue.length > 0 && (
+                <div className="space-y-1 rounded-sm border border-sky-300/25 bg-black/50 p-2">
+                  <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-sky-200/80">
+                    <span>Queue · {queue.length} job{queue.length === 1 ? "" : "s"}</span>
+                    <button
+                      type="button"
+                      onClick={clearQueue}
+                      className="rounded-sm border border-rose-300/30 px-2 py-0.5 text-[9px] uppercase tracking-widest text-rose-200/80 hover:bg-rose-400/15"
+                    >
+                      clear
+                    </button>
+                  </div>
+                  <ul className="space-y-1">
+                    {queue.map((j, i) => (
+                      <li key={j.id} className="flex items-center justify-between gap-1 rounded-sm border border-white/10 bg-black/40 px-2 py-1 font-mono text-[10px]">
+                        <span className="truncate text-sky-100/90">
+                          <span className="text-white/40">{String(i + 1).padStart(2, "0")}.</span> {j.label}
+                        </span>
+                        <button
+                          onClick={() => removeJob(j.id)}
+                          className="rounded-sm border border-rose-300/30 px-1.5 py-0.5 text-[9px] uppercase tracking-widest text-rose-200/80 hover:bg-rose-400/15"
+                          aria-label={`Remove ${j.label}`}
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+
 
 
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">

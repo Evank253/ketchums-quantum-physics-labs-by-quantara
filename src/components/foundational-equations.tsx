@@ -133,10 +133,18 @@ const DOMAINS: Domain[] = [
   },
 ];
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+const SEARCH_KEY = "quantara.equations.search.v1";
 
 export function FoundationalEquations() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try { return localStorage.getItem(SEARCH_KEY) || ""; } catch { return ""; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(SEARCH_KEY, query); } catch {}
+  }, [query]);
   const q = query.trim().toLowerCase();
   const filtered = useMemo(() => {
     if (!q) return DOMAINS.map((d) => ({ domain: d, equations: d.equations, matched: false }));

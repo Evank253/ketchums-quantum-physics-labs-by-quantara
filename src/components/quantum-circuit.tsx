@@ -199,7 +199,19 @@ export function QuantumCircuit() {
                     <div className="w-10 font-mono text-[11px] text-white/70">q{q}</div>
                     <button
                       onClick={() => place(q)}
-                      className="relative flex-1 h-10 rounded border border-white/10 bg-white/[0.02] hover:bg-cyan-400/5 transition-colors"
+                      onDragOver={(e) => { e.preventDefault(); setHoverWire(q); }}
+                      onDragLeave={() => setHoverWire((h) => (h === q ? null : h))}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setHoverWire(null);
+                        const g = e.dataTransfer.getData("text/quantara-gate") as Gate;
+                        if (g) place(q, g);
+                      }}
+                      className={`relative flex-1 h-10 rounded border transition-colors ${
+                        hoverWire === q
+                          ? "border-fuchsia-400 bg-fuchsia-400/10"
+                          : "border-white/10 bg-white/[0.02] hover:bg-cyan-400/5"
+                      }`}
                     >
                       <div className="absolute inset-y-1/2 left-2 right-2 h-px bg-gradient-to-r from-cyan-400/30 via-white/30 to-fuchsia-400/30" />
                       <div className="absolute inset-0 flex items-center gap-1 px-2">
@@ -228,10 +240,9 @@ export function QuantumCircuit() {
             {/* Bloch spheres */}
             <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/5 pt-4">
               <div className="font-mono text-[10px] uppercase tracking-widest text-white/60">Bloch</div>
-              {Array.from({length: n}).map((_, q) => {
-                const b = blochOf(state, n, q);
-                return <BlochSphere key={q} {...b} label={`q${q}`} />;
-              })}
+              {blochs.map((b, q) => (
+                <BlochSphere key={q} {...b} label={`q${q}`} />
+              ))}
             </div>
 
             {/* Histogram */}

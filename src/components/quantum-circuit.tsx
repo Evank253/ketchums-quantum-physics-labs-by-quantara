@@ -729,6 +729,7 @@ function ExponentMetric({
   peakStability,
   lambdaMantissa,
   lambdaExp,
+  collapseTick,
 }: {
   probs: number[];
   n: number;
@@ -737,6 +738,7 @@ function ExponentMetric({
   peakStability: number;
   lambdaMantissa: string;
   lambdaExp: number;
+  collapseTick: number;
 }) {
   // Particle density on the dominant bin (the magenta spike).
   const peakHeight = Math.max(8, Math.min(100, peakStability * 100));

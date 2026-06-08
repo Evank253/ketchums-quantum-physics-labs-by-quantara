@@ -414,17 +414,18 @@ export function QuantumCircuit() {
     const badge = `[${W}×${H}${resScale !== 1 ? ` · ${resScale.toFixed(2)}x` : ""}]`;
     setExporting("png");
     setExportLabel(`PNG · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""}${pngTransparent ? " · alpha" : ""}`);
-    setExportProgress(0.15);
+    exportStartRef.current = performance.now();
+    tickProgress(0.15);
     // give the UI a tick to repaint
     requestAnimationFrame(() => {
       const c = document.createElement("canvas");
       c.width = W; c.height = H;
       const ctx = c.getContext("2d")!;
       drawFrameInto(ctx, W, H, probs, collapsed, badge, pngTransparent);
-      setExportProgress(0.7);
+      tickProgress(0.7);
       c.toBlob((blob) => {
-        setExportProgress(1);
-        setTimeout(() => { setExporting(null); setExportProgress(0); }, 350);
+        tickProgress(1);
+        setTimeout(() => { setExporting(null); setExportProgress(0); setExportEtaMs(null); }, 350);
         if (!blob) return;
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");

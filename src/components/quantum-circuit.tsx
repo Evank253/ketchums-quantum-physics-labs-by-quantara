@@ -347,23 +347,30 @@ export function QuantumCircuit() {
     ctx.font = `${12*S}px ui-monospace, monospace`;
     ctx.fillText(collapsedOverride !== null ? `collapsed → |${collapsedOverride.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48*S, H - 38*S);
 
-    // Watermark — configurable position, color, size, opacity
+    // Watermark — configurable position, color, size, opacity, multi-line
     if (watermarkOn && watermarkText.trim()) {
-      const txt = watermarkText.trim();
+      const lines = watermarkText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       ctx.save();
       const sz = Math.max(6, watermarkSize) * S;
       ctx.font = `${sz}px ui-monospace, monospace`;
-      const tw = ctx.measureText(txt).width;
+      const lh = sz * 1.25;
+      const widths = lines.map((l) => ctx.measureText(l).width);
+      const tw = Math.max(...widths, 0);
+      const th = lh * lines.length;
       const padX = 24 * S, padY = 22 * S;
-      let px = W - tw - padX, py = H - padY;
-      if (watermarkPos === "bl") { px = padX; py = H - padY; }
-      else if (watermarkPos === "tr") { px = W - tw - padX; py = padY + sz; }
-      else if (watermarkPos === "tl") { px = padX; py = padY + sz; }
-      ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity)) * 0.6;
+      let bx = W - tw - padX, by = H - th - padY * 0.4;
+      if (watermarkPos === "bl") { bx = padX; by = H - th - padY * 0.4; }
+      else if (watermarkPos === "tr") { bx = W - tw - padX; by = padY * 0.5; }
+      else if (watermarkPos === "tl") { bx = padX; by = padY * 0.5; }
+      ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity)) * 0.55;
       ctx.fillStyle = "#0a0a0f";
-      ctx.fillRect(px - 8*S, py - sz - 2*S, tw + 16*S, sz + 8*S);
+      ctx.fillRect(bx - 8*S, by - 2*S, tw + 16*S, th + 8*S);
       ctx.globalAlpha = Math.min(1, Math.max(0, watermarkOpacity));
       ctx.fillStyle = watermarkColor;
+      lines.forEach((l, i) => ctx.fillText(l, bx, by + lh * i + sz));
+      ctx.restore();
+    }
+  };
       ctx.fillText(txt, px, py);
       ctx.restore();
     }

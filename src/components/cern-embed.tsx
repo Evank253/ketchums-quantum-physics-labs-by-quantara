@@ -110,6 +110,20 @@ export function CernEmbed() {
             <div className="absolute left-3 top-3 font-mono text-[10px] uppercase tracking-widest text-cyan-300/90">
               Beam · {beam.toUpperCase()} · {energy.toFixed(2)} TeV · B={field.toFixed(2)} T
             </div>
+            <div className="absolute right-3 top-3 flex gap-1">
+              <button onClick={fire}
+                className="rounded border border-cyan-400/60 bg-cyan-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-100 hover:bg-cyan-400/25">
+                Fire
+              </button>
+              <button onClick={() => { runFlag.current = !runFlag.current; }}
+                className="rounded border border-white/20 bg-black/60 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white/80 hover:bg-white/10">
+                Pause
+              </button>
+              <button onClick={() => { particles.current = []; setStats({ collisions: 0, runs: 0 }); }}
+                className="rounded border border-white/20 bg-black/60 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white/80 hover:bg-white/10">
+                Reset
+              </button>
+            </div>
             <div className="absolute right-3 bottom-3 font-mono text-[10px] text-white/70">
               collisions {stats.collisions} · runs {stats.runs}
             </div>

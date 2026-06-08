@@ -704,6 +704,19 @@ qreg q[${n}];
                       className="w-full accent-amber-400" />
                   </label>
                 </div>
+                <div className="mt-1 grid grid-cols-3 gap-1">
+                  {["start", "mid", "end"].map((lbl, i) => (
+                    <div key={lbl} className="overflow-hidden rounded-sm border border-amber-300/15 bg-black/70">
+                      <canvas
+                        ref={previewRefs[i]}
+                        width={160}
+                        height={90}
+                        className="block w-full"
+                      />
+                      <div className="px-1 py-0.5 font-mono text-[8px] uppercase tracking-widest text-amber-200/60">{lbl}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Watermark */}

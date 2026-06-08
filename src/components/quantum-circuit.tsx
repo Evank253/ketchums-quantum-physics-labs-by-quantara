@@ -591,6 +591,7 @@ qreg q[${n}];
               peakStability={peakStability}
               lambdaMantissa={lambdaMantissa}
               lambdaExp={lambdaExp}
+              collapseTick={collapseTick}
             />
           </GlassPane>
         </div>

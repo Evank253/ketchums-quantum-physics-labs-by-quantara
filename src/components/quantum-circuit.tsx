@@ -414,12 +414,29 @@ qreg q[${n}];
                 <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent opacity-70" />
               </button>
 
-              <button
-                onClick={exportFrame}
-                className="w-full rounded-sm border border-cyan-300/40 bg-black/50 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-100 hover:bg-cyan-400/10"
-              >
-                ⤓ Export Render Frame (PNG)
-              </button>
+              <div className="grid grid-cols-3 gap-1">
+                <button
+                  onClick={() => exportFrame(1)}
+                  disabled={!!exporting}
+                  className="rounded-sm border border-cyan-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-100 hover:bg-cyan-400/10 disabled:opacity-50"
+                >
+                  {exporting === "png" ? "…" : "⤓ PNG"}
+                </button>
+                <button
+                  onClick={() => exportFrame(3)}
+                  disabled={!!exporting}
+                  className="rounded-sm border border-fuchsia-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-fuchsia-100 hover:bg-fuchsia-400/10 disabled:opacity-50"
+                >
+                  {exporting === "4k" ? "…" : "⤓ 4K"}
+                </button>
+                <button
+                  onClick={exportGif}
+                  disabled={!!exporting}
+                  className="rounded-sm border border-amber-300/40 bg-black/50 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-amber-100 hover:bg-amber-400/10 disabled:opacity-50"
+                >
+                  {exporting === "gif" ? "ENC…" : "⤓ GIF"}
+                </button>
+              </div>
 
               <div className="rounded-sm border border-white/10 bg-black/40 p-2 font-mono text-[9px] uppercase tracking-widest text-white/50">
                 Status: <span className={cascading ? "text-amber-300" : "text-emerald-300"}>{cascading ? "CASCADING" : "READY"}</span> · noise <span className="text-fuchsia-300">{(noise * 100).toFixed(0)}%</span>

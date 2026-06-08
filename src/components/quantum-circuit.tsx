@@ -523,6 +523,61 @@ export function QuantumCircuit() {
     creditDat(gifPreset === "lg" ? 24 : gifPreset === "md" ? 14 : 8);
   };
 
+  // ===== Export queue =====
+  const captureSnapshot = (): ExportSnapshot => ({
+    pngPreset, gifPreset, pngTransparent, gifTransparent, resScale,
+    watermarkOn, watermarkText, watermarkPos, watermarkColor, watermarkSize, watermarkOpacity,
+    gifStart, gifEnd,
+  });
+  const applySnapshot = (s: ExportSnapshot) => {
+    setPngPreset(s.pngPreset); setGifPreset(s.gifPreset);
+    setPngTransparent(s.pngTransparent); setGifTransparent(s.gifTransparent);
+    setResScale(s.resScale);
+    setWatermarkOn(s.watermarkOn); setWatermarkText(s.watermarkText);
+    setWatermarkPos(s.watermarkPos); setWatermarkColor(s.watermarkColor);
+    setWatermarkSize(s.watermarkSize); setWatermarkOpacity(s.watermarkOpacity);
+    setGifStart(s.gifStart); setGifEnd(s.gifEnd);
+  };
+  const enqueueJob = (kind: "png" | "gif") => {
+    const snap = captureSnapshot();
+    const label = kind === "png"
+      ? `PNG · ${PNG_PRESETS[snap.pngPreset].label}${snap.resScale !== 1 ? ` @${snap.resScale.toFixed(2)}x` : ""}${snap.pngTransparent ? " · α" : ""}`
+      : `GIF · ${GIF_PRESETS[snap.gifPreset].label}${snap.resScale !== 1 ? ` @${snap.resScale.toFixed(2)}x` : ""}${snap.gifTransparent ? " · α" : ""}`;
+    const job: QueueJob = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, label, snapshot: snap };
+    setQueue((q) => [...q, job]);
+    // Auto-start processor (no-op if already running)
+    void processQueue();
+  };
+  const removeJob = (id: string) => setQueue((q) => q.filter((j) => j.id !== id));
+  const clearQueue = () => setQueue([]);
+  const processQueue = async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    try {
+      // wait if a manual export is in flight
+      while (exporting) await new Promise((r) => setTimeout(r, 120));
+      while (queueRef.current.length > 0) {
+        const next = queueRef.current[0];
+        applySnapshot(next.snapshot);
+        // give state a tick to flush before reading via captured globals
+        await new Promise((r) => setTimeout(r, 30));
+        if (next.kind === "png") {
+          exportFrame();
+          // wait for PNG to finish (it's quick + async via toBlob)
+          await new Promise((r) => setTimeout(r, 800));
+        } else {
+          await exportGif();
+        }
+        setQueue((q) => q.filter((j) => j.id !== next.id));
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    } finally {
+      processingRef.current = false;
+    }
+  };
+
+
+
   // Live preview thumbnails of GIF frame range (start / mid / end)
   const previewRefs = [useRef<HTMLCanvasElement | null>(null), useRef<HTMLCanvasElement | null>(null), useRef<HTMLCanvasElement | null>(null)];
   useEffect(() => {

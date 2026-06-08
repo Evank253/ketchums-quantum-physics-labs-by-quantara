@@ -544,7 +544,7 @@ function GlassPane({
 }: {
   label: string;
   accent: "cyan" | "fuchsia" | "white";
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const edge =
     accent === "cyan"

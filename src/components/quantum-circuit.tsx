@@ -854,6 +854,7 @@ function ExponentMetric({
   lambdaMantissa,
   lambdaExp,
   collapseTick,
+  shaderIntensity,
 }: {
   probs: number[];
   n: number;
@@ -863,10 +864,12 @@ function ExponentMetric({
   lambdaMantissa: string;
   lambdaExp: number;
   collapseTick: number;
+  shaderIntensity: number;
 }) {
   // Particle density on the dominant bin (the magenta spike).
   const peakHeight = Math.max(8, Math.min(100, peakStability * 100));
-  const peakParticles = Math.round(14 + peakStability * 26);
+  // Particle count scales with shader intensity; perf mode → 0 particles.
+  const peakParticles = shaderIntensity < 0.05 ? 0 : Math.round((6 + peakStability * 30) * shaderIntensity);
 
   return (
     <div className="flex flex-col gap-3">

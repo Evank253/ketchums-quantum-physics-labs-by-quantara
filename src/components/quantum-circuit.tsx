@@ -213,6 +213,48 @@ export function QuantumCircuit() {
   const [exportProgress, setExportProgress] = useState(0);
   const [exportLabel, setExportLabel] = useState("");
 
+  // New: resolution multiplier, watermark, GIF frame range, saved profiles
+  const [resScale, setResScale] = useState(1);             // 0.5 .. 2
+  const [watermarkOn, setWatermarkOn] = useState(true);
+  const [watermarkText, setWatermarkText] = useState("QUANTARA · quantara.app");
+  const [gifStart, setGifStart] = useState(0);             // 0 .. 1
+  const [gifEnd, setGifEnd] = useState(1);                 // 0 .. 1
+  type ExportProfile = {
+    name: string; pngPreset: PngPreset; gifPreset: GifPreset;
+    pngTransparent: boolean; gifTransparent: boolean;
+    resScale: number; watermarkOn: boolean; watermarkText: string;
+    gifStart: number; gifEnd: number;
+  };
+  const PROFILE_KEY = "quantara.exportProfiles.v1";
+  const [profiles, setProfiles] = useState<ExportProfile[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]"); } catch { return []; }
+  });
+  const [profileName, setProfileName] = useState("");
+  const persistProfiles = (next: ExportProfile[]) => {
+    setProfiles(next);
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(next)); } catch {}
+  };
+  const saveProfile = () => {
+    const name = profileName.trim() || `Preset ${profiles.length + 1}`;
+    const p: ExportProfile = {
+      name, pngPreset, gifPreset, pngTransparent, gifTransparent,
+      resScale, watermarkOn, watermarkText, gifStart, gifEnd,
+    };
+    const next = [...profiles.filter((x) => x.name !== name), p];
+    persistProfiles(next);
+    setProfileName("");
+  };
+  const loadProfile = (name: string) => {
+    const p = profiles.find((x) => x.name === name);
+    if (!p) return;
+    setPngPreset(p.pngPreset); setGifPreset(p.gifPreset);
+    setPngTransparent(p.pngTransparent); setGifTransparent(p.gifTransparent);
+    setResScale(p.resScale); setWatermarkOn(p.watermarkOn);
+    setWatermarkText(p.watermarkText); setGifStart(p.gifStart); setGifEnd(p.gifEnd);
+  };
+  const deleteProfile = (name: string) => persistProfiles(profiles.filter((x) => x.name !== name));
+
   // Draw a frame into a canvas. Used by both PNG and GIF paths.
   const drawFrameInto = (
     ctx: CanvasRenderingContext2D,
@@ -268,14 +310,33 @@ export function QuantumCircuit() {
     ctx.fillStyle = transparent ? "#cbd5e1" : "#94a3b8";
     ctx.font = `${12*S}px ui-monospace, monospace`;
     ctx.fillText(collapsedOverride !== null ? `collapsed → |${collapsedOverride.toString(2).padStart(n,"0")}⟩` : "superposition · unmeasured", 48*S, H - 38*S);
+
+    // Watermark — bottom-right, subtle
+    if (watermarkOn && watermarkText.trim()) {
+      const txt = watermarkText.trim();
+      ctx.save();
+      ctx.font = `${12*S}px ui-monospace, monospace`;
+      const tw = ctx.measureText(txt).width;
+      const px = W - tw - 24*S;
+      const py = H - 22*S;
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "#0a0a0f";
+      ctx.fillRect(px - 8*S, py - 14*S, tw + 16*S, 20*S);
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = "#e9d5ff";
+      ctx.fillText(txt, px, py);
+      ctx.restore();
+    }
   };
 
   const exportFrame = () => {
     if (exporting) return;
     const preset = PNG_PRESETS[pngPreset];
-    const { w: W, h: H, badge } = preset;
+    const W = Math.max(320, Math.round(preset.w * resScale));
+    const H = Math.max(180, Math.round(preset.h * resScale));
+    const badge = `[${W}×${H}${resScale !== 1 ? ` · ${resScale.toFixed(2)}x` : ""}]`;
     setExporting("png");
-    setExportLabel(`PNG · ${preset.label}${pngTransparent ? " · alpha" : ""}`);
+    setExportLabel(`PNG · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""}${pngTransparent ? " · alpha" : ""}`);
     setExportProgress(0.15);
     // give the UI a tick to repaint
     requestAnimationFrame(() => {
@@ -291,11 +352,11 @@ export function QuantumCircuit() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `quantara-frame-${pngPreset}${pngTransparent ? "-alpha" : ""}-${Date.now()}.png`;
+        a.download = `quantara-frame-${pngPreset}-${W}x${H}${pngTransparent ? "-alpha" : ""}-${Date.now()}.png`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }, "image/png");
-      logLedger("kernel", `Q-Circuit · render frame ${pngPreset} n=${n}`);
+      logLedger("kernel", `Q-Circuit · render frame ${pngPreset} @${resScale.toFixed(2)}x n=${n}`);
       creditDat(pngPreset === "uhd" ? 16 : pngPreset === "qhd" ? 10 : pngPreset === "fhd" ? 6 : 4);
     });
   };
@@ -303,11 +364,17 @@ export function QuantumCircuit() {
   const exportGif = async () => {
     if (exporting) return;
     const preset = GIF_PRESETS[gifPreset];
-    const { w: W, h: H, fps, dur } = preset;
-    const FRAMES = Math.max(6, Math.round(fps * dur));
+    const W = Math.max(160, Math.round(preset.w * resScale));
+    const H = Math.max(90, Math.round(preset.h * resScale));
+    const fps = preset.fps;
+    const dur = preset.dur;
+    // Frame range — clamp to [0,1], ensure end > start
+    const rs = Math.min(0.99, Math.max(0, gifStart));
+    const re = Math.min(1, Math.max(rs + 0.05, gifEnd));
+    const FRAMES = Math.max(6, Math.round(fps * dur * (re - rs)));
     const DELAY = Math.round(1000 / fps);
     setExporting("gif");
-    setExportLabel(`GIF · ${preset.label}${gifTransparent ? " · alpha" : ""}`);
+    setExportLabel(`GIF · ${preset.label}${resScale !== 1 ? ` @${resScale.toFixed(2)}x` : ""} · t[${rs.toFixed(2)}–${re.toFixed(2)}]${gifTransparent ? " · alpha" : ""}`);
     setExportProgress(0.02);
     await new Promise((r) => setTimeout(r, 30));
     const c = document.createElement("canvas");
@@ -321,7 +388,7 @@ export function QuantumCircuit() {
     }
     const uniform = probs.map(() => 1 / probs.length);
     for (let f = 0; f < FRAMES; f++) {
-      const t = f / (FRAMES - 1);
+      const t = rs + (re - rs) * (f / Math.max(1, FRAMES - 1));
       let frameProbs: number[];
       let frameCollapsed: number | null = null;
       if (t < 0.45) {
@@ -525,6 +592,124 @@ qreg q[${n}];
                   </button>
                 </div>
               </div>
+
+              {/* Resolution scale */}
+              <div className="space-y-1 rounded-sm border border-fuchsia-300/25 bg-black/50 p-2">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-fuchsia-200/80">
+                  <span>Resolution Scale</span>
+                  <span className="text-fuchsia-100">{resScale.toFixed(2)}×</span>
+                </div>
+                <input
+                  type="range"
+                  min={0.5}
+                  max={2}
+                  step={0.05}
+                  value={resScale}
+                  onChange={(e) => setResScale(parseFloat(e.target.value))}
+                  className="w-full accent-fuchsia-400"
+                />
+                <div className="flex justify-between font-mono text-[8px] uppercase tracking-widest text-white/35">
+                  <span>0.5×</span><span>1×</span><span>2×</span>
+                </div>
+              </div>
+
+              {/* GIF frame range */}
+              <div className="space-y-1 rounded-sm border border-amber-300/25 bg-black/50 p-2">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-amber-200/80">
+                  <span>GIF Frame Range</span>
+                  <span className="text-amber-100">t [{gifStart.toFixed(2)} → {gifEnd.toFixed(2)}]</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="font-mono text-[8px] uppercase tracking-widest text-white/45">start</span>
+                    <input type="range" min={0} max={0.95} step={0.01} value={gifStart}
+                      onChange={(e) => { const v = parseFloat(e.target.value); setGifStart(v); if (gifEnd <= v + 0.05) setGifEnd(Math.min(1, v + 0.05)); }}
+                      className="w-full accent-amber-400" />
+                  </label>
+                  <label className="block">
+                    <span className="font-mono text-[8px] uppercase tracking-widest text-white/45">end</span>
+                    <input type="range" min={0.05} max={1} step={0.01} value={gifEnd}
+                      onChange={(e) => { const v = parseFloat(e.target.value); setGifEnd(v); if (gifStart >= v - 0.05) setGifStart(Math.max(0, v - 0.05)); }}
+                      className="w-full accent-amber-400" />
+                  </label>
+                </div>
+              </div>
+
+              {/* Watermark */}
+              <div className="space-y-2 rounded-sm border border-violet-300/25 bg-black/50 p-2">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-violet-200/80">
+                  <span>Watermark</span>
+                  <label className="flex cursor-pointer items-center gap-1 text-white/55 normal-case tracking-normal">
+                    <input
+                      type="checkbox"
+                      checked={watermarkOn}
+                      onChange={(e) => setWatermarkOn(e.target.checked)}
+                      className="h-3 w-3 accent-violet-400"
+                    />
+                    <span className="text-[9px] uppercase tracking-widest">on</span>
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  value={watermarkText}
+                  onChange={(e) => setWatermarkText(e.target.value)}
+                  disabled={!watermarkOn}
+                  placeholder="QUANTARA · your-name"
+                  className="w-full rounded-sm border border-violet-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-violet-100 outline-none focus:border-violet-300 disabled:opacity-40"
+                />
+              </div>
+
+              {/* Saved export profiles */}
+              <div className="space-y-2 rounded-sm border border-emerald-300/25 bg-black/50 p-2">
+                <div className="font-mono text-[9px] uppercase tracking-widest text-emerald-200/80">
+                  Export Profiles
+                </div>
+                <div className="flex gap-1">
+                  <input
+                    type="text"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    placeholder="profile name"
+                    className="flex-1 rounded-sm border border-emerald-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-emerald-100 outline-none focus:border-emerald-300"
+                  />
+                  <button
+                    onClick={saveProfile}
+                    className="rounded-sm border border-emerald-300/50 bg-emerald-400/15 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-100 hover:bg-emerald-400/25"
+                  >
+                    save
+                  </button>
+                </div>
+                {profiles.length > 0 ? (
+                  <ul className="space-y-1">
+                    {profiles.map((p) => (
+                      <li key={p.name} className="flex items-center justify-between gap-1 rounded-sm border border-white/10 bg-black/40 px-2 py-1 font-mono text-[10px]">
+                        <span className="truncate text-emerald-100/90">{p.name}</span>
+                        <span className="flex gap-1">
+                          <button
+                            onClick={() => loadProfile(p.name)}
+                            className="rounded-sm border border-emerald-300/40 px-2 py-0.5 text-[9px] uppercase tracking-widest text-emerald-100 hover:bg-emerald-400/20"
+                          >
+                            load
+                          </button>
+                          <button
+                            onClick={() => deleteProfile(p.name)}
+                            className="rounded-sm border border-rose-300/30 px-2 py-0.5 text-[9px] uppercase tracking-widest text-rose-200/80 hover:bg-rose-400/15"
+                            aria-label={`Delete ${p.name}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-white/35">
+                    no saved profiles · adjust + save
+                  </div>
+                )}
+              </div>
+
+
 
               {/* Export progress */}
               {exporting && (

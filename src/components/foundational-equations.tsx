@@ -172,63 +172,77 @@ export function FoundationalEquations() {
 
 
         {/* domain stack */}
-        <div className="space-y-20">
+        <div className="space-y-4">
           {DOMAINS.map((d, di) => (
-            <div key={d.id} id={`canon-${d.id}`} className="relative">
-              <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-white/5 pb-4">
-                <div>
-                  <div className={`font-mono text-[10px] uppercase tracking-[0.3em] ${d.accent}`}>{d.label}</div>
-                  <h3 className="mt-2 text-balance text-2xl font-black tracking-[-0.02em] text-white md:text-3xl">
-                    {d.heading}
-                  </h3>
-                  <p className="mt-2 max-w-2xl font-mono text-[11px] leading-relaxed text-muted-foreground">{d.blurb}</p>
+            <details
+              key={d.id}
+              id={`canon-${d.id}`}
+              className="group relative overflow-hidden border border-white/10 bg-card/20 transition-colors open:bg-card/40 [&_summary::-webkit-details-marker]:hidden"
+            >
+              <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-4 px-6 py-5 hover:bg-white/[0.03]">
+                <div className="flex items-center gap-4">
+                  <span
+                    aria-hidden
+                    className="inline-flex size-7 items-center justify-center rounded-full border border-white/15 font-mono text-[11px] text-white/70 transition-transform group-open:rotate-45"
+                    style={{ boxShadow: `0 0 14px color-mix(in oklab, ${d.glow} 35%, transparent)` }}
+                  >
+                    +
+                  </span>
+                  <div>
+                    <div className={`font-mono text-[10px] uppercase tracking-[0.3em] ${d.accent}`}>{d.label}</div>
+                    <h3 className="mt-1 text-balance text-xl font-black tracking-[-0.02em] text-white md:text-2xl">
+                      {d.heading}
+                    </h3>
+                  </div>
                 </div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-chrome/60">
-                  {String(di + 1).padStart(2, "0")} / {String(DOMAINS.length).padStart(2, "0")}
+                  {String(di + 1).padStart(2, "0")} / {String(DOMAINS.length).padStart(2, "0")} · {d.equations.length} eqs
+                </div>
+              </summary>
+
+              <div className="border-t border-white/5 px-6 pb-8 pt-6">
+                <p className="mb-6 max-w-2xl font-mono text-[11px] leading-relaxed text-muted-foreground">{d.blurb}</p>
+                <div className="grid gap-px md:grid-cols-2">
+                  {d.equations.map((eq, i) => (
+                    <article
+                      key={eq.id}
+                      className="group/eq relative overflow-hidden border border-white/5 bg-card/30 p-7 transition-colors hover:bg-card/60"
+                    >
+                      <span className="pointer-events-none absolute left-0 top-0 size-3 border-l border-t border-white/30" />
+                      <span className="pointer-events-none absolute right-0 top-0 size-3 border-r border-t border-white/30" />
+                      <span className="pointer-events-none absolute bottom-0 left-0 size-3 border-b border-l border-white/30" />
+                      <span className="pointer-events-none absolute bottom-0 right-0 size-3 border-b border-r border-white/30" />
+
+                      <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em]">
+                        <span className={d.accent}>{eq.id}</span>
+                        <span className="text-chrome/60">{String(i + 1).padStart(2, "0")} / {String(d.equations.length).padStart(2, "0")}</span>
+                      </div>
+
+                      <h4 className="mt-3 text-balance text-base font-bold leading-tight tracking-[-0.01em] text-white">
+                        {eq.title}
+                      </h4>
+
+                      <div className="relative mt-5 overflow-x-auto border border-white/10 bg-background/70 px-5 py-6">
+                        <div
+                          className="pointer-events-none absolute inset-0"
+                          style={{ background: `linear-gradient(180deg, color-mix(in oklab, ${d.glow} 8%, transparent), transparent 45%, color-mix(in oklab, ${d.glow} 8%, transparent))` }}
+                        />
+                        <pre
+                          className="relative whitespace-pre-wrap break-words font-mono text-[12.5px] leading-relaxed text-white/95 md:text-[14px]"
+                          style={{ textShadow: `0 0 12px color-mix(in oklab, ${d.glow} 40%, transparent)` }}
+                        >
+                          {eq.tex}
+                        </pre>
+                      </div>
+
+                      <p className="mt-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                        {eq.note}
+                      </p>
+                    </article>
+                  ))}
                 </div>
               </div>
-
-              <div className="grid gap-px md:grid-cols-2">
-                {d.equations.map((eq, i) => (
-                  <article
-                    key={eq.id}
-                    className="group relative overflow-hidden border border-white/5 bg-card/30 p-7 transition-colors hover:bg-card/60"
-                  >
-                    {/* corner accents */}
-                    <span className="pointer-events-none absolute left-0 top-0 size-3 border-l border-t border-white/30" />
-                    <span className="pointer-events-none absolute right-0 top-0 size-3 border-r border-t border-white/30" />
-                    <span className="pointer-events-none absolute bottom-0 left-0 size-3 border-b border-l border-white/30" />
-                    <span className="pointer-events-none absolute bottom-0 right-0 size-3 border-b border-r border-white/30" />
-
-                    <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em]">
-                      <span className={d.accent}>{eq.id}</span>
-                      <span className="text-chrome/60">{String(i + 1).padStart(2, "0")} / {String(d.equations.length).padStart(2, "0")}</span>
-                    </div>
-
-                    <h4 className="mt-3 text-balance text-base font-bold leading-tight tracking-[-0.01em] text-white">
-                      {eq.title}
-                    </h4>
-
-                    <div className="relative mt-5 overflow-x-auto border border-white/10 bg-background/70 px-5 py-6">
-                      <div
-                        className="pointer-events-none absolute inset-0"
-                        style={{ background: `linear-gradient(180deg, color-mix(in oklab, ${d.glow} 8%, transparent), transparent 45%, color-mix(in oklab, ${d.glow} 8%, transparent))` }}
-                      />
-                      <pre
-                        className="relative whitespace-pre-wrap break-words font-mono text-[12.5px] leading-relaxed text-white/95 md:text-[14px]"
-                        style={{ textShadow: `0 0 12px color-mix(in oklab, ${d.glow} 40%, transparent)` }}
-                      >
-                        {eq.tex}
-                      </pre>
-                    </div>
-
-                    <p className="mt-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
-                      {eq.note}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
+            </details>
           ))}
         </div>
       </div>

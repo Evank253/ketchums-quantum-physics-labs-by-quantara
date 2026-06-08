@@ -593,6 +593,124 @@ qreg q[${n}];
                 </div>
               </div>
 
+              {/* Resolution scale */}
+              <div className="space-y-1 rounded-sm border border-fuchsia-300/25 bg-black/50 p-2">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-fuchsia-200/80">
+                  <span>Resolution Scale</span>
+                  <span className="text-fuchsia-100">{resScale.toFixed(2)}×</span>
+                </div>
+                <input
+                  type="range"
+                  min={0.5}
+                  max={2}
+                  step={0.05}
+                  value={resScale}
+                  onChange={(e) => setResScale(parseFloat(e.target.value))}
+                  className="w-full accent-fuchsia-400"
+                />
+                <div className="flex justify-between font-mono text-[8px] uppercase tracking-widest text-white/35">
+                  <span>0.5×</span><span>1×</span><span>2×</span>
+                </div>
+              </div>
+
+              {/* GIF frame range */}
+              <div className="space-y-1 rounded-sm border border-amber-300/25 bg-black/50 p-2">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-amber-200/80">
+                  <span>GIF Frame Range</span>
+                  <span className="text-amber-100">t [{gifStart.toFixed(2)} → {gifEnd.toFixed(2)}]</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="font-mono text-[8px] uppercase tracking-widest text-white/45">start</span>
+                    <input type="range" min={0} max={0.95} step={0.01} value={gifStart}
+                      onChange={(e) => { const v = parseFloat(e.target.value); setGifStart(v); if (gifEnd <= v + 0.05) setGifEnd(Math.min(1, v + 0.05)); }}
+                      className="w-full accent-amber-400" />
+                  </label>
+                  <label className="block">
+                    <span className="font-mono text-[8px] uppercase tracking-widest text-white/45">end</span>
+                    <input type="range" min={0.05} max={1} step={0.01} value={gifEnd}
+                      onChange={(e) => { const v = parseFloat(e.target.value); setGifEnd(v); if (gifStart >= v - 0.05) setGifStart(Math.max(0, v - 0.05)); }}
+                      className="w-full accent-amber-400" />
+                  </label>
+                </div>
+              </div>
+
+              {/* Watermark */}
+              <div className="space-y-2 rounded-sm border border-violet-300/25 bg-black/50 p-2">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-violet-200/80">
+                  <span>Watermark</span>
+                  <label className="flex cursor-pointer items-center gap-1 text-white/55 normal-case tracking-normal">
+                    <input
+                      type="checkbox"
+                      checked={watermarkOn}
+                      onChange={(e) => setWatermarkOn(e.target.checked)}
+                      className="h-3 w-3 accent-violet-400"
+                    />
+                    <span className="text-[9px] uppercase tracking-widest">on</span>
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  value={watermarkText}
+                  onChange={(e) => setWatermarkText(e.target.value)}
+                  disabled={!watermarkOn}
+                  placeholder="QUANTARA · your-name"
+                  className="w-full rounded-sm border border-violet-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-violet-100 outline-none focus:border-violet-300 disabled:opacity-40"
+                />
+              </div>
+
+              {/* Saved export profiles */}
+              <div className="space-y-2 rounded-sm border border-emerald-300/25 bg-black/50 p-2">
+                <div className="font-mono text-[9px] uppercase tracking-widest text-emerald-200/80">
+                  Export Profiles
+                </div>
+                <div className="flex gap-1">
+                  <input
+                    type="text"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    placeholder="profile name"
+                    className="flex-1 rounded-sm border border-emerald-400/20 bg-black/70 px-2 py-1.5 font-mono text-[10px] text-emerald-100 outline-none focus:border-emerald-300"
+                  />
+                  <button
+                    onClick={saveProfile}
+                    className="rounded-sm border border-emerald-300/50 bg-emerald-400/15 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-100 hover:bg-emerald-400/25"
+                  >
+                    save
+                  </button>
+                </div>
+                {profiles.length > 0 ? (
+                  <ul className="space-y-1">
+                    {profiles.map((p) => (
+                      <li key={p.name} className="flex items-center justify-between gap-1 rounded-sm border border-white/10 bg-black/40 px-2 py-1 font-mono text-[10px]">
+                        <span className="truncate text-emerald-100/90">{p.name}</span>
+                        <span className="flex gap-1">
+                          <button
+                            onClick={() => loadProfile(p.name)}
+                            className="rounded-sm border border-emerald-300/40 px-2 py-0.5 text-[9px] uppercase tracking-widest text-emerald-100 hover:bg-emerald-400/20"
+                          >
+                            load
+                          </button>
+                          <button
+                            onClick={() => deleteProfile(p.name)}
+                            className="rounded-sm border border-rose-300/30 px-2 py-0.5 text-[9px] uppercase tracking-widest text-rose-200/80 hover:bg-rose-400/15"
+                            aria-label={`Delete ${p.name}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-white/35">
+                    no saved profiles · adjust + save
+                  </div>
+                )}
+              </div>
+
+
+
               {/* Export progress */}
               {exporting && (
                 <div className="space-y-1 rounded-sm border border-emerald-300/30 bg-black/60 p-2">

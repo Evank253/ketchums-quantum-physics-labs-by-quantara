@@ -213,6 +213,23 @@ export function QuantumCircuit() {
   const [exporting, setExporting] = useState<null | "png" | "gif">(null);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportLabel, setExportLabel] = useState("");
+  const exportStartRef = useRef<number>(0);
+  const [exportEtaMs, setExportEtaMs] = useState<number | null>(null);
+  // Queue of pending jobs (run serially after the current export)
+  type QueueJob = { id: string; kind: "png" | "gif"; label: string; snapshot: ExportSnapshot };
+  type ExportSnapshot = {
+    pngPreset: PngPreset; gifPreset: GifPreset;
+    pngTransparent: boolean; gifTransparent: boolean;
+    resScale: number;
+    watermarkOn: boolean; watermarkText: string;
+    watermarkPos: "br" | "bl" | "tr" | "tl";
+    watermarkColor: string; watermarkSize: number; watermarkOpacity: number;
+    gifStart: number; gifEnd: number;
+  };
+  const [queue, setQueue] = useState<QueueJob[]>([]);
+  const queueRef = useRef<QueueJob[]>([]);
+  const processingRef = useRef(false);
+  useEffect(() => { queueRef.current = queue; }, [queue]);
 
   // New: resolution multiplier, watermark, GIF frame range, saved profiles
   const [resScale, setResScale] = useState(1);             // 0.5 .. 2

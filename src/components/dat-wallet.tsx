@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { claimDat, getOnChainBalance, listClaims } from "@/lib/dat-mint.functions";
 
 // Base Sepolia testnet config
 const BASE_SEPOLIA = {
@@ -9,70 +11,77 @@ const BASE_SEPOLIA = {
   blockExplorerUrls: ["https://sepolia.basescan.org"],
 };
 
-type Claim = {
+type ClaimRow = {
   id: string;
-  amount: number;
+  amount: number | string;
   reason: string;
-  ts: number;
-  txHash?: string; // present once a real on-chain mint lands
+  reason_key: string | null;
+  status: "pending" | "sent" | "confirmed" | "failed";
+  tx_hash: string | null;
+  block_number: number | null;
+  error: string | null;
+  created_at: string;
 };
 
-type Ledger = {
-  address: string;
-  balance: number;
-  claims: Claim[];
-};
+type PresetId = "small" | "medium" | "large" | "genesis";
 
-const LEDGER_KEY = (addr: string) => `quantara.dat.ledger.${addr.toLowerCase()}`;
-
-function loadLedger(addr: string): Ledger {
-  if (typeof window === "undefined") return { address: addr, balance: 0, claims: [] };
-  try {
-    const raw = localStorage.getItem(LEDGER_KEY(addr));
-    if (raw) return JSON.parse(raw) as Ledger;
-  } catch {}
-  return { address: addr, balance: 0, claims: [] };
-}
-function saveLedger(l: Ledger) {
-  try { localStorage.setItem(LEDGER_KEY(l.address), JSON.stringify(l)); } catch {}
-}
+const PRESETS: Array<{ id: PresetId; amount: number; label: string; tone: string }> = [
+  { id: "small", amount: 5, label: "Clean batch", tone: "cyan" },
+  { id: "medium", amount: 25, label: "Verified set", tone: "fuchsia" },
+  { id: "large", amount: 100, label: "Sovereign archive", tone: "amber" },
+  { id: "genesis", amount: 500, label: "Genesis (1×)", tone: "emerald" },
+];
 
 declare global {
   interface Window { ethereum?: any }
 }
 
+function formatUnits(raw: string, decimals: number): string {
+  if (!raw || raw === "0") return "0";
+  const s = raw.padStart(decimals + 1, "0");
+  const i = s.length - decimals;
+  const whole = s.slice(0, i).replace(/^0+(?=\d)/, "");
+  const frac = s.slice(i).replace(/0+$/, "");
+  return frac ? `${whole}.${frac.slice(0, 4)}` : whole;
+}
+
 export function DatWallet() {
   const [address, setAddress] = useState<string | null>(null);
   const [chainId, setChainId] = useState<string | null>(null);
-  const [ledger, setLedger] = useState<Ledger | null>(null);
+  const [claims, setClaims] = useState<ClaimRow[]>([]);
+  const [chainBalance, setChainBalance] = useState<string>("0");
+  const [chainDecimals, setChainDecimals] = useState<number>(18);
+  const [chainConfigured, setChainConfigured] = useState<boolean | null>(null);
+  const [chainMissing, setChainMissing] = useState<string[]>([]);
+  const [contractAddr, setContractAddr] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [hasWallet, setHasWallet] = useState(false);
 
-  const hasWallet = typeof window !== "undefined" && !!window.ethereum;
+  const callClaim = useServerFn(claimDat);
+  const callBalance = useServerFn(getOnChainBalance);
+  const callList = useServerFn(listClaims);
+
+  // Client-only mount flag to avoid SSR/CSR mismatch
+  useEffect(() => {
+    setHasWallet(typeof window !== "undefined" && !!window.ethereum);
+  }, []);
 
   const refreshAccounts = useCallback(async () => {
-    if (!hasWallet) return;
+    if (typeof window === "undefined" || !window.ethereum) return;
     try {
       const accts: string[] = await window.ethereum.request({ method: "eth_accounts" });
       const cid: string = await window.ethereum.request({ method: "eth_chainId" });
       setChainId(cid);
-      if (accts && accts[0]) {
-        setAddress(accts[0]);
-        setLedger(loadLedger(accts[0]));
-      } else {
-        setAddress(null);
-        setLedger(null);
-      }
+      setAddress(accts?.[0] ?? null);
     } catch (e: any) { setErr(e?.message ?? String(e)); }
-  }, [hasWallet]);
+  }, []);
 
   useEffect(() => {
     if (!hasWallet) return;
     refreshAccounts();
-    const onAcc = (accts: string[]) => {
-      if (accts[0]) { setAddress(accts[0]); setLedger(loadLedger(accts[0])); }
-      else { setAddress(null); setLedger(null); }
-    };
+    const onAcc = (accts: string[]) => setAddress(accts?.[0] ?? null);
     const onChain = (cid: string) => setChainId(cid);
     window.ethereum.on?.("accountsChanged", onAcc);
     window.ethereum.on?.("chainChanged", onChain);
@@ -81,6 +90,28 @@ export function DatWallet() {
       window.ethereum?.removeListener?.("chainChanged", onChain);
     };
   }, [hasWallet, refreshAccounts]);
+
+  const loadServerState = useCallback(async (addr: string) => {
+    try {
+      const [bal, list] = await Promise.all([
+        callBalance({ data: { wallet: addr } }),
+        callList({ data: { wallet: addr, limit: 50 } }),
+      ]);
+      setChainConfigured(bal.configured);
+      setChainMissing("missing" in bal && bal.missing ? bal.missing : []);
+      setChainBalance(bal.balance ?? "0");
+      if ("decimals" in bal && bal.decimals) setChainDecimals(bal.decimals);
+      if ("contract" in bal && bal.contract) setContractAddr(bal.contract);
+      setClaims((list.claims ?? []) as ClaimRow[]);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    }
+  }, [callBalance, callList]);
+
+  useEffect(() => {
+    if (address) loadServerState(address);
+    else { setClaims([]); setChainBalance("0"); }
+  }, [address, loadServerState]);
 
   const connect = async () => {
     setErr(null);
@@ -119,45 +150,33 @@ export function DatWallet() {
     finally { setBusy(null); }
   };
 
-  const disconnect = () => {
-    setAddress(null);
-    setLedger(null);
-  };
+  const disconnect = () => setAddress(null);
 
   const onBaseSepolia = chainId?.toLowerCase() === BASE_SEPOLIA.chainIdHex.toLowerCase();
 
-  const claim = async (amount: number, reason: string) => {
+  const doClaim = async (preset: PresetId) => {
     if (!address) return;
-    setErr(null);
+    setErr(null); setInfo(null);
     try {
-      setBusy("claim");
-      // Off-chain ledger entry. When a real ERC-20 contract is deployed,
-      // we'll replace this with a writeContract({ ..., functionName: "mint" }) call
-      // and store the resulting txHash. The ledger shape already supports it.
-      const claim: Claim = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        amount, reason, ts: Date.now(),
-      };
-      const next: Ledger = {
-        address,
-        balance: (ledger?.balance ?? 0) + amount,
-        claims: [claim, ...(ledger?.claims ?? [])].slice(0, 200),
-      };
-      saveLedger(next);
-      setLedger(next);
-    } catch (e: any) { setErr(e?.message ?? String(e)); }
-    finally { setBusy(null); }
+      setBusy(`claim:${preset}`);
+      const res = await callClaim({ data: { wallet: address, preset } });
+      setInfo(`Minted! tx ${res.txHash.slice(0, 10)}… block ${res.blockNumber}`);
+      await loadServerState(address);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+      // Refresh list anyway — failed/pending rows still show up
+      if (address) await loadServerState(address);
+    } finally { setBusy(null); }
   };
 
-  const resetLedger = () => {
-    if (!address) return;
-    if (!confirm("Reset $DAT ledger for this wallet?")) return;
-    const next: Ledger = { address, balance: 0, claims: [] };
-    saveLedger(next);
-    setLedger(next);
-  };
-
-  const short = useMemo(() => address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "", [address]);
+  const short = useMemo(
+    () => (address ? `${address.slice(0, 6)}…${address.slice(-4)}` : ""),
+    [address],
+  );
+  const balanceDisplay = useMemo(
+    () => formatUnits(chainBalance, chainDecimals),
+    [chainBalance, chainDecimals],
+  );
 
   return (
     <section
@@ -173,9 +192,22 @@ export function DatWallet() {
             On-chain Rewards (Base Sepolia testnet)
           </h2>
           <p className="mt-1 max-w-2xl text-xs text-white/55">
-            Connect a browser wallet, switch to Base Sepolia, and claim $DAT for cleaning bad data.
-            The claim ledger is keyed to your wallet address. Live ERC-20 minting wires in once you
-            deploy a token contract — the claim shape already carries a <code>txHash</code> field.
+            Server-side minter signs every mint. Double-claims blocked by DB unique index +
+            cooldown. Full audit log written for every attempt (success or failure).
+            {contractAddr && (
+              <>
+                {" "}
+                Contract:{" "}
+                <a
+                  href={`${BASE_SEPOLIA.blockExplorerUrls[0]}/address/${contractAddr}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-cyan-300 hover:underline"
+                >
+                  {contractAddr.slice(0, 8)}…{contractAddr.slice(-6)}
+                </a>
+              </>
+            )}
           </p>
         </div>
 
@@ -204,7 +236,22 @@ export function DatWallet() {
         </div>
       </header>
 
-      {!hasWallet && (
+      {chainConfigured === false && (
+        <div className="mb-4 rounded-sm border border-amber-300/30 bg-amber-500/5 p-3 text-[11px] text-amber-200/90">
+          <div className="font-mono uppercase tracking-[0.2em] text-amber-100">
+            On-chain minter not configured
+          </div>
+          <div className="mt-1 text-amber-200/80">
+            Missing secrets: <span className="font-mono">{chainMissing.join(", ")}</span>. Deploy an
+            ERC-20 with an owner-only <code>mint(address,uint256)</code> on Base Sepolia, then add
+            <span className="font-mono"> DAT_CONTRACT_ADDRESS</span> and
+            <span className="font-mono"> DAT_MINTER_PRIVATE_KEY</span> as Lovable Cloud secrets.
+            Claims will still be recorded in the ledger but won't hit the chain yet.
+          </div>
+        </div>
+      )}
+
+      {hasWallet === false && (
         <div className="rounded-sm border border-amber-300/30 bg-amber-500/5 p-3 text-[11px] text-amber-200/90">
           No EIP-1193 wallet found. Install MetaMask, Rabby, or any Base-compatible wallet, then reload.
         </div>
@@ -228,47 +275,52 @@ export function DatWallet() {
           {err}
         </div>
       )}
+      {info && (
+        <div className="mb-4 rounded-sm border border-emerald-400/40 bg-emerald-500/5 p-3 text-[11px] text-emerald-200">
+          {info}
+        </div>
+      )}
 
       {address && (
         <div className="grid gap-4 md:grid-cols-3">
           {/* Balance + actions */}
           <div className="rounded-sm border border-cyan-300/25 bg-black/50 p-4 md:col-span-1">
-            <div className="font-mono text-[9px] uppercase tracking-widest text-cyan-300/70">Balance</div>
+            <div className="font-mono text-[9px] uppercase tracking-widest text-cyan-300/70">
+              On-chain balance
+            </div>
             <div className="mt-1 font-mono text-3xl text-cyan-100">
-              {(ledger?.balance ?? 0).toLocaleString(undefined, { maximumFractionDigits: 4 })}
+              {balanceDisplay}
               <span className="ml-2 text-xs text-cyan-300/70">$DAT</span>
             </div>
             <div className="mt-2 text-[10px] text-white/45">
               Network: {onBaseSepolia ? "Base Sepolia ✓" : (chainId ?? "—")}
+              {chainConfigured === false && " · simulated"}
             </div>
 
             <div className="mt-4 space-y-2">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => doClaim(p.id)}
+                  disabled={!onBaseSepolia || busy?.startsWith("claim")}
+                  className={`w-full rounded-sm border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] disabled:opacity-40 ${
+                    p.tone === "cyan"
+                      ? "border-cyan-300/50 bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/25"
+                      : p.tone === "fuchsia"
+                      ? "border-fuchsia-300/50 bg-fuchsia-400/15 text-fuchsia-100 hover:bg-fuchsia-400/25"
+                      : p.tone === "amber"
+                      ? "border-amber-300/50 bg-amber-400/15 text-amber-100 hover:bg-amber-400/25"
+                      : "border-emerald-300/50 bg-emerald-400/15 text-emerald-100 hover:bg-emerald-400/25"
+                  }`}
+                >
+                  {busy === `claim:${p.id}` ? "…" : `Claim ${p.amount} · ${p.label}`}
+                </button>
+              ))}
               <button
-                onClick={() => claim(5, "Cleaned bad data · small batch")}
-                disabled={!onBaseSepolia || busy === "claim"}
-                className="w-full rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25 disabled:opacity-40"
-              >
-                Claim 5 $DAT
-              </button>
-              <button
-                onClick={() => claim(25, "Verified dataset · medium batch")}
-                disabled={!onBaseSepolia || busy === "claim"}
-                className="w-full rounded-sm border border-fuchsia-300/50 bg-fuchsia-400/15 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-fuchsia-100 hover:bg-fuchsia-400/25 disabled:opacity-40"
-              >
-                Claim 25 $DAT
-              </button>
-              <button
-                onClick={() => claim(100, "Sovereign archive · large batch")}
-                disabled={!onBaseSepolia || busy === "claim"}
-                className="w-full rounded-sm border border-amber-300/50 bg-amber-400/15 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-amber-100 hover:bg-amber-400/25 disabled:opacity-40"
-              >
-                Claim 100 $DAT
-              </button>
-              <button
-                onClick={resetLedger}
+                onClick={() => address && loadServerState(address)}
                 className="w-full rounded-sm border border-white/15 bg-black/40 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/55 hover:bg-white/10"
               >
-                Reset ledger
+                Refresh
               </button>
             </div>
           </div>
@@ -277,38 +329,48 @@ export function DatWallet() {
           <div className="rounded-sm border border-white/10 bg-black/40 p-4 md:col-span-2">
             <div className="mb-2 flex items-center justify-between">
               <div className="font-mono text-[9px] uppercase tracking-widest text-white/60">
-                Claim history · {ledger?.claims.length ?? 0}
+                Claim history · {claims.length}
               </div>
               <div className="font-mono text-[9px] text-white/40">{short}</div>
             </div>
-            {(!ledger || ledger.claims.length === 0) ? (
+            {claims.length === 0 ? (
               <div className="py-10 text-center font-mono text-[11px] text-white/40">
                 No claims yet. Switch to Base Sepolia and submit one above.
               </div>
             ) : (
               <ul className="max-h-80 space-y-1 overflow-auto pr-1">
-                {ledger.claims.map((c) => (
+                {claims.map((c) => (
                   <li
                     key={c.id}
                     className="flex items-center justify-between rounded-sm border border-white/5 bg-black/40 px-3 py-2 font-mono text-[11px] text-white/80"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate">{c.reason}</div>
-                      <div className="text-[9px] text-white/40">
-                        {new Date(c.ts).toLocaleString()}
-                        {c.txHash && (
-                          <>
-                            {" · "}
-                            <a
-                              href={`${BASE_SEPOLIA.blockExplorerUrls[0]}/tx/${c.txHash}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-cyan-300 hover:underline"
-                            >
-                              tx
-                            </a>
-                          </>
+                      <div className="flex flex-wrap items-center gap-2 text-[9px] text-white/40">
+                        <span>{new Date(c.created_at).toLocaleString()}</span>
+                        <span
+                          className={
+                            c.status === "confirmed"
+                              ? "text-emerald-300"
+                              : c.status === "failed"
+                              ? "text-red-300"
+                              : "text-amber-300"
+                          }
+                        >
+                          · {c.status}
+                        </span>
+                        {c.tx_hash && (
+                          <a
+                            href={`${BASE_SEPOLIA.blockExplorerUrls[0]}/tx/${c.tx_hash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-cyan-300 hover:underline"
+                          >
+                            · tx {c.tx_hash.slice(0, 8)}…
+                          </a>
                         )}
+                        {c.block_number && <span>· block {c.block_number}</span>}
+                        {c.error && <span className="text-red-300/80">· {c.error}</span>}
                       </div>
                     </div>
                     <div className="ml-3 font-mono text-cyan-200">+{c.amount}</div>

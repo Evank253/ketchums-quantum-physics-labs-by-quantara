@@ -13,6 +13,7 @@ import { Route as WorldRouteImport } from './routes/world'
 import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
+import { Route as KveRouteImport } from './routes/kve'
 import { Route as InterstellarRouteImport } from './routes/interstellar'
 import { Route as CernRouteImport } from './routes/cern'
 import { Route as BenchmarksRouteImport } from './routes/benchmarks'
@@ -49,6 +50,11 @@ const LegalRoute = LegalRouteImport.update({
 const LedgerRoute = LedgerRouteImport.update({
   id: '/ledger',
   path: '/ledger',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KveRoute = KveRouteImport.update({
+  id: '/kve',
+  path: '/kve',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InterstellarRoute = InterstellarRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
   '/interstellar': typeof InterstellarRoute
+  '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
   '/interstellar': typeof InterstellarRoute
+  '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
   '/interstellar': typeof InterstellarRoute
+  '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/synthesis': typeof SynthesisRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/benchmarks'
     | '/cern'
     | '/interstellar'
+    | '/kve'
     | '/ledger'
     | '/legal'
     | '/synthesis'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/benchmarks'
     | '/cern'
     | '/interstellar'
+    | '/kve'
     | '/ledger'
     | '/legal'
     | '/synthesis'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/benchmarks'
     | '/cern'
     | '/interstellar'
+    | '/kve'
     | '/ledger'
     | '/legal'
     | '/synthesis'
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   BenchmarksRoute: typeof BenchmarksRoute
   CernRoute: typeof CernRoute
   InterstellarRoute: typeof InterstellarRoute
+  KveRoute: typeof KveRoute
   LedgerRoute: typeof LedgerRoute
   LegalRoute: typeof LegalRouteWithChildren
   SynthesisRoute: typeof SynthesisRoute
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/ledger'
       fullPath: '/ledger'
       preLoaderRoute: typeof LedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kve': {
+      id: '/kve'
+      path: '/kve'
+      fullPath: '/kve'
+      preLoaderRoute: typeof KveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/interstellar': {
@@ -485,6 +505,7 @@ const rootRouteChildren: RootRouteChildren = {
   BenchmarksRoute: BenchmarksRoute,
   CernRoute: CernRoute,
   InterstellarRoute: InterstellarRoute,
+  KveRoute: KveRoute,
   LedgerRoute: LedgerRoute,
   LegalRoute: LegalRouteWithChildren,
   SynthesisRoute: SynthesisRoute,
@@ -497,13 +518,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -64,12 +64,12 @@ export async function saveSolve(input: {
   const entry: ArchivedSolve = {
     id: `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
     theory: (input.theory || "Untitled solve").slice(0, 500),
-    solver: (input.solver || "Quantara Operator").slice(0, 200),
+    solver: (input.solver || getOperator()).slice(0, 200),
     abstract: (input.abstract || "").slice(0, 4000),
     math: (input.math || "").slice(0, 16000),
     transcript: (input.transcript || "").slice(0, 32000),
     source: (input.source || "web").slice(0, 60),
-    created_at: new Date().toISOString(),
+    created_at: stampNow(),
   };
   // localStorage first — instant
   const list = readLocal();

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { saveSolve } from "@/lib/solved-archive";
+import { useEffect, useState } from "react";
+import { saveSolve, mergedArchive, type ArchivedSolve } from "@/lib/solved-archive";
 
 // ============================================================================
 // Solved Derivations — full start-to-finish mathematical walk-throughs for

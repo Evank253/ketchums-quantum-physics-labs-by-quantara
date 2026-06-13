@@ -208,15 +208,11 @@ function UniverseFilm() {
   return (
     <section className="relative border-t border-white/5">
       <div className="relative h-[90vh] w-full overflow-hidden">
-        <video
+        <LazyVideo
           src={universeVideo.url}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
           className="absolute inset-0 h-full w-full object-cover grayscale-[30%]"
         />
+
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,var(--background)_95%)]" />
 

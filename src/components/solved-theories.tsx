@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { logLedger } from "@/lib/learning-ledger";
+import { mergedArchive, type ArchivedSolve } from "@/lib/solved-archive";
 
 // ============================================================================
 // Solved Theories + Auto-Notify Engine
@@ -214,7 +215,40 @@ export function SolvedTheories() {
   const [nobel, setNobel] = useState(false);
 
   useEffect(() => {
-    setList(load());
+    const seedLocal = load();
+    setList(seedLocal);
+    // Auto-register every theory ever archived via saveSolve (DB + local archive)
+    let cancelled = false;
+    (async () => {
+      try {
+        const archive = await mergedArchive();
+        if (cancelled) return;
+        const mapped: Solved[] = archive.map((a: ArchivedSolve) => ({
+          id: `arch-${a.id}`,
+          theory: a.theory,
+          solver: a.solver || "Quantara",
+          affiliation: "Quantara Platform · E. Ketchum",
+          abstract: a.abstract || a.transcript?.slice(0, 280) || "Archived solution registered on the Quantara ledger.",
+          preprintUrl: undefined,
+          nobelClass: false,
+          solvedAtISO: a.created_at,
+        }));
+        // Merge: keep all seeds + archive, dedupe by theory (case-insensitive), newest wins
+        const byKey = new Map<string, Solved>();
+        for (const s of [...seedLocal, ...mapped]) {
+          const k = s.theory.trim().toLowerCase();
+          const prev = byKey.get(k);
+          if (!prev || new Date(s.solvedAtISO) > new Date(prev.solvedAtISO)) byKey.set(k, s);
+        }
+        const merged = Array.from(byKey.values()).sort(
+          (a, b) => new Date(b.solvedAtISO).getTime() - new Date(a.solvedAtISO).getTime(),
+        );
+        setList(merged);
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const submit = (e: React.FormEvent) => {

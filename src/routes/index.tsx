@@ -482,9 +482,12 @@ function Hero() {
           </p>
 
           <div className="mt-12 flex flex-wrap gap-3">
-            <button className="bg-foreground px-7 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-background transition-colors hover:bg-chrome">
+            <Link
+              to="/world"
+              className="bg-foreground px-7 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-background transition-colors hover:bg-chrome"
+            >
               Access Protocol
-            </button>
+            </Link>
             <Link
               to="/ledger"
               className="border border-white/15 px-7 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/5"

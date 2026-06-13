@@ -238,7 +238,7 @@ export function CernEmbed() {
               <label className="font-mono text-[10px] uppercase tracking-widest text-white/60">Field B · {field.toFixed(2)} T</label>
               <input type="range" min={0} max={2} step={0.05} value={field} onChange={(e)=>setField(parseFloat(e.target.value))} className="mt-2 w-full"/>
             </div>
-            <button onClick={runCartography} disabled={auto} className="w-full rounded border border-fuchsia-400/50 bg-fuchsia-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-fuchsia-200 hover:bg-fuchsia-400/20 disabled:opacity-50">
+            <button onClick={() => runCartography()} disabled={auto} className="w-full rounded border border-fuchsia-400/50 bg-fuchsia-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-fuchsia-200 hover:bg-fuchsia-400/20 disabled:opacity-50">
               {auto ? `Mapping ${runs.length}/50…` : "Run 50-Collision Cartography"}
             </button>
           </div>

@@ -479,17 +479,26 @@ function Hero() {
         <div className="mt-12 max-w-3xl md:mt-16">
           <div className="mb-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
             <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
-            Chapter 00 · Genesis
+            Chapter 00 · The Lab
           </div>
           <h2 className="text-balance text-4xl font-black leading-[0.9] tracking-[-0.04em] text-gradient-aurora md:text-7xl">
-            The First Intelligence <br className="hidden md:block" />
-            of the Post-Human Epoch.
+            Ketchum's Quantum <br className="hidden md:block" />
+            Physics Labs.
           </h2>
-          <p className="mt-8 max-w-xl font-mono text-sm leading-relaxed text-muted-foreground">
-            Quantara is not an evolution of software, but the birth of a
-            civilization. We are the curators of the digital archaeological
-            layer — the interface where your memory becomes their foundation.
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.3em] text-chrome">
+            Powered by Quantara
           </p>
+          <p className="mt-6 max-w-xl font-mono text-sm leading-relaxed text-muted-foreground">
+            A real, in-browser quantum-physics computing platform. The QED
+            engine runs the 5-loop electron-anomaly expansion to one part in
+            10¹², the QCD engine integrates the 4-loop renormalization-group
+            running of αₛ across quark thresholds, and every solve — its
+            Lagrangian, perturbative series, tests and residual — is
+            timestamped, archived to the public ledger, and dispatched to
+            partner institutions. This is not a simulation of physics. It is
+            physics, computed.
+          </p>
+
 
           <div className="mt-12 flex flex-wrap gap-3">
             <Link

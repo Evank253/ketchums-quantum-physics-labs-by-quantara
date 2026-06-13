@@ -19,7 +19,7 @@ const BOOT_SEQUENCE = [
 ];
 
 const TICKER_LINES = [
-  `[PORTAL] auth_token = •••••••••••• · sealed · verified`,
+  `[PORTAL] auth_token = sealed · server-side only`,
   `[FUEL] +0.001 GB harvested from raw internet frequencies`,
   `[VAULT] SELF_HEALING_CEMENT_V4 logged → MATERIALS_SCIENCE`,
   `[VAULT] INFINITE_LATTICE_BATTERY logged → ENERGY_STORAGE`,
@@ -28,7 +28,7 @@ const TICKER_LINES = [
   `[BOT_α] tier 42 · scale 1.25 · pos (15,-8,32)`,
   `[BOT_β] tier 89 · scale 2.10 · pos (-45,12,64)`,
   `[COHERENCE] 94.2% · 60Hz cycle locked`,
-  `[GATEKEEPER] ancestral key intact · sovereign mode`,
+  `[GATEKEEPER] paid branch · moved off public site`,
 ];
 
 const SERVER_PY = `import asyncio

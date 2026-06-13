@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { SiteFooter } from "@/components/site-footer";
+import { ColdComputeHud } from "@/components/cold-compute-hud";
 
 function NotFoundComponent() {
   return (
@@ -120,6 +121,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <SiteFooter />
+      <ColdComputeHud />
     </QueryClientProvider>
   );
 }

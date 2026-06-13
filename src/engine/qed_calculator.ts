@@ -1,6 +1,8 @@
 // QED Engine — perturbative anomalous magnetic moment a_e to 10^-11 precision.
 // Coefficients per Aoyama et al. (Phys. Rep. 887, 2020). CODATA-anchored.
 
+import { pushLoad, popLoad } from "@/lib/thermal-governor";
+
 const QED_COEFFS = [0.5, -0.328478965, 1.181241456, -1.91293, 7.791, -83.0];
 const A_E_CODATA = 1.15965218073e-3;
 const ALPHA_INV = 137.035999084;
@@ -18,12 +20,20 @@ export class QEDEngine {
 
   /** a_e = Σ cᵢ (α/π)^i — closed perturbative series to configured loop order. */
   calculateAe(): number {
-    const alpha = 1 / ALPHA_INV;
-    const x = alpha / Math.PI;
-    let s = 0;
-    for (let i = 0; i < this.loops; i++) s += QED_COEFFS[i] * Math.pow(x, i + 1);
-    this.residual = Math.abs(s - A_E_CODATA);
-    return s;
+    // Cold-compute: higher loop order = harder problem = more ambient FX shed.
+    const id = `qed:${this.loops}:${Math.random().toString(36).slice(2, 7)}`;
+    pushLoad(id, Math.min(1, this.loops / QED_COEFFS.length));
+    try {
+      const alpha = 1 / ALPHA_INV;
+      const x = alpha / Math.PI;
+      let s = 0;
+      for (let i = 0; i < this.loops; i++) s += QED_COEFFS[i] * Math.pow(x, i + 1);
+      this.residual = Math.abs(s - A_E_CODATA);
+      return s;
+    } finally {
+      // Hold a brief residual load so the cool-down is perceptible.
+      setTimeout(() => popLoad(id), 1500);
+    }
   }
 
   getResidual(): number {

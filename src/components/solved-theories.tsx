@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { logLedger } from "@/lib/learning-ledger";
+import { mergedArchive, type ArchivedSolve } from "@/lib/solved-archive";
 
 // ============================================================================
 // Solved Theories + Auto-Notify Engine

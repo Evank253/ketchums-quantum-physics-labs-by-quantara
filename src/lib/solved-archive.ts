@@ -124,13 +124,5 @@ export async function fetchArchive(): Promise<ArchivedSolve[]> {
 
 export async function mergedArchive(): Promise<ArchivedSolve[]> {
   const [remote, local] = await Promise.all([fetchArchive(), Promise.resolve(readLocal())]);
-  const seen = new Set<string>();
-  const out: ArchivedSolve[] = [];
-  for (const e of [...remote, ...local]) {
-    const key = `${e.theory}|${e.created_at}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(e);
-  }
-  return out;
+  return dedupe([...remote, ...local]);
 }

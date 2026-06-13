@@ -1,6 +1,8 @@
 // Shared canvas animation helper: caps DPR, resizes only when needed,
-// pauses when offscreen or tab is hidden, and honors prefers-reduced-motion.
+// pauses when offscreen or tab is hidden, honors prefers-reduced-motion,
+// and obeys the cold-compute thermal governor (harder problems = lower FPS/DPR).
 import { useEffect } from "react";
+import { getThermal, subscribeThermal } from "./thermal-governor";
 
 export function useCanvasLoop(
   ref: React.RefObject<HTMLCanvasElement | null>,

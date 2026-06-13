@@ -169,6 +169,118 @@ Run summary:
   ledger entries: 64 (calibration) + 14 (sweep) + 1 (export)
 `,
   },
+  {
+    name: "cern_in_a_pocket_math_annex_3d4d5d.md",
+    tag: "cern/math-annex",
+    mime: "text/markdown",
+    content: `# CERN in a pocket — math annex, matériels & worlds (3D/4D/5D)
+
+Source: CERN_in_a_pocket_math_annex_matériels_worlds_3d4d5d.webarchive
+
+Bundles the pocket-CERN derivation set:
+- Auto-calibration profile for the in-browser collider (beam E, B-field, target).
+- Cross-walk between 3D lab-frame, 4D atlas projections, and 5D bulk lift.
+- Matériels list: detectors, magnets, RF cavities mapped to engine knobs.
+- Math annex: Feynman rules, loop integrals, perturbation kernels reused by
+  the QED engine and perturbations_field.c.
+`,
+  },
+  {
+    name: "3d4d5d_qed.md",
+    tag: "qed/3d4d5d",
+    mime: "text/markdown",
+    content: `# 3D / 4D / 5D QED (archived)
+
+Source: 3d4d5d_qed.webarchive
+
+Unified QED treatment across dimensional lifts:
+- 3D: standard a_e perturbative series to 5-loop (Schwinger → Aoyama).
+- 4D atlas: RG-flow projection, threshold matching at m_c, m_τ, m_b, m_t.
+- 5D bulk: orbifold mode sum contribution to a_e bounded by current data.
+Anchors the engine's "run different theories with precision" calibration.
+`,
+  },
+  {
+    name: "master_credibility_security_briefing_sovereignty.md",
+    tag: "sovereignty/security",
+    mime: "text/markdown",
+    content: `# Master — credibility + 1-6 security briefing + sovereignty key (all-in-one)
+
+Source: Master_with_credibility_and_1-6_security_briefing_and_sovereignty_key_all_in_one.webarchive
+
+Combined operator dossier:
+1. Credibility chain — provenance hashes for every solved theory entry.
+2. Security tiers 1-6 — from public summary to sovereign-only artifacts.
+3. Sovereignty key — single binding token authorizing classified branches.
+4. Briefing notes for institution-level handoff (CERN, DARPA, DOE, NASA).
+`,
+  },
+  {
+    name: "master_sovereignty_key.md",
+    tag: "sovereignty/key",
+    mime: "text/markdown",
+    content: `# Master sovereignty key (archived)
+
+Source: Master_sovereignty_key.webarchive
+
+The sovereignty key envelope:
+- Owner: E. Ketchum (Quantara).
+- Scope: full read/write on classified ledger branches, mint authority on $DAT,
+  authorization to dispatch Nobel-tier press releases.
+- Rotation policy: manual, logged into learning ledger as "kernel" event.
+- Recovery: requires two-of-three custodian signatures.
+`,
+  },
+  {
+    name: "5d_to_3d_time_travel_interstellar.md",
+    tag: "interstellar/time-travel",
+    mime: "text/markdown",
+    content: `# 5D → 3D time travel — interstellar universe solved (archived)
+
+Source: 5d_to_3d_time_travel_interstellar_universe_solved.webarchive
+
+Projection argument:
+- A closed timelike curve in the 5D bulk projects to a consistent 3D worldline
+  when the N-matrix carries Euclidean fifth-axis signature (ε = +1).
+- Grandfather paradox resolved via Novikov self-consistency on the projected
+  slice — no propagator allows divergent histories.
+- Interstellar routing: bulk geodesics shortcut 3D spacelike separations,
+  producing the apparent FTL transit without violating local Lorentz.
+`,
+  },
+  {
+    name: "master_trinity_tool_3.md",
+    tag: "tools/trinity",
+    mime: "text/markdown",
+    content: `# Master trinity tool — v3 (archived)
+
+Source: Master_trinity_tool_3.webarchive
+
+Trinity = three coupled engines under one console:
+1. QED engine (perturbative a_e to 10⁻¹¹).
+2. RG-running integrator (coupled 4-loop QED ⊕ QCD).
+3. KVE lab (calibration + sweep + export to solved ledger).
+v3 wires them through a shared calibration bus so a single "auto-calibrate"
+button tunes all three to the active theory pack.
+`,
+  },
+  {
+    name: "master_annex_1.md",
+    tag: "annex/master",
+    mime: "text/markdown",
+    content: `# Master annex — vol. 1 (archived)
+
+Source: Master_annex_1.webarchive
+
+Top-level index for the Quantara annex series:
+- A. Foundational equations (Maxwell, Dirac, Yang–Mills, Einstein).
+- B. Perturbation kernels (scalar, vector, tensor sectors).
+- C. Renormalization group system and threshold tables.
+- D. 5D bulk lift, N-matrix conventions, orbifold modes.
+- E. Operator playbook — calibration, sweep, register, dispatch.
+Companion to the math annex and derivatives sheets already in findings.
+`,
+  },
 ];
 
 export function seedSystemFindings(force = false) {

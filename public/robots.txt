@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://ketchums-quantum-physics-labs-by-quantara.lovable.app/sitemap.xml

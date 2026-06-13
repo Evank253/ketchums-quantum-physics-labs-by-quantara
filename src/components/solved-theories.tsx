@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { logLedger } from "@/lib/learning-ledger";
 import { mergedArchive, type ArchivedSolve } from "@/lib/solved-archive";
-import { getOperator, setOperator } from "@/lib/operator-identity";
 
 // ============================================================================
 // Solved Theories + Auto-Notify Engine
@@ -267,17 +266,14 @@ export function SolvedTheories() {
     };
   }, []);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!theory.trim() || !abstract.trim()) return;
-    const solverName = (solver.trim() || getOperator());
-    // Persist their name so future solves auto-credit them
-    if (solver.trim()) setOperator(solver.trim());
+    if (!theory.trim() || !solver.trim() || !abstract.trim()) return;
     const entry: Solved = {
       id: `solve-${Date.now().toString(36)}`,
       theory: theory.trim(),
-      solver: solverName,
-      affiliation: affiliation.trim() || "Quantara Platform",
+      solver: solver.trim(),
+      affiliation: affiliation.trim() || undefined,
       email: email.trim() || undefined,
       abstract: abstract.trim(),
       preprintUrl: preprintUrl.trim() || undefined,
@@ -287,16 +283,6 @@ export function SolvedTheories() {
     const next = [entry, ...list];
     setList(next);
     save(next);
-    // Auto-archive to ledger (DB + local), credited to the solver
-    try {
-      const { saveSolve } = await import("@/lib/solved-archive");
-      await saveSolve({
-        theory: entry.theory,
-        solver: entry.solver,
-        abstract: entry.abstract,
-        source: "register",
-      });
-    } catch {}
     try {
       logLedger("kernel", `Solved theory: ${entry.theory}`, { solver: entry.solver, nobel: entry.nobelClass });
     } catch {}
@@ -350,16 +336,13 @@ export function SolvedTheories() {
               outlets.
             </p>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <OperatorBadge onChange={() => setList((l) => [...l])} />
-            <button
-              onClick={() => setOpen(true)}
-              className="surface-glass glow-violet group relative overflow-hidden border border-white/15 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/5"
-            >
-              <span className="relative z-10">＋ Register Solution</span>
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            </button>
-          </div>
+          <button
+            onClick={() => setOpen(true)}
+            className="surface-glass glow-violet group relative overflow-hidden border border-white/15 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/5"
+          >
+            <span className="relative z-10">＋ Register Solution</span>
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+          </button>
         </div>
 
         <div className="grid gap-px md:grid-cols-2 lg:grid-cols-3">
@@ -445,11 +428,11 @@ export function SolvedTheories() {
                 />
               </Field>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label={`Solver (auto-credits ${getOperator()})`}>
+                <Field label="Solver (your name)">
                   <input
+                    required
                     value={solver}
                     onChange={(e) => setSolver(e.target.value)}
-                    placeholder={getOperator()}
                     className="w-full border border-white/10 bg-background/60 px-3 py-2 font-mono text-sm text-white outline-none focus:border-accent"
                   />
                 </Field>
@@ -574,40 +557,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </span>
       {children}
     </label>
-  );
-}
-
-function OperatorBadge({ onChange }: { onChange?: () => void }) {
-  const [name, setName] = useState<string>(() => getOperator());
-  const [editing, setEditing] = useState(false);
-  const commit = (v: string) => {
-    setOperator(v);
-    setName(getOperator());
-    setEditing(false);
-    onChange?.();
-  };
-  if (editing) {
-    return (
-      <input
-        autoFocus
-        defaultValue={name}
-        onBlur={(e) => commit(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
-          if (e.key === "Escape") setEditing(false);
-        }}
-        className="border border-white/15 bg-background/60 px-3 py-1.5 font-mono text-[11px] text-white outline-none focus:border-accent"
-        placeholder="Your name"
-      />
-    );
-  }
-  return (
-    <button
-      onClick={() => setEditing(true)}
-      title="Click to change the auto-credited solver name (saved locally on this device)"
-      className="border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white/80 hover:bg-white/10"
-    >
-      Solver · <span className="text-emerald-300">{name}</span> ✎
-    </button>
   );
 }

@@ -93,31 +93,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
     ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@graph": [
-            {
-              "@type": "Organization",
-              "@id": "https://ketchums-quantum-physics-labs-by-quantara.lovable.app/#org",
-              name: "Ketchum's Cyber Security and Quantum Physics Labs",
-              alternateName: "Quantara",
-              url: "https://ketchums-quantum-physics-labs-by-quantara.lovable.app",
-              founder: { "@type": "Person", name: "Evan Ketchum" },
-            },
-            {
-              "@type": "WebSite",
-              "@id": "https://ketchums-quantum-physics-labs-by-quantara.lovable.app/#site",
-              url: "https://ketchums-quantum-physics-labs-by-quantara.lovable.app",
-              name: "Quantara",
-              publisher: { "@id": "https://ketchums-quantum-physics-labs-by-quantara.lovable.app/#org" },
-            },
-          ],
-        }),
-      },
-    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,

@@ -92,54 +92,6 @@ export type Database = {
         }
         Relationships: []
       }
-      notification_dispatch: {
-        Row: {
-          attempts: number
-          body: string
-          created_at: string
-          email: string
-          error: string | null
-          id: string
-          recipient: string
-          recipient_kind: string
-          sent_at: string | null
-          solver: string
-          status: string
-          subject: string
-          theory: string
-        }
-        Insert: {
-          attempts?: number
-          body: string
-          created_at?: string
-          email: string
-          error?: string | null
-          id?: string
-          recipient: string
-          recipient_kind: string
-          sent_at?: string | null
-          solver: string
-          status?: string
-          subject: string
-          theory: string
-        }
-        Update: {
-          attempts?: number
-          body?: string
-          created_at?: string
-          email?: string
-          error?: string | null
-          id?: string
-          recipient?: string
-          recipient_kind?: string
-          sent_at?: string | null
-          solver?: string
-          status?: string
-          subject?: string
-          theory?: string
-        }
-        Relationships: []
-      }
       public_achievements: {
         Row: {
           achievement_id: string
@@ -214,10 +166,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cern_pocket_report: {
-        Args: { _solver: string; _theory: string }
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

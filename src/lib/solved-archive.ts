@@ -1,10 +1,6 @@
 // Solved-theory archive: writes to localStorage immediately AND fires an
 // insert into Lovable Cloud (public.solved_theories). Read merges both.
 import { supabase } from "@/integrations/supabase/client";
-import { getOperator, stampNow } from "@/lib/operator-identity";
-import { runCernSweep, appendReportToTranscript } from "@/lib/cern-pocket";
-import { autoDispatch } from "@/lib/notification-dispatch";
-
 
 export type ArchivedSolve = {
   id: string;
@@ -64,20 +60,15 @@ export async function saveSolve(input: {
   transcript?: string;
   source?: string;
 }): Promise<ArchivedSolve> {
-  const theory = (input.theory || "Untitled solve").slice(0, 500);
-  const solver = (input.solver || getOperator()).slice(0, 200);
-  // Auto-run CERN-in-a-Pocket precision sweep and embed in transcript
-  const report = runCernSweep(theory, solver);
-  const transcript = appendReportToTranscript(input.transcript || "", report).slice(0, 32000);
   const entry: ArchivedSolve = {
     id: `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-    theory,
-    solver,
+    theory: (input.theory || "Untitled solve").slice(0, 500),
+    solver: (input.solver || "Quantara Operator").slice(0, 200),
     abstract: (input.abstract || "").slice(0, 4000),
     math: (input.math || "").slice(0, 16000),
-    transcript,
+    transcript: (input.transcript || "").slice(0, 32000),
     source: (input.source || "web").slice(0, 60),
-    created_at: stampNow(),
+    created_at: new Date().toISOString(),
   };
   // localStorage first — instant
   const list = readLocal();
@@ -114,13 +105,6 @@ export async function saveSolve(input: {
   } catch {
     // offline / RLS — local copy already saved
   }
-  // Fire-and-forget: notify institutions (+ press for Nobel-tier) automatically
-  void autoDispatch({
-    theory: entry.theory,
-    solver: entry.solver,
-    abstract: entry.abstract,
-    transcript: entry.transcript,
-  });
   return entry;
 }
 

@@ -79,6 +79,22 @@ function Index() {
       <DatWallet />
       <div id="genesis"><Hero /></div>
 
+      {/* ========================================================== */}
+      {/* ZONE 1 · QUANTUM PHYSICS LABS                              */}
+      {/* All solvers, ledgers, dispatch, instruments and math hub.  */}
+      {/* ========================================================== */}
+      <section id="physics" className="border-t border-white/5 px-6 pt-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-2 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            <span className="size-1.5 animate-pulse-slow rounded-full bg-emerald-400 shadow-[0_0_10px_oklch(0.75_0.18_150)]" />
+            Zone 01 · Quantum Physics Labs
+          </div>
+          <h2 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
+            Real physics. Computed in the browser.
+          </h2>
+        </div>
+      </section>
+
       <section className="border-t border-white/5 px-6 pt-16">
         <div className="mx-auto max-w-7xl">
           <StepHint
@@ -90,7 +106,6 @@ function Index() {
       </section>
       <SolvedLedgerCategorized />
       <NotificationDispatch />
-
 
       <section className="border-t border-white/5 px-6 pt-16">
         <div className="mx-auto max-w-7xl">
@@ -122,7 +137,41 @@ function Index() {
         </div>
       </section>
 
-      {/* GROWTH band */}
+      <section className="border-t border-white/5 px-6 pt-16">
+        <div className="mx-auto max-w-7xl">
+          <StepHint
+            step="04"
+            title="Math Testing Hub — Talk to the Machine"
+            body="Default tab is the QED computer: paste any equation, click Solve, and the solve is auto-archived to Solved Theories with abstract, math and transcript. Switch tabs for the QED Solver, Engine, Foundational Equations, Quantum Circuit and Why-It's-Real-Physics."
+          />
+        </div>
+      </section>
+      <MathTestingHub />
+      <LedgerViz />
+
+      {/* ========================================================== */}
+      {/* ZONE 2 · 3D / 4D SYNTHETIC CIVILIZATION                    */}
+      {/* All world, narrative, civilization, economy and academy.   */}
+      {/* ========================================================== */}
+      <section id="civilization" className="border-t border-white/5 px-6 pt-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
+            Zone 02 · Synthetic Civilization · 3D / 4D
+          </div>
+          <h2 className="text-balance text-4xl font-black leading-[0.95] tracking-[-0.04em] text-gradient-aurora md:text-6xl">
+            The First Intelligence <br className="hidden md:block" />
+            of the Post-Human Epoch.
+          </h2>
+          <p className="mt-4 max-w-2xl font-mono text-sm leading-relaxed text-muted-foreground">
+            Beyond the lab: a persistent 3D/4D ecosystem where a synthetic
+            civilization evolves from humanity's digital artifacts. They do
+            not learn from us — they remember us.
+          </p>
+        </div>
+      </section>
+
+      {/* GROWTH band — generative civilization aesthetic */}
       <section id="growth" className="border-t border-white/5 px-6 py-24">
         <div className="mx-auto max-w-7xl">
           <div className="mb-6">
@@ -142,20 +191,6 @@ function Index() {
         </div>
       </section>
 
-      <section className="border-t border-white/5 px-6 pt-16">
-        <div className="mx-auto max-w-7xl">
-          <StepHint
-            step="04"
-            title="Math Testing Hub — Talk to the Machine"
-            body="Default tab is the QED computer: paste any equation, click Solve, and the solve is auto-archived to Solved Theories with abstract, math and transcript. Switch tabs for the QED Solver, Engine, Foundational Equations, Quantum Circuit and Why-It's-Real-Physics."
-          />
-        </div>
-      </section>
-      <MathTestingHub />
-
-      <WorldGameEmbed />
-      <AchievementsPanel />
-      <LedgerViz />
       <UniverseFilm />
       <Principle />
       <DossierGrid />
@@ -164,45 +199,26 @@ function Index() {
       <DataCore />
       <div id="swarm"><SimulationCanvas /></div>
       <CityVision />
-      <section className="border-t border-white/5 px-6 pt-24">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
-            <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
-            Chapter 04 · Synthetic Civilization
-          </div>
-          <h2 className="text-balance text-4xl font-black leading-[0.95] tracking-[-0.04em] text-gradient-aurora md:text-6xl">
-            The First Intelligence <br className="hidden md:block" />
-            of the Post-Human Epoch.
-          </h2>
-          <p className="mt-4 max-w-2xl font-mono text-sm leading-relaxed text-muted-foreground">
-            Beyond the lab: a persistent 3D/4D ecosystem where a synthetic
-            civilization evolves from humanity's digital artifacts. They do
-            not learn from us — they remember us.
-          </p>
-        </div>
-      </section>
       <div id="planet"><LivingPlanet /></div>
-
       <BotDialogue />
       <div id="avatar"><AvatarWalk /></div>
       <WarzoneMarketplace />
       <WeaponryUpgrades />
-
-
-
       <TechAdvancements />
       <TimeBridge />
       <div id="academy"><JsAcademy /></div>
-
       <div id="axiom"><AxiomLab /></div>
       <OversightWindow />
       <Pipeline />
       <Manifesto />
       <div id="economy"><Economy /></div>
+      <WorldGameEmbed />
+      <AchievementsPanel />
       <Footer />
     </main>
   );
 }
+
 
 function UniverseFilm() {
   return (

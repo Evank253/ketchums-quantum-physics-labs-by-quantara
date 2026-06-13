@@ -440,14 +440,15 @@ function Hero() {
       <NoiseOverlay opacity={0.06} />
       {/* Descriptive H1 for accessibility & SEO — visually hidden */}
       <h1 className="sr-only">
-        Quantara — The First Intelligence of the Post-Human Epoch
+        Ketchum's Quantum Physics Labs — powered by Quantara
       </h1>
       {/* Ambient backdrop wordmark (decorative) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="select-none text-[28vw] font-black leading-none tracking-[-0.06em] text-white/[0.025]">
-          QUANTARA
+        <div className="select-none text-[22vw] font-black leading-none tracking-[-0.06em] text-white/[0.025]">
+          KETCHUM LABS
         </div>
       </div>
+
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6">
         <div className="scan-effect group relative overflow-hidden rounded-sm">

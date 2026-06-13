@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-import { useColdRaf } from "@/hooks/use-cold-raf";
+import { useEffect, useRef, useState } from "react";
 
 const STOPS = [
   ["#020314", "#0a0824", "#10182a"],
@@ -13,37 +12,44 @@ const STOPS = [
 export function HorizonDawn() {
   const ref = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState(0);
-  const tRef = useRef(0);
 
-  useColdRaf(ref, (dt) => {
+  useEffect(() => {
     const cvs = ref.current!; const ctx = cvs.getContext("2d")!;
-    const r = cvs.getBoundingClientRect();
-    cvs.width = r.width * devicePixelRatio; cvs.height = r.height * devicePixelRatio;
-    const W = cvs.width, H = cvs.height;
-    const s = STOPS[phase];
-    const grd = ctx.createLinearGradient(0, 0, 0, H);
-    grd.addColorStop(0, s[0]); grd.addColorStop(0.55, s[1]); grd.addColorStop(1, s[2]);
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-    tRef.current += dt * 0.6;
-    const t = tRef.current;
-    const sunY = H * (1 - phase / (STOPS.length - 1) * 0.55) - 30;
-    const sunR = 36 * devicePixelRatio + phase * 6 * devicePixelRatio;
-    const glow = ctx.createRadialGradient(W / 2, sunY, 0, W / 2, sunY, sunR * 2.5);
-    glow.addColorStop(0, "rgba(255,220,180,0.9)");
-    glow.addColorStop(1, "rgba(255,220,180,0)");
-    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(255,235,200,0.95)";
-    ctx.beginPath(); ctx.arc(W / 2, sunY, sunR, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 1.5 * devicePixelRatio;
-    ctx.beginPath(); ctx.moveTo(0, H * 0.78); ctx.lineTo(W, H * 0.78); ctx.stroke();
-    ctx.strokeStyle = `rgba(255,200,160,${0.15 + phase * 0.1})`;
-    for (let i = 0; i < 6; i++) {
-      ctx.beginPath();
-      ctx.moveTo(0, H * 0.78 + 6 * devicePixelRatio + i * 6 * devicePixelRatio + Math.sin(t + i) * 2);
-      ctx.lineTo(W, H * 0.78 + 6 * devicePixelRatio + i * 6 * devicePixelRatio + Math.cos(t + i) * 2);
-      ctx.stroke();
-    }
-  }, { fps: 18, deps: [phase] });
+    let raf = 0; let t = 0;
+    const loop = () => {
+      const r = cvs.getBoundingClientRect();
+      cvs.width = r.width * devicePixelRatio; cvs.height = r.height * devicePixelRatio;
+      const W = cvs.width, H = cvs.height;
+      const s = STOPS[phase];
+      const grd = ctx.createLinearGradient(0, 0, 0, H);
+      grd.addColorStop(0, s[0]); grd.addColorStop(0.55, s[1]); grd.addColorStop(1, s[2]);
+      ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+      t += 0.01;
+      // sun rising
+      const sunY = H * (1 - phase / (STOPS.length - 1) * 0.55) - 30;
+      const sunR = 36 * devicePixelRatio + phase * 6 * devicePixelRatio;
+      const glow = ctx.createRadialGradient(W / 2, sunY, 0, W / 2, sunY, sunR * 2.5);
+      glow.addColorStop(0, "rgba(255,220,180,0.9)");
+      glow.addColorStop(1, "rgba(255,220,180,0)");
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "rgba(255,235,200,0.95)";
+      ctx.beginPath(); ctx.arc(W / 2, sunY, sunR, 0, Math.PI * 2); ctx.fill();
+      // horizon line
+      ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 1.5 * devicePixelRatio;
+      ctx.beginPath(); ctx.moveTo(0, H * 0.78); ctx.lineTo(W, H * 0.78); ctx.stroke();
+      // ripple on water
+      ctx.strokeStyle = `rgba(255,200,160,${0.15 + phase * 0.1})`;
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, H * 0.78 + 6 * devicePixelRatio + i * 6 * devicePixelRatio + Math.sin(t + i) * 2);
+        ctx.lineTo(W, H * 0.78 + 6 * devicePixelRatio + i * 6 * devicePixelRatio + Math.cos(t + i) * 2);
+        ctx.stroke();
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [phase]);
 
   return (
     <div className="rounded-md border border-white/10 bg-card/40 p-4">

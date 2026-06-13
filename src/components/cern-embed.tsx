@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { logLedger } from "@/lib/learning-ledger";
 import { creditDat } from "@/lib/dat-tokens";
 import { saveSolve } from "@/lib/solved-archive";
-import { useColdRaf } from "@/hooks/use-cold-raf";
 
 type P = {
   x: number; y: number; vx: number; vy: number;
@@ -47,9 +46,10 @@ export function CernEmbed() {
   const runFlag = useRef(true);
   const runsRef = useRef<Run[]>([]);
 
-  // Size canvas once (and on resize) — no longer tied to the RAF loop.
   useEffect(() => {
     const cvs = ref.current!;
+    const ctx = cvs.getContext("2d")!;
+    let raf = 0;
     const resize = () => {
       const r = cvs.getBoundingClientRect();
       cvs.width = r.width * devicePixelRatio;
@@ -57,49 +57,51 @@ export function CernEmbed() {
     };
     resize();
     const ro = new ResizeObserver(resize); ro.observe(cvs);
-    return () => ro.disconnect();
-  }, []);
 
-  // Cold-compute render loop: pauses offscreen / when tab hidden, capped fps.
-  useColdRaf(ref, (dtSec) => {
-    const cvs = ref.current!;
-    const ctx = cvs.getContext("2d")!;
-    const dt = Math.min(2, dtSec * 60 / 16.67 * 16.67 / 16.67); // ~frames at 60fps baseline
-    const W = cvs.width, H = cvs.height;
-    ctx.fillStyle = "rgba(2,4,12,0.22)";
-    ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "rgba(0,255,204,0.10)";
-    ctx.beginPath(); ctx.arc(W / 2, H / 2, Math.min(W, H) * 0.42, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = `rgba(255,80,180,${0.15 + field * 0.35})`;
-    ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+    let last = performance.now();
+    const loop = (t: number) => {
+      const dt = Math.min(33, t - last) / 16.67; last = t;
+      const W = cvs.width, H = cvs.height;
+      ctx.fillStyle = "rgba(2,4,12,0.22)";
+      ctx.fillRect(0,0,W,H);
 
-    if (!runFlag.current) return;
-    const arr = particles.current;
-    const next: P[] = [];
-    let coll = 0;
-    for (const p of arr) {
-      const ay = -p.charge * field * 0.05 * p.vx;
-      p.vy += ay * dt;
-      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
-      ctx.fillStyle = `hsla(${p.hue},95%,60%,0.95)`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 2.2 * devicePixelRatio, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = `hsla(${p.hue},95%,60%,0.16)`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 6 * devicePixelRatio, 0, Math.PI * 2); ctx.fill();
-      if (p.x > -10 && p.x < W + 10 && p.y > -10 && p.y < H + 10 && p.life > 0) next.push(p);
-    }
-    for (let i = 0; i < next.length; i++) for (let j = i + 1; j < Math.min(next.length, i + 5); j++) {
-      const dx = next[i].x - next[j].x, dy = next[i].y - next[j].y;
-      if (dx * dx + dy * dy < (4 * devicePixelRatio) ** 2) {
-        coll++;
-        const cx = (next[i].x + next[j].x) / 2, cy = (next[i].y + next[j].y) / 2;
-        ctx.fillStyle = "rgba(255,255,200,0.9)";
-        ctx.beginPath(); ctx.arc(cx, cy, 10 * devicePixelRatio, 0, Math.PI * 2); ctx.fill();
-        next[i].life = 0; next[j].life = 0;
+      ctx.strokeStyle = "rgba(0,255,204,0.10)";
+      ctx.beginPath(); ctx.arc(W/2,H/2, Math.min(W,H)*0.42, 0, Math.PI*2); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,80,180,${0.15 + field*0.35})`;
+      ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+
+      if (runFlag.current) {
+        const arr = particles.current;
+        const next: P[] = [];
+        let coll = 0;
+        for (const p of arr) {
+          const ay = -p.charge * field * 0.05 * p.vx;
+          p.vy += ay * dt;
+          p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+          ctx.fillStyle = `hsla(${p.hue},95%,60%,0.95)`;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 2.2*devicePixelRatio, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = `hsla(${p.hue},95%,60%,0.16)`;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 6*devicePixelRatio, 0, Math.PI*2); ctx.fill();
+          if (p.x>-10 && p.x<W+10 && p.y>-10 && p.y<H+10 && p.life>0) next.push(p);
+        }
+        for (let i=0;i<next.length;i++) for (let j=i+1;j<Math.min(next.length,i+5);j++){
+          const dx=next[i].x-next[j].x, dy=next[i].y-next[j].y;
+          if (dx*dx+dy*dy < (4*devicePixelRatio)**2) {
+            coll++;
+            const cx=(next[i].x+next[j].x)/2, cy=(next[i].y+next[j].y)/2;
+            ctx.fillStyle = "rgba(255,255,200,0.9)";
+            ctx.beginPath(); ctx.arc(cx,cy,10*devicePixelRatio,0,Math.PI*2); ctx.fill();
+            next[i].life = 0; next[j].life = 0;
+          }
+        }
+        particles.current = next.filter(p => p.life > 0);
+        if (coll) setStats(s => ({ collisions: s.collisions + coll, runs: s.runs }));
       }
-    }
-    particles.current = next.filter(p => p.life > 0);
-    if (coll) setStats(s => ({ collisions: s.collisions + coll, runs: s.runs }));
-  }, { fps: 30, deps: [field] });
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [field]);
 
   const fireOnce = (): number => {
     const cvs = ref.current!;
@@ -163,14 +165,10 @@ export function CernEmbed() {
     tick();
   };
 
-  // Auto-init on mount: short presentation demo. Skipped on small screens /
-  // reduced-motion / battery-saver to keep phones cool.
+  // Auto-init on mount: short 5-run presentation demo so visitors see it work
   useEffect(() => {
     if (autoStarted) return;
     setAutoStarted(true);
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const small = window.innerWidth < 768;
-    if (reduced || small) return;
     const t = setTimeout(() => runCartography(5, true), 1200);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

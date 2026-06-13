@@ -1,6 +1,8 @@
 // QED Engine — perturbative anomalous magnetic moment a_e to 10^-11 precision.
 // Coefficients per Aoyama et al. (Phys. Rep. 887, 2020). CODATA-anchored.
 
+import { pushLoad, popLoad } from "@/lib/thermal-governor";
+
 const QED_COEFFS = [0.5, -0.328478965, 1.181241456, -1.91293, 7.791, -83.0];
 const A_E_CODATA = 1.15965218073e-3;
 const ALPHA_INV = 137.035999084;

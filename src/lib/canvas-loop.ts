@@ -19,7 +19,9 @@ export function useCanvasLoop(
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.5);
+    const baseDpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.5);
+    let therm = getThermal();
+    let dpr = baseDpr * therm.dprScale;
 
     let raf = 0;
     let t = 0;
@@ -28,8 +30,16 @@ export function useCanvasLoop(
     let lastW = 0;
     let lastH = 0;
     let last = 0;
-    // ~30fps on mobile, ~45fps on desktop — visually fine for ambient FX.
-    const minFrameMs = isMobile ? 33 : 22;
+    const baseMin = isMobile ? 33 : 22;
+    let minFrameMs = baseMin + (1000 / Math.max(4, therm.fps) - baseMin);
+
+    const unsubTherm = subscribeThermal((s) => {
+      therm = s;
+      dpr = baseDpr * s.dprScale;
+      minFrameMs = Math.max(baseMin, 1000 / Math.max(4, s.fps));
+      lastW = 0; // force resize on next frame
+      lastH = 0;
+    });
 
     const resize = () => {
       const r = cvs.getBoundingClientRect();
@@ -49,7 +59,7 @@ export function useCanvasLoop(
       if (now - last < minFrameMs) return;
       last = now;
       resize();
-      t += 0.01;
+      t += 0.01 * therm.motion;
       draw(ctx, cvs.width, cvs.height, dpr, t);
     };
 

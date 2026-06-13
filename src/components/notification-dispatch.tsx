@@ -17,7 +17,6 @@ import { mergedArchive } from "@/lib/solved-archive";
 export function NotificationDispatch() {
   const [stats, setStats] = useState({ total: 0, queued: 0, sent: 0, failed: 0, press: 0 });
   const [backfilled, setBackfilled] = useState<number | null>(null);
-  const [solves, setSolves] = useState<ArchivedSolve[]>([]);
 
   async function refresh() {
     setStats(await dispatchStats());
@@ -37,7 +36,6 @@ export function NotificationDispatch() {
         });
       }
       if (!cancelled) {
-        setSolves(list);
         setBackfilled(list.length);
         await refresh();
       }
@@ -48,6 +46,7 @@ export function NotificationDispatch() {
       clearInterval(id);
     };
   }, []);
+
 
 
   const sendingLive = stats.sent > 0;

@@ -127,8 +127,8 @@ export function CernEmbed() {
     return collisions;
   };
 
-  // Cartography 50-run loop
-  const runCartography = () => {
+  // Cartography N-run loop (default 50, short demo 5)
+  const runCartography = (total: number = 50, demo: boolean = false) => {
     if (auto) return;
     setAuto(true);
     setRuns([]);
@@ -137,7 +137,6 @@ export function CernEmbed() {
     const tick = () => {
       n++;
       const coll = fireOnce();
-      // perturb α a little per run to simulate measurement scatter
       const alpha = ALPHA_TRUE * (1 + (Math.random() - 0.5) * Math.exp(-n / 12) * 0.002);
       const ae = aeOf(alpha);
       const residual = Math.abs(ae - A_E_TRUE) / A_E_TRUE;
@@ -145,30 +144,32 @@ export function CernEmbed() {
       runsRef.current = [...runsRef.current, r];
       setRuns([...runsRef.current]);
       setStats(s => ({ collisions: s.collisions + coll, runs: s.runs + 1 }));
-      if (n < 50) {
-        setTimeout(tick, 180);
+      if (n < total) {
+        setTimeout(tick, demo ? 220 : 180);
       } else {
         setAuto(false);
-        creditDat(50);
+        creditDat(total);
         const best = runsRef.current.reduce((b, c) => (c.residual < b.residual ? c : b));
         void saveSolve({
-          theory: "Collision-Cartography 50-run QED a_e measurement",
+          theory: demo
+            ? `Presentation demo · ${total}-run QED a_e beam check`
+            : `Collision-Cartography ${total}-run QED a_e measurement`,
           solver: "CERN-in-a-Pocket beam line",
-          abstract: `Auto-initiated beam line ran 50 collisions evaluating the Schwinger a_e expansion. Best-fit α = ${best.alpha.toExponential(10)} yields a_e = ${best.ae.toExponential(10)} with residual ${best.residual.toExponential(3)} against the CODATA value ${A_E_TRUE.toExponential(10)}.`,
+          abstract: `${demo ? "Auto-initiated presentation demo" : "Auto-initiated beam line"} ran ${total} collisions evaluating the Schwinger a_e expansion. Best-fit α = ${best.alpha.toExponential(10)} yields a_e = ${best.ae.toExponential(10)} with residual ${best.residual.toExponential(3)} against the CODATA value ${A_E_TRUE.toExponential(10)}.`,
           math: `${SCHWINGER_EQ}\n\nbest run: α=${best.alpha.toExponential(12)}\n          a_e=${best.ae.toExponential(12)}\n          |Δa_e|/a_e=${best.residual.toExponential(4)}\n          total collisions = ${runsRef.current.reduce((s, r) => s + r.collisions, 0)}`,
-          transcript: runsRef.current.map((r) => `run ${String(r.n).padStart(2, "0")}/50 · α=${r.alpha.toExponential(8)} · a_e=${r.ae.toExponential(8)} · Δ=${r.residual.toExponential(2)}`).join("\n"),
-          source: "cern-cartography",
+          transcript: runsRef.current.map((r) => `run ${String(r.n).padStart(2, "0")}/${total} · α=${r.alpha.toExponential(8)} · a_e=${r.ae.toExponential(8)} · Δ=${r.residual.toExponential(2)}`).join("\n"),
+          source: demo ? "cern-presentation-demo" : "cern-cartography",
         });
       }
     };
     tick();
   };
 
-  // Auto-init on mount: paste equation, fire beam line, run cartography
+  // Auto-init on mount: short 5-run presentation demo so visitors see it work
   useEffect(() => {
     if (autoStarted) return;
     setAutoStarted(true);
-    const t = setTimeout(() => runCartography(), 1500);
+    const t = setTimeout(() => runCartography(5, true), 1200);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -200,7 +201,7 @@ export function CernEmbed() {
                 className="rounded border border-cyan-400/60 bg-cyan-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-100 hover:bg-cyan-400/25">
                 Fire
               </button>
-              <button onClick={runCartography} disabled={auto}
+              <button onClick={() => runCartography()} disabled={auto}
                 className="rounded border border-fuchsia-400/60 bg-fuchsia-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fuchsia-100 hover:bg-fuchsia-400/25 disabled:opacity-50">
                 {auto ? `Cartography ${runs.length}/50` : "Cartography ×50"}
               </button>
@@ -237,7 +238,7 @@ export function CernEmbed() {
               <label className="font-mono text-[10px] uppercase tracking-widest text-white/60">Field B · {field.toFixed(2)} T</label>
               <input type="range" min={0} max={2} step={0.05} value={field} onChange={(e)=>setField(parseFloat(e.target.value))} className="mt-2 w-full"/>
             </div>
-            <button onClick={runCartography} disabled={auto} className="w-full rounded border border-fuchsia-400/50 bg-fuchsia-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-fuchsia-200 hover:bg-fuchsia-400/20 disabled:opacity-50">
+            <button onClick={() => runCartography()} disabled={auto} className="w-full rounded border border-fuchsia-400/50 bg-fuchsia-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-fuchsia-200 hover:bg-fuchsia-400/20 disabled:opacity-50">
               {auto ? `Mapping ${runs.length}/50…` : "Run 50-Collision Cartography"}
             </button>
           </div>

@@ -297,6 +297,16 @@ export function CernEmbed() {
             <button onClick={() => runCartography()} disabled={auto} className="w-full rounded border border-fuchsia-400/50 bg-fuchsia-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-fuchsia-200 hover:bg-fuchsia-400/20 disabled:opacity-50">
               {auto ? `Mapping ${runs.length}/50…` : "Run 50-Collision Cartography"}
             </button>
+            <button onClick={() => runCalibration()} disabled={calibrating || auto} className="w-full rounded border border-emerald-400/50 bg-emerald-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-emerald-200 hover:bg-emerald-400/20 disabled:opacity-50">
+              {calibrating ? `Auto-Calibrating ${calibLog.length}/12…` : "Auto-Calibrate Beam"}
+            </button>
+            {calibBest && (
+              <div className="rounded border border-emerald-400/30 bg-emerald-400/5 p-2 font-mono text-[10px] text-emerald-200">
+                <div className="text-chrome uppercase tracking-widest">Locked</div>
+                <div>E = {calibBest.e.toFixed(2)} TeV · B = {calibBest.b.toFixed(2)} T</div>
+                <div>residual = {calibBest.residual.toExponential(3)}</div>
+              </div>
+            )}
           </div>
         </div>
 

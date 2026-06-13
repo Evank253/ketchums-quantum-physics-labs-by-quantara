@@ -2,20 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-interactive";
 import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgrades } from "@/components/quantara-world";
-import { QedSolver } from "@/components/qed-solver";
-import { QedComputer } from "@/components/qed-computer";
-import { QedEngineOverview } from "@/components/qed-engine-overview";
 import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
 import { SolvedTheories } from "@/components/solved-theories";
-import { PhysicsExplainer } from "@/components/physics-explainer";
-import { FoundationalEquations } from "@/components/foundational-equations";
 import { DatHud } from "@/components/dat-hud";
 import { DatWallet } from "@/components/dat-wallet";
 import { AchievementsPanel } from "@/components/achievements-panel";
 import { LedgerViz } from "@/components/ledger-viz";
-import { QuantumCircuit } from "@/components/quantum-circuit";
 import { CernEmbed } from "@/components/cern-embed";
 import { WorldGameEmbed } from "@/components/world-game-embed";
+import { WaveFunctionTamer } from "@/components/wave-function-tamer";
+import { EntangledGateSmith } from "@/components/entangled-gate-smith";
+import { AuroraApex } from "@/components/aurora-apex";
+import { MeridianSkyline } from "@/components/meridian-skyline";
+import { HorizonDawn } from "@/components/horizon-dawn";
+import { MathTestingHub } from "@/components/math-testing-hub";
 
 
 import entityHero from "@/assets/entity-hero.jpg";

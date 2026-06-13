@@ -8,8 +8,10 @@ import {
   autoDispatch,
   dispatchStats,
   isNobelTier,
+  buildArxivSubmission,
 } from "@/lib/notification-dispatch";
-import { mergedArchive } from "@/lib/solved-archive";
+import { mergedArchive, type ArchivedSolve } from "@/lib/solved-archive";
+
 
 export function NotificationDispatch() {
   const [stats, setStats] = useState({ total: 0, queued: 0, sent: 0, failed: 0, press: 0 });

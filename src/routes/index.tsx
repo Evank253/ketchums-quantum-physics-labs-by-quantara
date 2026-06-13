@@ -109,6 +109,20 @@ function Index() {
       <WorldGameEmbed />
       <AchievementsPanel />
       <LedgerViz />
+      <UniverseFilm />
+      <Principle />
+      <DossierGrid />
+      <DualReality />
+      <div id="telepathy"><Telepathy /></div>
+      <DataCore />
+      <div id="swarm"><SimulationCanvas /></div>
+      <CityVision />
+      <div id="planet"><LivingPlanet /></div>
+      <BotDialogue />
+      <div id="avatar"><AvatarWalk /></div>
+      <WarzoneMarketplace />
+      <WeaponryUpgrades />
+
 
 
       <TechAdvancements />

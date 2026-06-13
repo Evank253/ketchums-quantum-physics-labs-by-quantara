@@ -21,9 +21,37 @@ const TIER_COLOR: Record<string, string> = {
 
 export function AchievementsPanel() {
   const [unlocked, setUnlocked] = useState<Record<string, number>>({});
+  const [feed, setFeed] = useState<PublicUnlock[]>([]);
   useEffect(() => {
     setUnlocked(getUnlocked());
     return subscribeAchievements(setUnlocked);
+  }, []);
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from("public_achievements")
+        .select("id, achievement_id, title, tier, reward, operator, unlocked_at")
+        .order("unlocked_at", { ascending: false })
+        .limit(50);
+      if (alive && data) setFeed(data as PublicUnlock[]);
+    };
+    load();
+    const channel = supabase
+      .channel("public_achievements_feed")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "public_achievements" },
+        (payload) => {
+          if (!alive) return;
+          setFeed((cur) => [payload.new as PublicUnlock, ...cur].slice(0, 50));
+        },
+      )
+      .subscribe();
+    return () => {
+      alive = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
   const got = Object.keys(unlocked).length;
   const pct = Math.round((got / ACHIEVEMENTS.length) * 100);

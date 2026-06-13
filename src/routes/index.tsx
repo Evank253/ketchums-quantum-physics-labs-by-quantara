@@ -7,6 +7,7 @@ import { QedComputer } from "@/components/qed-computer";
 import { QedEngineOverview } from "@/components/qed-engine-overview";
 import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
 import { SolvedTheories } from "@/components/solved-theories";
+import { PhysicsExplainer } from "@/components/physics-explainer";
 import { FoundationalEquations } from "@/components/foundational-equations";
 import { DatHud } from "@/components/dat-hud";
 import { DatWallet } from "@/components/dat-wallet";
@@ -72,6 +73,7 @@ function Index() {
       <DatWallet />
       <div id="genesis"><Hero /></div>
       <SolvedTheories />
+      <PhysicsExplainer />
       <FoundationalEquations />
       <QuantumCircuit />
       <CernEmbed />

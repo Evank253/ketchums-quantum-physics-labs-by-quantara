@@ -100,42 +100,8 @@ export function NotificationDispatch() {
         </div>
       )}
 
-      <div className="mt-5 rounded-lg border border-border bg-background/40 p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm font-semibold">arXiv auto-log · {solves.length} solve{solves.length === 1 ? "" : "s"}</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">help@arxiv.org notified · operator files via endorsed account</div>
-        </div>
-        <div className="max-h-64 overflow-auto divide-y divide-border/50">
-          {solves.slice(0, 50).map((s) => {
-            const sub = buildArxivSubmission({
-              theory: s.theory,
-              solver: s.solver || OPERATOR_NAME,
-              abstract: s.abstract,
-            });
-            return (
-              <div key={s.id} className="py-2 text-xs flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="truncate font-mono">{s.theory}</div>
-                  <div className="opacity-60">
-                    {sub.primary_category} · {s.solver || OPERATOR_NAME}
-                  </div>
-                </div>
-                <a
-                  href={sub.submit_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 px-2 py-1 rounded border border-border hover:bg-muted/40"
-                >
-                  Open arXiv submit →
-                </a>
-              </div>
-            );
-          })}
-          {solves.length === 0 && (
-            <div className="py-3 text-xs opacity-60">No solves archived yet.</div>
-          )}
-        </div>
-      </div>
+
+
 
 
 

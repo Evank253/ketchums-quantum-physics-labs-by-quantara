@@ -33,6 +33,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 
 const KEY = "quantara.achievements.v1";
 const EVT = "quantara:achievements";
+const OPERATOR_KEY = "quantara.operator";
 
 function readUnlocked(): Record<string, number> {
   if (typeof window === "undefined") return {};
@@ -42,6 +43,28 @@ function writeUnlocked(map: Record<string, number>) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, JSON.stringify(map));
   window.dispatchEvent(new CustomEvent(EVT, { detail: map }));
+}
+
+function getOperator(): string | null {
+  if (typeof window === "undefined") return null;
+  try { return window.localStorage.getItem(OPERATOR_KEY) || null; } catch { return null; }
+}
+
+// Fire-and-forget public record. Safe to call repeatedly; we only call it
+// once per local unlock and the table is append-only / publicly readable.
+async function publishAchievement(a: Achievement) {
+  try {
+    await supabase.from("public_achievements").insert({
+      achievement_id: a.id,
+      title: a.title,
+      description: a.desc,
+      tier: a.tier,
+      reward: a.reward,
+      operator: getOperator(),
+    });
+  } catch {
+    // Silent — local unlock still stands; will not retry to avoid spam.
+  }
 }
 
 let evaluating = false;

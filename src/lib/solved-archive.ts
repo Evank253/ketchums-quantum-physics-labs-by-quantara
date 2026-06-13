@@ -62,14 +62,17 @@ export async function saveSolve(input: {
   try {
     const { data, error } = await supabase
       .from("solved_theories")
-      .insert({
-        theory: entry.theory,
-        solver: entry.solver,
-        abstract: entry.abstract || null,
-        math: entry.math || null,
-        transcript: entry.transcript || null,
-        source: entry.source,
-      })
+      .upsert(
+        {
+          theory: entry.theory,
+          solver: entry.solver,
+          abstract: entry.abstract || null,
+          math: entry.math || null,
+          transcript: entry.transcript || null,
+          source: entry.source,
+        },
+        { onConflict: "theory" },
+      )
       .select()
       .single();
     if (!error && data) {

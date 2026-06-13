@@ -472,9 +472,11 @@ export function QedComputer() {
   const [paste, setPaste] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const [engineId, setEngineId] = useState<EngineId>("qed");
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [lines, setLines] = useState<Line[]>(() => [
-    { id: 1, kind: "sys", text: "QED_COMPUTER // v1.0 · operator terminal" },
-    { id: 2, kind: "sys", text: "type 'help' or paste expressions into the work-pad ▼" },
+    { id: 1, kind: "sys", text: "QUANTARA_KERNEL // v2.0 · multi-engine operator terminal" },
+    { id: 2, kind: "sys", text: "select engine ▾  · type 'help' for that engine's commands" },
   ]);
   const idRef = useRef(3);
   const logRef = useRef<HTMLDivElement>(null);

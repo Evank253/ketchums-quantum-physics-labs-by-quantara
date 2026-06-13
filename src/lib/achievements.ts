@@ -90,6 +90,8 @@ export function evaluateAchievements(): Record<string, number> {
           writeUnlocked(unlocked);
           logLedger("unlock", `Achievement · ${a.title}`, { id: a.id, reward: a.reward });
           if (a.reward) creditDat(a.reward);
+          // Publish to the public, CERN-visible ledger.
+          void publishAchievement(a);
         }
       } catch {}
     }

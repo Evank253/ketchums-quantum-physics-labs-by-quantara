@@ -445,11 +445,11 @@ export function SolvedTheories() {
                 />
               </Field>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label="Solver (your name)">
+                <Field label={`Solver (auto-credits ${getOperator()})`}>
                   <input
-                    required
                     value={solver}
                     onChange={(e) => setSolver(e.target.value)}
+                    placeholder={getOperator()}
                     className="w-full border border-white/10 bg-background/60 px-3 py-2 font-mono text-sm text-white outline-none focus:border-accent"
                   />
                 </Field>

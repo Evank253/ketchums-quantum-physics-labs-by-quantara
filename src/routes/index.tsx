@@ -16,6 +16,7 @@ import { AuroraApex } from "@/components/aurora-apex";
 import { MeridianSkyline } from "@/components/meridian-skyline";
 import { HorizonDawn } from "@/components/horizon-dawn";
 import { MathTestingHub } from "@/components/math-testing-hub";
+import { HowToUse } from "@/components/how-to-use";
 
 
 import entityHero from "@/assets/entity-hero.jpg";
@@ -72,6 +73,7 @@ function Index() {
       <DatHud />
       <DatWallet />
       <div id="genesis"><Hero /></div>
+      <HowToUse />
       <SolvedTheories />
       <CernEmbed />
 

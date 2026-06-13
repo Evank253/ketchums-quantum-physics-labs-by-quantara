@@ -40,6 +40,17 @@ const SEED: Solved[] = [
     nobelClass: false,
     solvedAtISO: new Date("2026-05-15T14:22:00Z").toISOString(),
   },
+  {
+    id: "seed-rg-running",
+    theory: "Coupled 4-loop QED ⊕ 4-loop QCD renormalization-group running, 1 GeV → 1 TeV",
+    solver: "Quantara RG Engine",
+    affiliation: "Quantara Platform · E. Ketchum",
+    abstract:
+      "In-browser piecewise RK4 integration of the coupled MS-bar β-system for (α, αₛ) with explicit threshold matching at m_c, m_τ, m_b, m_t and a data-driven HVP boundary at μ₀ = 1 GeV. Reproduces αₛ(M_Z) = 0.11828 (PDG 0.1179 ± 0.0009) and α⁻¹(M_Z) = 127.24, with α⁻¹(1 TeV) = 123.33 after top-quark decoupling.",
+    preprintUrl: "/rg-running",
+    nobelClass: false,
+    solvedAtISO: new Date("2026-06-13T00:00:00Z").toISOString(),
+  },
 ];
 
 const INSTITUTIONS: { name: string; email: string }[] = [

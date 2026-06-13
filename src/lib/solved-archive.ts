@@ -3,6 +3,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getOperator, stampNow } from "@/lib/operator-identity";
 import { runCernSweep, appendReportToTranscript } from "@/lib/cern-pocket";
+import { autoDispatch } from "@/lib/notification-dispatch";
+
 
 export type ArchivedSolve = {
   id: string;
@@ -112,6 +114,13 @@ export async function saveSolve(input: {
   } catch {
     // offline / RLS — local copy already saved
   }
+  // Fire-and-forget: notify institutions (+ press for Nobel-tier) automatically
+  void autoDispatch({
+    theory: entry.theory,
+    solver: entry.solver,
+    abstract: entry.abstract,
+    transcript: entry.transcript,
+  });
   return entry;
 }
 

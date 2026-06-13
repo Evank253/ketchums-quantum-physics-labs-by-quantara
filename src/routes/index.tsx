@@ -16,7 +16,7 @@ import { AuroraApex } from "@/components/aurora-apex";
 import { MeridianSkyline } from "@/components/meridian-skyline";
 import { HorizonDawn } from "@/components/horizon-dawn";
 import { MathTestingHub } from "@/components/math-testing-hub";
-import { HowToUse } from "@/components/how-to-use";
+import { StepHint } from "@/components/step-hint";
 
 
 import entityHero from "@/assets/entity-hero.jpg";
@@ -73,8 +73,27 @@ function Index() {
       <DatHud />
       <DatWallet />
       <div id="genesis"><Hero /></div>
-      <HowToUse />
+
+      <section className="border-t border-white/5 px-6 pt-16">
+        <div className="mx-auto max-w-7xl">
+          <StepHint
+            step="06"
+            title="Solved Theories — the public ledger"
+            body="Every solve from any tool below — auto or manual — lands here. Expand a card to see the equation, math and full transcript."
+          />
+        </div>
+      </section>
       <SolvedTheories />
+
+      <section className="border-t border-white/5 px-6 pt-16">
+        <div className="mx-auto max-w-7xl">
+          <StepHint
+            step="01"
+            title="CERN-in-a-Pocket — auto-demo + 50-run sweep"
+            body="A 5-run presentation fires on load and auto-archives. Tune Particle / Energy / Field B in the right panel, then click Cartography ×50 for the full sweep. Click any heat cell to inspect that run's α, a_e and residual."
+          />
+        </div>
+      </section>
       <CernEmbed />
 
       {/* INSTRUMENTS band */}
@@ -84,6 +103,11 @@ function Index() {
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">◉ Instruments</span>
             <h3 className="mt-2 text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">Forge the field.</h3>
           </div>
+          <StepHint
+            step="02"
+            title="Wave Tamer & Gate Smith"
+            body="Wave Function Tamer: drag the canvas to collapse the wave. Entangled Gate Smith: tap gates to build a circuit and watch Bell-state probabilities live."
+          />
           <div className="grid gap-4 md:grid-cols-2">
             <WaveFunctionTamer />
             <EntangledGateSmith />
@@ -98,6 +122,11 @@ function Index() {
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">◉ Growth</span>
             <h3 className="mt-2 text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">Grow the skyline.</h3>
           </div>
+          <StepHint
+            step="03"
+            title="Aurora · Meridian · Horizon"
+            body="Each canvas has a Grow button that evolves the visual one step. Reset returns to baseline. No solves are emitted from this band — it's purely generative."
+          />
           <div className="grid gap-4 md:grid-cols-3">
             <AuroraApex />
             <MeridianSkyline />
@@ -106,6 +135,15 @@ function Index() {
         </div>
       </section>
 
+      <section className="border-t border-white/5 px-6 pt-16">
+        <div className="mx-auto max-w-7xl">
+          <StepHint
+            step="04"
+            title="Math Testing Hub — Talk to the Machine"
+            body="Default tab is the QED computer: paste any equation, click Solve, and the solve is auto-archived to Solved Theories with abstract, math and transcript. Switch tabs for the QED Solver, Engine, Foundational Equations, Quantum Circuit and Why-It's-Real-Physics."
+          />
+        </div>
+      </section>
       <MathTestingHub />
 
       <WorldGameEmbed />

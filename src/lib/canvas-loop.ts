@@ -92,6 +92,7 @@ export function useCanvasLoop(
       io.disconnect();
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("resize", onResize);
+      unsubTherm();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);

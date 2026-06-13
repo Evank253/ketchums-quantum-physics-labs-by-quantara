@@ -110,13 +110,28 @@ const PRESS: { name: string; email: string }[] = [
   { name: "New Scientist", email: "news@newscientist.com" },
 ];
 
+function dedupeSolved(list: Solved[]): Solved[] {
+  const byKey = new Map<string, Solved>();
+  for (const s of list) {
+    const k = (s.theory || "").trim().toLowerCase();
+    if (!k) continue;
+    const prev = byKey.get(k);
+    if (!prev || new Date(s.solvedAtISO).getTime() > new Date(prev.solvedAtISO).getTime()) {
+      byKey.set(k, s);
+    }
+  }
+  return Array.from(byKey.values()).sort(
+    (a, b) => new Date(b.solvedAtISO).getTime() - new Date(a.solvedAtISO).getTime(),
+  );
+}
+
 function load(): Solved[] {
   if (typeof window === "undefined") return SEED;
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return SEED;
     const v = JSON.parse(raw) as Solved[];
-    return Array.isArray(v) && v.length ? v : SEED;
+    return dedupeSolved(Array.isArray(v) && v.length ? v : SEED);
   } catch {
     return SEED;
   }
@@ -125,7 +140,7 @@ function load(): Solved[] {
 function save(list: Solved[]) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(list));
+    window.localStorage.setItem(KEY, JSON.stringify(dedupeSolved(list)));
   } catch {}
 }
 

@@ -337,13 +337,16 @@ export function SolvedTheories() {
               outlets.
             </p>
           </div>
-          <button
-            onClick={() => setOpen(true)}
-            className="surface-glass glow-violet group relative overflow-hidden border border-white/15 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/5"
-          >
-            <span className="relative z-10">＋ Register Solution</span>
-            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-          </button>
+          <div className="flex flex-col items-end gap-2">
+            <OperatorBadge onChange={() => setList((l) => [...l])} />
+            <button
+              onClick={() => setOpen(true)}
+              className="surface-glass glow-violet group relative overflow-hidden border border-white/15 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/5"
+            >
+              <span className="relative z-10">＋ Register Solution</span>
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-px md:grid-cols-2 lg:grid-cols-3">

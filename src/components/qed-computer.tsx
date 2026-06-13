@@ -655,16 +655,9 @@ END — ${new Date().toISOString()}
   const copyFullSolution = solveAndSave;
 
 
-  const examples = [
-    "alpha",
-    "ae",
-    "compton 105.66",
-    "1/(4*pi) * alpha",
-    "lamb",
-    "feynman 4",
-    "screening 79",
-    "talk explain renormalization",
-  ];
+  const examples = engineId === "qed"
+    ? ["alpha", "ae", "compton 105.66", "1/(4*pi) * alpha", "lamb", "feynman 4", "screening 79", "talk explain renormalization"]
+    : ENGINES[engineId].commands;
 
   return (
     <section id="qed-computer" className="border-t border-white/5 bg-[oklch(0.05_0.01_280)] px-6 py-32">
@@ -672,22 +665,23 @@ END — ${new Date().toISOString()}
         <div className="mb-10 flex flex-col items-end justify-between gap-6 md:flex-row">
           <div className="max-w-xl">
             <span className="mb-4 block font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
-              QED_COMPUTER // OPERATOR_TERMINAL
+              QUANTARA_KERNEL // MULTI-ENGINE OPERATOR TERMINAL
             </span>
             <h3 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
-              Talk to the machine. Paste the work.
+              Talk to the machine. Pick an engine. Paste the work.
             </h3>
             <p className="mt-4 max-w-md font-mono text-xs leading-relaxed text-muted-foreground">
-              A dedicated QED computer. Drop in numbers, full derivations, or
-              natural-language questions. The kernel parses expressions, runs
-              Schwinger expansions, and answers back. Transcript persists locally.
+              Five physics engines under one operator terminal: QED, QCD, EFT/RG-Running,
+              Cosmology, Quantum Gravity. Solve any formula in the engine's domain — hit
+              <span className="text-fuchsia-300"> Solve & Save</span> to copy the full
+              derivation and archive it on the public solved-theories record.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={copyFullSolution}
               className="border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-fuchsia-200 hover:bg-fuchsia-500/20"
-            >{solved ? "Solution copied" : "Solve QED · Copy"}</button>
+            >{solved ? (savedMsg ?? "Saved") : `Solve ${ENGINES[engineId].name} · Save`}</button>
             <button
               onClick={copyAll}
               className="border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300 hover:bg-emerald-500/20"
@@ -702,6 +696,30 @@ END — ${new Date().toISOString()}
             >Help</button>
           </div>
         </div>
+
+        {/* Engine selector */}
+        <div className="mb-px grid gap-px grid-cols-2 md:grid-cols-5">
+          {ENGINE_ORDER.map((id) => {
+            const e = ENGINES[id];
+            const active = engineId === id;
+            return (
+              <button
+                key={id}
+                onClick={() => { setEngineId(id); push({ kind: "sys", text: `// engine → ${e.name} · ${e.sub}` }); }}
+                className={`border px-3 py-2 text-left font-mono transition-colors ${
+                  active
+                    ? "border-fuchsia-400/60 bg-fuchsia-500/10 text-fuchsia-200"
+                    : "border-white/10 bg-card/30 text-white/70 hover:border-fuchsia-400/30 hover:text-white"
+                }`}
+              >
+                <div className="text-[11px] font-bold uppercase tracking-widest">{e.name}</div>
+                <div className={`mt-0.5 text-[9px] ${active ? "text-fuchsia-300/80" : "text-chrome"}`}>{e.sub}</div>
+              </button>
+            );
+          })}
+        </div>
+
+
 
         <div className="grid gap-px md:grid-cols-5">
           {/* Transcript */}

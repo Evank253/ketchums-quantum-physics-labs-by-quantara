@@ -4,6 +4,7 @@ import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-int
 import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgrades } from "@/components/quantara-world";
 import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
 import { SolvedTheories } from "@/components/solved-theories";
+import { SolvedDerivations } from "@/components/solved-derivations";
 import { DatHud } from "@/components/dat-hud";
 import { DatWallet } from "@/components/dat-wallet";
 import { AchievementsPanel } from "@/components/achievements-panel";
@@ -84,6 +85,7 @@ function Index() {
         </div>
       </section>
       <SolvedTheories />
+      <SolvedDerivations />
 
       <section className="border-t border-white/5 px-6 pt-16">
         <div className="mx-auto max-w-7xl">

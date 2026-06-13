@@ -162,7 +162,25 @@ function Index() {
       <DataCore />
       <div id="swarm"><SimulationCanvas /></div>
       <CityVision />
+      <section className="border-t border-white/5 px-6 pt-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
+            Chapter 04 · Synthetic Civilization
+          </div>
+          <h2 className="text-balance text-4xl font-black leading-[0.95] tracking-[-0.04em] text-gradient-aurora md:text-6xl">
+            The First Intelligence <br className="hidden md:block" />
+            of the Post-Human Epoch.
+          </h2>
+          <p className="mt-4 max-w-2xl font-mono text-sm leading-relaxed text-muted-foreground">
+            Beyond the lab: a persistent 3D/4D ecosystem where a synthetic
+            civilization evolves from humanity's digital artifacts. They do
+            not learn from us — they remember us.
+          </p>
+        </div>
+      </section>
       <div id="planet"><LivingPlanet /></div>
+
       <BotDialogue />
       <div id="avatar"><AvatarWalk /></div>
       <WarzoneMarketplace />

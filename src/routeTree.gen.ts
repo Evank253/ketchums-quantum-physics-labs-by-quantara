@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorldRouteImport } from './routes/world'
 import { Route as SynthesisRouteImport } from './routes/synthesis'
+import { Route as RgRunningRouteImport } from './routes/rg-running'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as KveRouteImport } from './routes/kve'
@@ -40,6 +41,11 @@ const WorldRoute = WorldRouteImport.update({
 const SynthesisRoute = SynthesisRouteImport.update({
   id: '/synthesis',
   path: '/synthesis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RgRunningRoute = RgRunningRouteImport.update({
+  id: '/rg-running',
+  path: '/rg-running',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalRoute = LegalRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/rg-running': typeof RgRunningRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/rg-running': typeof RgRunningRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/rg-running': typeof RgRunningRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/rg-running'
     | '/synthesis'
     | '/world'
     | '/api/benchmark'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/rg-running'
     | '/synthesis'
     | '/world'
     | '/api/benchmark'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/rg-running'
     | '/synthesis'
     | '/world'
     | '/api/benchmark'
@@ -301,6 +313,7 @@ export interface RootRouteChildren {
   KveRoute: typeof KveRoute
   LedgerRoute: typeof LedgerRoute
   LegalRoute: typeof LegalRouteWithChildren
+  RgRunningRoute: typeof RgRunningRoute
   SynthesisRoute: typeof SynthesisRoute
   WorldRoute: typeof WorldRouteWithChildren
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
@@ -323,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/synthesis'
       fullPath: '/synthesis'
       preLoaderRoute: typeof SynthesisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rg-running': {
+      id: '/rg-running'
+      path: '/rg-running'
+      fullPath: '/rg-running'
+      preLoaderRoute: typeof RgRunningRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal': {
@@ -508,6 +528,7 @@ const rootRouteChildren: RootRouteChildren = {
   KveRoute: KveRoute,
   LedgerRoute: LedgerRoute,
   LegalRoute: LegalRouteWithChildren,
+  RgRunningRoute: RgRunningRoute,
   SynthesisRoute: SynthesisRoute,
   WorldRoute: WorldRouteWithChildren,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
@@ -518,13 +539,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

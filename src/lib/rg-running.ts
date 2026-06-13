@@ -62,7 +62,7 @@ export function dYdt(state: State, Nf: number, Nlep: number): State {
     (b3 * a ** 4) / PI ** 3 +
     (b4 * a ** 5) / PI ** 4;
 
-  // QCD 4-loop
+  // QCD 4-loop, PDG convention: dαₛ/dlnμ = -2αₛ²[β0/(4π) + β1αₛ/(4π)² + …]
   const c0 = 11 - (2 / 3) * Nf;
   const c1 = 102 - (38 / 3) * Nf;
   const c2 = 2857 / 2 - (5033 / 18) * Nf + (325 / 54) * Nf * Nf;
@@ -74,7 +74,7 @@ export function dYdt(state: State, Nf: number, Nlep: number): State {
 
   const x = alphas;
   const fp = 4 * PI;
-  const dAlphas = -(
+  const dAlphas = -2 * (
     (c0 * x * x) / fp +
     (c1 * x ** 3) / fp ** 2 +
     (c2 * x ** 4) / fp ** 3 +

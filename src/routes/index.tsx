@@ -19,6 +19,8 @@ import { MeridianSkyline } from "@/components/meridian-skyline";
 import { HorizonDawn } from "@/components/horizon-dawn";
 import { MathTestingHub } from "@/components/math-testing-hub";
 import { StepHint } from "@/components/step-hint";
+import { LazyVideo } from "@/components/lazy-video";
+
 
 
 import entityHero from "@/assets/entity-hero.jpg";

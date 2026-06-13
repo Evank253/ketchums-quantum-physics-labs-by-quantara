@@ -51,6 +51,17 @@ const SEED: Solved[] = [
     nobelClass: false,
     solvedAtISO: new Date("2026-06-13T00:00:00Z").toISOString(),
   },
+  {
+    id: "seed-qed-full",
+    theory: "Quantum Electrodynamics — full solved derivation (Lagrangian → a_e to 1 part in 10¹²)",
+    solver: "Quantara QED Computer",
+    affiliation: "Quantara Platform · E. Ketchum",
+    abstract:
+      "Start-to-finish QED: Lagrangian, Euler–Lagrange, canonical quantization, Feynman rules (Feynman gauge), on-shell renormalization with Ward–Takahashi (Z₁=Z₂), 1-loop running coupling, Schwinger anomaly, 5-loop a_e expansion converging to CODATA at residual ≈ 3.86×10⁻¹², Lamb shift, Bohr/Rydberg/Compton secondaries, path-integral generating functional, and Cutkosky unitarity check.",
+    preprintUrl: "#derivations",
+    nobelClass: false,
+    solvedAtISO: new Date("2026-06-13T07:28:56.370Z").toISOString(),
+  },
 ];
 
 const INSTITUTIONS: { name: string; email: string }[] = [

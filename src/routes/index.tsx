@@ -73,29 +73,42 @@ function Index() {
       <DatWallet />
       <div id="genesis"><Hero /></div>
       <SolvedTheories />
-      <PhysicsExplainer />
-      <FoundationalEquations />
-      <QuantumCircuit />
       <CernEmbed />
+
+      {/* INSTRUMENTS band */}
+      <section id="instruments" className="border-t border-white/5 px-6 py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">◉ Instruments</span>
+            <h3 className="mt-2 text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">Forge the field.</h3>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <WaveFunctionTamer />
+            <EntangledGateSmith />
+          </div>
+        </div>
+      </section>
+
+      {/* GROWTH band */}
+      <section id="growth" className="border-t border-white/5 px-6 py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">◉ Growth</span>
+            <h3 className="mt-2 text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">Grow the skyline.</h3>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <AuroraApex />
+            <MeridianSkyline />
+            <HorizonDawn />
+          </div>
+        </div>
+      </section>
+
+      <MathTestingHub />
+
       <WorldGameEmbed />
       <AchievementsPanel />
       <LedgerViz />
-      <UniverseFilm />
-      <Principle />
-      <DossierGrid />
-      <DualReality />
-      <div id="telepathy"><Telepathy /></div>
-      <DataCore />
-      <div id="swarm"><SimulationCanvas /></div>
-      <CityVision />
-      <div id="planet"><LivingPlanet /></div>
-      <BotDialogue />
-      <div id="avatar"><AvatarWalk /></div>
-      <WarzoneMarketplace />
-      <WeaponryUpgrades />
-      <QedSolver />
-      <QedComputer />
-      <QedEngineOverview />
 
 
       <TechAdvancements />

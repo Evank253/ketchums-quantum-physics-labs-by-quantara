@@ -26,7 +26,7 @@ type Solved = {
   solvedAtISO: string; // full ISO with date+time
 };
 
-const KEY = "quantara.solved.v1";
+const KEY = "quantara.solved.v2";
 
 const SEED: Solved[] = [
   {

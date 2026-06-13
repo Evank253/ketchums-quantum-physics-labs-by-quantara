@@ -217,13 +217,56 @@ export function CernEmbed() {
     tick();
   };
 
-  // Auto-init on mount: calibrate FIRST, then run a short presentation demo.
+  // THEORY-PACK auto-runner — calibrates each theory and logs to Solved Theories.
+  const [theoryRunning, setTheoryRunning] = useState(false);
+  const [theoryResults, setTheoryResults] = useState<CalibrationResult[]>([]);
+  const [theoryIdx, setTheoryIdx] = useState(0);
+  const theoryFlag = useRef(false);
+
+  const runTheoryPack = () => {
+    if (theoryFlag.current) return;
+    theoryFlag.current = true;
+    setTheoryRunning(true);
+    setTheoryResults([]);
+    setTheoryIdx(0);
+    const out: CalibrationResult[] = [];
+    let i = 0;
+    const step = () => {
+      const t = THEORY_PACK[i];
+      setTheoryIdx(i);
+      fireOnce();
+      const result = calibrateTheory(t, 12);
+      out.push(result);
+      setTheoryResults([...out]);
+      creditDat(3);
+      logLedger("benchmark", `Theory calibrated · ${t.symbol}`, { residual: result.residual });
+      void saveSolve({
+        theory: `${t.name} (${t.symbol}) — auto-calibrated precision run`,
+        solver: "CERN-in-a-Pocket theory-pack calibrator",
+        abstract: `Auto-swept precision knob over 12 points against target ${t.symbol} = ${t.target} ${t.unit}. Best prediction ${result.predicted.toPrecision(12)} with residual ${result.residual.toExponential(3)}.`,
+        math: `${t.equation}\n\ntarget   = ${t.target} ${t.unit}\npredicted = ${result.predicted}\n|Δ|/target = ${result.residual.toExponential(4)}`,
+        transcript: result.sweep.map((s, k) => `pt ${String(k + 1).padStart(2, "0")}/12 · knob=${s.knob.toFixed(3)} · pred=${s.predicted.toPrecision(10)} · Δ=${s.residual.toExponential(2)}`).join("\n"),
+        source: "cern-theory-pack",
+      });
+      i++;
+      if (i < THEORY_PACK.length) {
+        setTimeout(step, 450);
+      } else {
+        setTheoryRunning(false);
+        theoryFlag.current = false;
+      }
+    };
+    step();
+  };
+
+  // Auto-init on mount: calibrate FIRST, then short demo, then theory-pack sweep.
   useEffect(() => {
     if (autoStarted) return;
     setAutoStarted(true);
     const t1 = setTimeout(() => runCalibration(12), 800);
     const t2 = setTimeout(() => runCartography(5, true), 800 + 12 * 200 + 600);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t3 = setTimeout(() => runTheoryPack(), 800 + 12 * 200 + 600 + 5 * 220 + 1200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

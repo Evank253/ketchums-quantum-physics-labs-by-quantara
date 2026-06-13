@@ -20,12 +20,20 @@ export class QEDEngine {
 
   /** a_e = Σ cᵢ (α/π)^i — closed perturbative series to configured loop order. */
   calculateAe(): number {
-    const alpha = 1 / ALPHA_INV;
-    const x = alpha / Math.PI;
-    let s = 0;
-    for (let i = 0; i < this.loops; i++) s += QED_COEFFS[i] * Math.pow(x, i + 1);
-    this.residual = Math.abs(s - A_E_CODATA);
-    return s;
+    // Cold-compute: higher loop order = harder problem = more ambient FX shed.
+    const id = `qed:${this.loops}:${Math.random().toString(36).slice(2, 7)}`;
+    pushLoad(id, Math.min(1, this.loops / QED_COEFFS.length));
+    try {
+      const alpha = 1 / ALPHA_INV;
+      const x = alpha / Math.PI;
+      let s = 0;
+      for (let i = 0; i < this.loops; i++) s += QED_COEFFS[i] * Math.pow(x, i + 1);
+      this.residual = Math.abs(s - A_E_CODATA);
+      return s;
+    } finally {
+      // Hold a brief residual load so the cool-down is perceptible.
+      setTimeout(() => popLoad(id), 1500);
+    }
   }
 
   getResidual(): number {

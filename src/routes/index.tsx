@@ -80,14 +80,14 @@ function Index() {
         <div className="mx-auto max-w-7xl">
           <StepHint
             step="06"
-            title="Solved Theories — the public ledger"
-            body="Every solve from any tool below — auto or manual — lands here. Expand a card to see the equation, math and full transcript."
+            title="Solved Theories — categorized ledger"
+            body="Every solve from any tool below — auto or manual — is filed by domain (QED, QCD, RG, …). Sections are collapsed by default; open any card to read the full math and transcript."
           />
         </div>
       </section>
-      <SolvedTheories />
-      <SolvedDerivations />
+      <SolvedLedgerCategorized />
       <NotificationDispatch />
+
 
       <section className="border-t border-white/5 px-6 pt-16">
         <div className="mx-auto max-w-7xl">

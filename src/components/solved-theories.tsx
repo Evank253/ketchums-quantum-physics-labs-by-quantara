@@ -267,14 +267,17 @@ export function SolvedTheories() {
     };
   }, []);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!theory.trim() || !solver.trim() || !abstract.trim()) return;
+    if (!theory.trim() || !abstract.trim()) return;
+    const solverName = (solver.trim() || getOperator());
+    // Persist their name so future solves auto-credit them
+    if (solver.trim()) setOperator(solver.trim());
     const entry: Solved = {
       id: `solve-${Date.now().toString(36)}`,
       theory: theory.trim(),
-      solver: solver.trim(),
-      affiliation: affiliation.trim() || undefined,
+      solver: solverName,
+      affiliation: affiliation.trim() || "Quantara Platform",
       email: email.trim() || undefined,
       abstract: abstract.trim(),
       preprintUrl: preprintUrl.trim() || undefined,
@@ -284,6 +287,16 @@ export function SolvedTheories() {
     const next = [entry, ...list];
     setList(next);
     save(next);
+    // Auto-archive to ledger (DB + local), credited to the solver
+    try {
+      const { saveSolve } = await import("@/lib/solved-archive");
+      await saveSolve({
+        theory: entry.theory,
+        solver: entry.solver,
+        abstract: entry.abstract,
+        source: "register",
+      });
+    } catch {}
     try {
       logLedger("kernel", `Solved theory: ${entry.theory}`, { solver: entry.solver, nobel: entry.nobelClass });
     } catch {}

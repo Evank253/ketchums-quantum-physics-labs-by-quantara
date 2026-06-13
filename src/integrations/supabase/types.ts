@@ -92,6 +92,42 @@ export type Database = {
         }
         Relationships: []
       }
+      public_achievements: {
+        Row: {
+          achievement_id: string
+          created_at: string
+          description: string | null
+          id: string
+          operator: string | null
+          reward: number
+          tier: string
+          title: string
+          unlocked_at: string
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          operator?: string | null
+          reward?: number
+          tier?: string
+          title: string
+          unlocked_at?: string
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          operator?: string | null
+          reward?: number
+          tier?: string
+          title?: string
+          unlocked_at?: string
+        }
+        Relationships: []
+      }
       solved_theories: {
         Row: {
           abstract: string | null

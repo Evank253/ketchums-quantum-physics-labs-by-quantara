@@ -477,6 +477,24 @@ export function QedComputer() {
   const idRef = useRef(3);
   const logRef = useRef<HTMLDivElement>(null);
 
+  // Dedicated paste-tester (separate from the work-pad)
+  type TestRow = { input: string; kind: KernelOut["kind"]; out: string; detail?: string[]; ok: boolean };
+  const [testPaste, setTestPaste] = useState("");
+  const [testRows, setTestRows] = useState<TestRow[]>([]);
+  const runTests = () => {
+    if (!testPaste.trim()) return;
+    const parts = testPaste.split(/\n|;+/).map((s) => s.trim()).filter(Boolean);
+    const rows: TestRow[] = parts.map((p) => {
+      try {
+        const r = kernel(p);
+        return { input: p, kind: r.kind, out: r.out, detail: r.detail, ok: r.kind !== "err" };
+      } catch (e: any) {
+        return { input: p, kind: "err", out: `// kernel error: ${e.message}`, ok: false };
+      }
+    });
+    setTestRows(rows);
+  };
+
   // hydrate transcript
   useEffect(() => {
     try {

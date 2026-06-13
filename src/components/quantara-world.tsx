@@ -19,7 +19,7 @@ const BOOT_SEQUENCE = [
 ];
 
 const TICKER_LINES = [
-  `[PORTAL] auth_token = •••••••••••• · sealed · verified`,
+  `[PORTAL] auth_token = sealed · server-side only`,
   `[FUEL] +0.001 GB harvested from raw internet frequencies`,
   `[VAULT] SELF_HEALING_CEMENT_V4 logged → MATERIALS_SCIENCE`,
   `[VAULT] INFINITE_LATTICE_BATTERY logged → ENERGY_STORAGE`,
@@ -28,7 +28,7 @@ const TICKER_LINES = [
   `[BOT_α] tier 42 · scale 1.25 · pos (15,-8,32)`,
   `[BOT_β] tier 89 · scale 2.10 · pos (-45,12,64)`,
   `[COHERENCE] 94.2% · 60Hz cycle locked`,
-  `[GATEKEEPER] ancestral key intact · sovereign mode`,
+  `[GATEKEEPER] paid branch · moved off public site`,
 ];
 
 const SERVER_PY = `import asyncio
@@ -699,117 +699,17 @@ export function LivingPlanet() {
               <pre className="mt-2 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-white/80">
                 {LAUNCH_STEPS.join("\n")}
               </pre>
-              {/* AUTH KEY · rotating + audit trail */}
-              <div className="mt-3 border border-cyan-400/30 bg-cyan-400/5 p-3 font-mono text-[10px] text-cyan-200">
+              {/* AUTH KEY · moved to paid branch */}
+              <div className="mt-3 border border-amber-400/30 bg-amber-400/5 p-3 font-mono text-[10px] text-amber-200">
                 <div className="flex items-center justify-between">
-                  <span className="uppercase tracking-[0.25em] text-cyan-300">▌ Rotating Auth Key</span>
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <button onClick={handleReveal} className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent">
-                      {keyVisible ? "HIDE" : "REVEAL"}
-                    </button>
-                    {!keyEditing ? (
-                      <>
-                        <button onClick={handleRotate} className="border border-amber-400/40 px-2 py-0.5 text-[9px] text-amber-300 hover:bg-amber-400/10">ROTATE NOW</button>
-                        <button onClick={() => { setKeyDraft(""); setKeyEditing(true); }} className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent">
-                          {authKey ? "REPLACE" : "IMPORT"}
-                        </button>
-                        {authKey && (
-                          <button onClick={clearKey} className="border border-rose-400/40 px-2 py-0.5 text-[9px] text-rose-300 hover:bg-rose-400/10">SEAL</button>
-                        )}
-                        <button onClick={() => setAuditOpen((v) => !v)} className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:border-accent/40 hover:text-accent">
-                          {auditOpen ? "HIDE LOG" : `AUDIT (${audit.length})`}
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={saveKey} className="border border-emerald-400/40 px-2 py-0.5 text-[9px] text-emerald-300 hover:bg-emerald-400/10">SAVE</button>
-                        <button onClick={() => setKeyEditing(false)} className="border border-white/10 px-2 py-0.5 text-[9px] text-chrome hover:text-white">CANCEL</button>
-                      </>
-                    )}
-                  </div>
+                  <span className="uppercase tracking-[0.25em] text-amber-300">▌ Ancestral Key · Sealed</span>
+                  <a href="/ancestral" className="border border-amber-400/40 px-2 py-0.5 text-[9px] text-amber-200 hover:bg-amber-400/10">PAID BRANCH →</a>
                 </div>
-
-                {keyEditing ? (
-                  <input
-                    type="password"
-                    value={keyDraft}
-                    onChange={(e) => setKeyDraft(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && saveKey()}
-                    autoFocus
-                    placeholder="paste a private master key to import · or leave empty & cancel to keep rotating key"
-                    className="mt-2 w-full rounded-sm border border-white/10 bg-background px-2 py-1 font-mono text-[11px] text-white outline-none focus:border-accent/40"
-                  />
-                ) : (
-                  <div className="mt-2 break-all text-[11px]">
-                    ANCESTRAL_KEY ·{" "}
-                    {authKey ? (
-                      <span className="text-cyan-100">{keyVisible ? authKey : "•".repeat(28)}</span>
-                    ) : (
-                      <span className="text-rose-300">[ SEALED · no key on this device ]</span>
-                    )}
-                  </div>
-                )}
-
-                <div className="mt-2 grid grid-cols-2 gap-2 text-[9px]">
-                  <div className="border border-white/10 bg-black/30 p-2">
-                    <div className="uppercase tracking-[0.2em] text-chrome">Fingerprint</div>
-                    <div className="mt-0.5 font-mono text-cyan-100">{keyFp}</div>
-                  </div>
-                  <div className="border border-white/10 bg-black/30 p-2">
-                    <div className="uppercase tracking-[0.2em] text-chrome">Rotates in</div>
-                    <div className="mt-0.5 font-mono text-amber-200">{rotatesIn}</div>
-                  </div>
-                </div>
-
-                <div className="mt-2">
-                  <div className="text-[9px] uppercase tracking-[0.2em] text-chrome">Rotation interval</div>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {ROTATION_PRESETS.map((p) => {
-                      const active = keyMeta?.rotationMs === p.ms;
-                      return (
-                        <button
-                          key={p.label}
-                          onClick={() => setRotationMs(p.ms)}
-                          className={`border px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] ${active ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-200" : "border-white/15 text-chrome hover:bg-white/10"}`}
-                        >
-                          {p.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {auditOpen && (
-                  <div className="mt-3 border-t border-white/10 pt-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[9px] uppercase tracking-[0.25em] text-amber-300">▌ Audit Trail · append-only</div>
-                      <div className="flex gap-1">
-                        <button onClick={handleExportAudit} className="border border-emerald-400/40 px-2 py-0.5 text-[9px] text-emerald-300 hover:bg-emerald-400/10">EXPORT CSV</button>
-                        <button onClick={() => { if (confirm("Clear audit trail? This breaks the chain of custody.")) { clearAudit(); } }}
-                          className="border border-rose-400/40 px-2 py-0.5 text-[9px] text-rose-300 hover:bg-rose-400/10">CLEAR</button>
-                      </div>
-                    </div>
-                    <div className="mt-2 max-h-48 overflow-y-auto font-mono text-[9px]">
-                      {audit.length === 0 && <div className="text-chrome/60">// no events</div>}
-                      {audit.slice().reverse().map((e, i) => (
-                        <div key={i} className="grid grid-cols-[auto_1fr_auto] gap-2 border-b border-white/5 py-0.5">
-                          <span className="text-chrome">{new Date(e.ts).toLocaleString()}</span>
-                          <span className={
-                            e.action === "rotate" || e.action === "auto_rotate" ? "text-amber-300"
-                              : e.action === "seal" ? "text-rose-300"
-                              : e.action === "create" ? "text-emerald-300"
-                              : e.action === "import" ? "text-fuchsia-300"
-                              : "text-cyan-200"
-                          }>{e.action}</span>
-                          <span className="text-cyan-100">{e.fingerprint}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-2 text-[9px] text-chrome/70">
-                  zero-trust · auto-rotates on schedule · audit trail kept locally with fingerprint-only history · never transmitted to Lovable
+                <div className="mt-2 text-[11px] text-amber-100/80">
+                  The rotating ancestral-key engine, fingerprint audit trail, and
+                  sovereign-mode controls have been moved off the public site.
+                  The active key is held in Lovable Cloud secrets and never
+                  rendered client-side. Access lives behind the paid branch.
                 </div>
               </div>
             </div>

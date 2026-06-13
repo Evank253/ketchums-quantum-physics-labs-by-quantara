@@ -8,9 +8,10 @@ import {
   autoDispatch,
   dispatchStats,
   isNobelTier,
-  buildArxivSubmission,
 } from "@/lib/notification-dispatch";
-import { mergedArchive, type ArchivedSolve } from "@/lib/solved-archive";
+import { mergedArchive } from "@/lib/solved-archive";
+
+
 
 
 export function NotificationDispatch() {

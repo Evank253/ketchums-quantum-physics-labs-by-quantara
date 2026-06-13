@@ -23,29 +23,43 @@ export function NotificationDispatch() {
   }
 
   // Auto-backfill: every solve ever recorded is queued for dispatch.
+  // Deferred until the browser is idle so it never blocks first paint.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const run = async () => {
       const list = await mergedArchive();
-      for (const s of list) {
-        await autoDispatch({
-          theory: s.theory,
-          solver: s.solver || OPERATOR_NAME,
-          abstract: s.abstract,
-          transcript: s.transcript,
-        });
-      }
+      // Fire-and-forget in parallel; the DB upsert is idempotent.
+      await Promise.allSettled(
+        list.map((s) =>
+          autoDispatch({
+            theory: s.theory,
+            solver: s.solver || OPERATOR_NAME,
+            abstract: s.abstract,
+            transcript: s.transcript,
+          }),
+        ),
+      );
       if (!cancelled) {
         setBackfilled(list.length);
         await refresh();
       }
-    })();
-    const id = setInterval(refresh, 8000);
+    };
+    const ric: ((cb: () => void) => number) =
+      (window as any).requestIdleCallback ??
+      ((cb: () => void) => window.setTimeout(cb, 1200));
+    const handle = ric(() => {
+      if (!cancelled) void run();
+    });
+    const id = window.setInterval(refresh, 15000);
     return () => {
       cancelled = true;
+      const cic = (window as any).cancelIdleCallback;
+      if (cic) cic(handle);
+      else clearTimeout(handle as unknown as number);
       clearInterval(id);
     };
   }, []);
+
 
 
 

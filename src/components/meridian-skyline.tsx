@@ -1,41 +1,35 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useColdRaf } from "@/hooks/use-cold-raf";
 
 export function MeridianSkyline() {
   const ref = useRef<HTMLCanvasElement>(null);
   const [towers, setTowers] = useState<{ x: number; h: number; w: number }[]>(() =>
     Array.from({ length: 14 }, (_, i) => ({ x: i / 14, h: 0.3 + Math.random() * 0.4, w: 0.04 + Math.random() * 0.03 })),
   );
+  const tRef = useRef(0);
 
-  useEffect(() => {
+  useColdRaf(ref, (dt) => {
     const cvs = ref.current!; const ctx = cvs.getContext("2d")!;
-    let raf = 0; let t = 0;
-    const loop = () => {
-      const r = cvs.getBoundingClientRect();
-      cvs.width = r.width * devicePixelRatio; cvs.height = r.height * devicePixelRatio;
-      const W = cvs.width, H = cvs.height;
-      // meridian gradient sky
-      const grd = ctx.createLinearGradient(0, 0, 0, H);
-      grd.addColorStop(0, "#0a0420"); grd.addColorStop(0.5, "#1a0a3a"); grd.addColorStop(1, "#3a1054");
-      ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-      t += 0.006;
-      // meridian line
-      ctx.strokeStyle = "rgba(244,114,182,0.5)"; ctx.lineWidth = devicePixelRatio;
-      ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
-      // towers
-      for (const tw of towers) {
-        const tx = tw.x * W; const tw_ = tw.w * W; const th = tw.h * H;
-        ctx.fillStyle = "rgba(8,8,20,0.95)";
-        ctx.fillRect(tx, H - th, tw_, th);
-        ctx.fillStyle = `hsla(${280 + (tw.x * 100) % 60},80%,60%,${0.4 + Math.sin(t + tw.x * 10) * 0.2})`;
-        for (let yy = H - th + 4; yy < H - 4; yy += 6 * devicePixelRatio) {
-          ctx.fillRect(tx + 2, yy, tw_ - 4, 2 * devicePixelRatio);
-        }
+    const r = cvs.getBoundingClientRect();
+    cvs.width = r.width * devicePixelRatio; cvs.height = r.height * devicePixelRatio;
+    const W = cvs.width, H = cvs.height;
+    const grd = ctx.createLinearGradient(0, 0, 0, H);
+    grd.addColorStop(0, "#0a0420"); grd.addColorStop(0.5, "#1a0a3a"); grd.addColorStop(1, "#3a1054");
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    tRef.current += dt * 0.4;
+    const t = tRef.current;
+    ctx.strokeStyle = "rgba(244,114,182,0.5)"; ctx.lineWidth = devicePixelRatio;
+    ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+    for (const tw of towers) {
+      const tx = tw.x * W; const tw_ = tw.w * W; const th = tw.h * H;
+      ctx.fillStyle = "rgba(8,8,20,0.95)";
+      ctx.fillRect(tx, H - th, tw_, th);
+      ctx.fillStyle = `hsla(${280 + (tw.x * 100) % 60},80%,60%,${0.4 + Math.sin(t + tw.x * 10) * 0.2})`;
+      for (let yy = H - th + 4; yy < H - 4; yy += 6 * devicePixelRatio) {
+        ctx.fillRect(tx + 2, yy, tw_ - 4, 2 * devicePixelRatio);
       }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [towers]);
+    }
+  }, { fps: 18, deps: [towers] });
 
   const grow = () => setTowers((cur) => [
     ...cur,

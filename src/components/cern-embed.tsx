@@ -201,7 +201,7 @@ export function CernEmbed() {
                 className="rounded border border-cyan-400/60 bg-cyan-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-100 hover:bg-cyan-400/25">
                 Fire
               </button>
-              <button onClick={runCartography} disabled={auto}
+              <button onClick={() => runCartography()} disabled={auto}
                 className="rounded border border-fuchsia-400/60 bg-fuchsia-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fuchsia-100 hover:bg-fuchsia-400/25 disabled:opacity-50">
                 {auto ? `Cartography ${runs.length}/50` : "Cartography ×50"}
               </button>

@@ -163,10 +163,14 @@ export function CernEmbed() {
     tick();
   };
 
-  // Auto-init on mount: short 5-run presentation demo so visitors see it work
+  // Auto-init on mount: short presentation demo. Skipped on small screens /
+  // reduced-motion / battery-saver to keep phones cool.
   useEffect(() => {
     if (autoStarted) return;
     setAutoStarted(true);
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const small = window.innerWidth < 768;
+    if (reduced || small) return;
     const t = setTimeout(() => runCartography(5, true), 1200);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
 import { ACHIEVEMENTS, subscribeAchievements, getUnlocked } from "@/lib/achievements";
+import { supabase } from "@/integrations/supabase/client";
+
+type PublicUnlock = {
+  id: string;
+  achievement_id: string;
+  title: string;
+  tier: string;
+  reward: number;
+  operator: string | null;
+  unlocked_at: string;
+};
 
 const TIER_COLOR: Record<string, string> = {
   bronze: "border-amber-700/50 text-amber-300",

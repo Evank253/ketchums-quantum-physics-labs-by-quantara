@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { logLedger } from "@/lib/learning-ledger";
 import { creditDat } from "@/lib/dat-tokens";
 import { saveSolve } from "@/lib/solved-archive";
+import { THEORY_PACK, calibrateTheory, type CalibrationResult } from "@/lib/theory-pack";
 
 type P = {
   x: number; y: number; vx: number; vy: number;
@@ -216,13 +217,56 @@ export function CernEmbed() {
     tick();
   };
 
-  // Auto-init on mount: calibrate FIRST, then run a short presentation demo.
+  // THEORY-PACK auto-runner — calibrates each theory and logs to Solved Theories.
+  const [theoryRunning, setTheoryRunning] = useState(false);
+  const [theoryResults, setTheoryResults] = useState<CalibrationResult[]>([]);
+  const [theoryIdx, setTheoryIdx] = useState(0);
+  const theoryFlag = useRef(false);
+
+  const runTheoryPack = () => {
+    if (theoryFlag.current) return;
+    theoryFlag.current = true;
+    setTheoryRunning(true);
+    setTheoryResults([]);
+    setTheoryIdx(0);
+    const out: CalibrationResult[] = [];
+    let i = 0;
+    const step = () => {
+      const t = THEORY_PACK[i];
+      setTheoryIdx(i);
+      fireOnce();
+      const result = calibrateTheory(t, 12);
+      out.push(result);
+      setTheoryResults([...out]);
+      creditDat(3);
+      logLedger("benchmark", `Theory calibrated · ${t.symbol}`, { residual: result.residual });
+      void saveSolve({
+        theory: `${t.name} (${t.symbol}) — auto-calibrated precision run`,
+        solver: "CERN-in-a-Pocket theory-pack calibrator",
+        abstract: `Auto-swept precision knob over 12 points against target ${t.symbol} = ${t.target} ${t.unit}. Best prediction ${result.predicted.toPrecision(12)} with residual ${result.residual.toExponential(3)}.`,
+        math: `${t.equation}\n\ntarget   = ${t.target} ${t.unit}\npredicted = ${result.predicted}\n|Δ|/target = ${result.residual.toExponential(4)}`,
+        transcript: result.sweep.map((s, k) => `pt ${String(k + 1).padStart(2, "0")}/12 · knob=${s.knob.toFixed(3)} · pred=${s.predicted.toPrecision(10)} · Δ=${s.residual.toExponential(2)}`).join("\n"),
+        source: "cern-theory-pack",
+      });
+      i++;
+      if (i < THEORY_PACK.length) {
+        setTimeout(step, 450);
+      } else {
+        setTheoryRunning(false);
+        theoryFlag.current = false;
+      }
+    };
+    step();
+  };
+
+  // Auto-init on mount: calibrate FIRST, then short demo, then theory-pack sweep.
   useEffect(() => {
     if (autoStarted) return;
     setAutoStarted(true);
     const t1 = setTimeout(() => runCalibration(12), 800);
     const t2 = setTimeout(() => runCartography(5, true), 800 + 12 * 200 + 600);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t3 = setTimeout(() => runTheoryPack(), 800 + 12 * 200 + 600 + 5 * 220 + 1200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -340,6 +384,51 @@ export function CernEmbed() {
               <div className="text-emerald-300">residual = {sel.residual.toExponential(3)}</div>
             </div>
           )}
+        </div>
+
+        {/* Theory-Pack auto-calibration panel */}
+        <div className="mt-4 rounded-md border border-emerald-400/20 bg-emerald-400/[0.03] p-4">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 font-mono text-[10px] uppercase tracking-widest">
+            <span className="text-emerald-300">Theory-Pack · auto-precision sweep</span>
+            <div className="flex items-center gap-2">
+              <span className="text-chrome">{theoryResults.length}/{THEORY_PACK.length}</span>
+              <button
+                onClick={runTheoryPack}
+                disabled={theoryRunning}
+                className="rounded border border-emerald-400/50 bg-emerald-400/10 px-2 py-1 text-emerald-200 hover:bg-emerald-400/20 disabled:opacity-50"
+              >
+                {theoryRunning ? `Calibrating ${THEORY_PACK[theoryIdx]?.symbol ?? ""}…` : "Re-run Theory Pack"}
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {THEORY_PACK.map((t, i) => {
+              const r = theoryResults[i];
+              const active = theoryRunning && i === theoryIdx;
+              return (
+                <div
+                  key={t.id}
+                  className={`rounded border p-3 font-mono text-[10px] ${
+                    r ? "border-emerald-400/30 bg-emerald-400/[0.04] text-emerald-100"
+                      : active ? "border-cyan-400/50 bg-cyan-400/[0.06] text-cyan-100 animate-pulse"
+                      : "border-white/10 bg-black/30 text-white/50"
+                  }`}
+                >
+                  <div className="text-chrome uppercase tracking-widest">{t.symbol} · {t.name}</div>
+                  <div className="mt-1 truncate">{t.equation}</div>
+                  <div className="mt-1">target = {t.target} {t.unit}</div>
+                  {r ? (
+                    <>
+                      <div className="text-emerald-200">pred = {r.predicted.toPrecision(10)}</div>
+                      <div className="text-emerald-300">Δ = {r.residual.toExponential(3)} · locked ✓</div>
+                    </>
+                  ) : (
+                    <div className="text-white/40">{active ? "calibrating…" : "queued"}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

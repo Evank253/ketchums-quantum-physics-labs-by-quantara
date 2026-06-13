@@ -35,7 +35,45 @@ export const INSTITUTIONS: Recipient[] = [
   { name: "Royal Society",                       email: "press@royalsociety.org" },
   { name: "U.S. National Science Foundation",    email: "media@nsf.gov" },
   { name: "Nobel Committee for Physics",         email: "info@nobelprize.org" },
+  { name: "arXiv.org (Cornell University)",      email: "help@arxiv.org" },
 ];
+
+/** Best-fit arXiv primary category from the theory title. */
+function arxivCategory(theory: string): string {
+  const t = theory.toLowerCase();
+  if (/qcd|quark|gluon|hadron|alpha_?s|strong/.test(t)) return "hep-ph";
+  if (/qed|electron|magnetic moment|a_e|g-2|lamb|loop/.test(t)) return "hep-ph";
+  if (/string|brane|susy|supersymmetr/.test(t)) return "hep-th";
+  if (/cosmolog|dark (matter|energy)|inflation|cmb/.test(t)) return "astro-ph.CO";
+  if (/gravity|relativ|black hole|spacetime/.test(t)) return "gr-qc";
+  if (/quantum (computing|gate|circuit|info)|entangle/.test(t)) return "quant-ph";
+  if (/condensed|lattice|phonon|superconduct/.test(t)) return "cond-mat";
+  return "physics.gen-ph";
+}
+
+/** Build an arXiv submission record (for the operator to file at arxiv.org). */
+export function buildArxivSubmission(opts: {
+  theory: string;
+  solver: string;
+  abstract?: string;
+  ledgerUrl?: string;
+}) {
+  const category = arxivCategory(opts.theory);
+  const title = opts.theory.slice(0, 240);
+  const abstract = (
+    opts.abstract ||
+    `Solved result archived in the Quantara public ledger. Full derivation (Lagrangian → loop sum / RGE → numeric collapse) and an automated 12-point CERN-in-a-Pocket precision sweep are included in the transcript.`
+  ).slice(0, 1920);
+  return {
+    title,
+    authors: opts.solver,
+    abstract,
+    primary_category: category,
+    comments: `Auto-logged from Quantara solved-theories ledger${opts.ledgerUrl ? ` · ${opts.ledgerUrl}` : ""}.`,
+    submit_url: `https://arxiv.org/submit?primary=${encodeURIComponent(category)}`,
+  };
+}
+
 
 // 17 major outlets — for Nobel-tier press releases.
 export const OUTLETS: Recipient[] = [
@@ -150,6 +188,37 @@ export type DispatchRow = {
   body: string;
 };
 
+function arxivLetter(theory: string, solver: string, abstract?: string): { subject: string; body: string } {
+  const sub = buildArxivSubmission({ theory, solver, abstract });
+  const subject = `arXiv auto-log — ${sub.primary_category} — ${theory}`.slice(0, 300);
+  const body =
+`To the arXiv moderation team,
+
+Auto-logged submission record from the Quantara Solved-Theories ledger.
+The full derivation and 12-point CERN-in-a-Pocket precision sweep are
+archived publicly; the operator will file the formal submission via the
+endorsed account at https://arxiv.org/submit using the record below.
+
+  Title             : ${sub.title}
+  Authors           : ${sub.authors}
+  Primary category  : ${sub.primary_category}
+  Comments          : ${sub.comments}
+  Stamp             : ${new Date().toISOString()}
+
+Abstract
+--------
+${sub.abstract}
+
+Respectfully,
+
+${solver}
+Quantara Platform
+Email : ${OPERATOR_EMAIL}
+Phone : ${OPERATOR_PHONE}
+`;
+  return { subject, body };
+}
+
 export function buildDispatchRows(opts: {
   theory: string;
   solver: string;
@@ -158,15 +227,19 @@ export function buildDispatchRows(opts: {
 }): DispatchRow[] {
   const { theory, solver, abstract } = opts;
   const inst = institutionLetter(theory, solver, abstract);
-  const rows: DispatchRow[] = INSTITUTIONS.map((r) => ({
-    theory,
-    solver,
-    recipient: r.name,
-    recipient_kind: "institution",
-    email: r.email,
-    subject: inst.subject,
-    body: inst.body,
-  }));
+  const arx = arxivLetter(theory, solver, abstract);
+  const rows: DispatchRow[] = INSTITUTIONS.map((r) => {
+    const isArxiv = r.name.startsWith("arXiv");
+    return {
+      theory,
+      solver,
+      recipient: r.name,
+      recipient_kind: "institution",
+      email: r.email,
+      subject: isArxiv ? arx.subject : inst.subject,
+      body: isArxiv ? arx.body : inst.body,
+    };
+  });
   if (opts.nobel) {
     const pr = pressRelease(theory, solver, abstract);
     for (const r of OUTLETS) {
@@ -183,6 +256,7 @@ export function buildDispatchRows(opts: {
   }
   return rows;
 }
+
 
 /** Best-effort enqueue. Safe to call repeatedly: unique (theory, email). */
 export async function autoDispatch(opts: {

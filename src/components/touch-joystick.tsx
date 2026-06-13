@@ -135,12 +135,20 @@ export function TouchButton({
 }
 
 // Detect touch-capable devices (we still allow on hybrid laptops).
+// IMPORTANT: must be synchronous on first render so PointerLockControls
+// is never mounted on phones (it throws on mobile and trips the route
+// error boundary, kicking the user back to the home page).
+function detectTouch(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    "ontouchstart" in window ||
+    (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0) ||
+    (typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches)
+  );
+}
 export function useIsTouch(): boolean {
-  const [touch, setTouch] = useState(false);
-  useEffect(() => {
-    const t = typeof window !== "undefined" &&
-      ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-    setTouch(t);
-  }, []);
+  const [touch, setTouch] = useState<boolean>(() => detectTouch());
+  useEffect(() => { setTouch(detectTouch()); }, []);
   return touch;
 }

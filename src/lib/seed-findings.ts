@@ -5,7 +5,7 @@ import { logLedger } from "./learning-ledger";
 import type { Discovery } from "./discoveries";
 
 const KEY = "quantara.discoveries.v1";
-const SEEDED = "quantara.findings.seeded.v2";
+const SEEDED = "quantara.findings.seeded.v3";
 const EVT = "quantara:discoveries";
 
 export interface SystemFinding {

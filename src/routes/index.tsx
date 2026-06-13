@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-interactive";
 import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgrades } from "@/components/quantara-world";
 import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
-import { SolvedTheories } from "@/components/solved-theories";
-import { SolvedDerivations } from "@/components/solved-derivations";
+import { SolvedLedgerCategorized } from "@/components/solved-ledger-categorized";
 import { NotificationDispatch } from "@/components/notification-dispatch";
+
 import { DatHud } from "@/components/dat-hud";
 import { DatWallet } from "@/components/dat-wallet";
 import { AchievementsPanel } from "@/components/achievements-panel";

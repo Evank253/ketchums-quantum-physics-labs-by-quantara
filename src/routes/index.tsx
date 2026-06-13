@@ -5,6 +5,7 @@ import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgr
 import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
 import { SolvedTheories } from "@/components/solved-theories";
 import { SolvedDerivations } from "@/components/solved-derivations";
+import { NotificationDispatch } from "@/components/notification-dispatch";
 import { DatHud } from "@/components/dat-hud";
 import { DatWallet } from "@/components/dat-wallet";
 import { AchievementsPanel } from "@/components/achievements-panel";
@@ -86,6 +87,7 @@ function Index() {
       </section>
       <SolvedTheories />
       <SolvedDerivations />
+      <NotificationDispatch />
 
       <section className="border-t border-white/5 px-6 pt-16">
         <div className="mx-auto max-w-7xl">

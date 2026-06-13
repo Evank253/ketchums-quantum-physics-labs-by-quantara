@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { logLedger } from "@/lib/learning-ledger";
 import { creditDat } from "@/lib/dat-tokens";
 import { saveSolve } from "@/lib/solved-archive";
+import { THEORY_PACK, calibrateTheory, type CalibrationResult } from "@/lib/theory-pack";
 
 type P = {
   x: number; y: number; vx: number; vy: number;

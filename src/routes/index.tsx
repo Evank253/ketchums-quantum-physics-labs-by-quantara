@@ -268,15 +268,11 @@ function Telepathy() {
         </div>
 
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-white/5">
-          <video
+          <LazyVideo
             src={brainVideo.url}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
             className="absolute inset-0 h-full w-full object-cover"
           />
+
           {/* scanline + grain */}
           <div className="scan-effect pointer-events-none absolute inset-0" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-background/30" />

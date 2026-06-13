@@ -321,7 +321,7 @@ export function SolvedDerivations() {
         </div>
 
         <div className="grid gap-6">
-          {DERIVATIONS.map((d) => {
+          {derivations.map((d: Derivation) => {
             const isOpen = !!open[d.id];
             const state = saved[d.id] ?? "idle";
             return (

@@ -437,11 +437,15 @@ function Hero() {
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden pt-28 pb-20">
       <AuroraBlobs />
       <NoiseOverlay opacity={0.06} />
-      {/* Ambient backdrop wordmark */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <h1 className="select-none text-[28vw] font-black leading-none tracking-[-0.06em] text-white/[0.025]">
+      {/* Descriptive H1 for accessibility & SEO — visually hidden */}
+      <h1 className="sr-only">
+        Quantara — The First Intelligence of the Post-Human Epoch
+      </h1>
+      {/* Ambient backdrop wordmark (decorative) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="select-none text-[28vw] font-black leading-none tracking-[-0.06em] text-white/[0.025]">
           QUANTARA
-        </h1>
+        </div>
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6">

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useCanvasLoop } from "@/lib/canvas-loop";
 
 export function MeridianSkyline() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -6,36 +7,26 @@ export function MeridianSkyline() {
     Array.from({ length: 14 }, (_, i) => ({ x: i / 14, h: 0.3 + Math.random() * 0.4, w: 0.04 + Math.random() * 0.03 })),
   );
 
-  useEffect(() => {
-    const cvs = ref.current!; const ctx = cvs.getContext("2d")!;
-    let raf = 0; let t = 0;
-    const loop = () => {
-      const r = cvs.getBoundingClientRect();
-      cvs.width = r.width * devicePixelRatio; cvs.height = r.height * devicePixelRatio;
-      const W = cvs.width, H = cvs.height;
-      // meridian gradient sky
+  useCanvasLoop(
+    ref,
+    (ctx, W, H, dpr, t) => {
       const grd = ctx.createLinearGradient(0, 0, 0, H);
       grd.addColorStop(0, "#0a0420"); grd.addColorStop(0.5, "#1a0a3a"); grd.addColorStop(1, "#3a1054");
       ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-      t += 0.006;
-      // meridian line
-      ctx.strokeStyle = "rgba(244,114,182,0.5)"; ctx.lineWidth = devicePixelRatio;
+      ctx.strokeStyle = "rgba(244,114,182,0.5)"; ctx.lineWidth = dpr;
       ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
-      // towers
       for (const tw of towers) {
         const tx = tw.x * W; const tw_ = tw.w * W; const th = tw.h * H;
         ctx.fillStyle = "rgba(8,8,20,0.95)";
         ctx.fillRect(tx, H - th, tw_, th);
         ctx.fillStyle = `hsla(${280 + (tw.x * 100) % 60},80%,60%,${0.4 + Math.sin(t + tw.x * 10) * 0.2})`;
-        for (let yy = H - th + 4; yy < H - 4; yy += 6 * devicePixelRatio) {
-          ctx.fillRect(tx + 2, yy, tw_ - 4, 2 * devicePixelRatio);
+        for (let yy = H - th + 4; yy < H - 4; yy += 6 * dpr) {
+          ctx.fillRect(tx + 2, yy, tw_ - 4, 2 * dpr);
         }
       }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [towers]);
+    },
+    [towers],
+  );
 
   const grow = () => setTowers((cur) => [
     ...cur,

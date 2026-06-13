@@ -1,40 +1,39 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useCanvasLoop } from "@/lib/canvas-loop";
 
 export function AuroraApex() {
   const ref = useRef<HTMLCanvasElement>(null);
   const [bands, setBands] = useState(3);
   const [apex, setApex] = useState(0.45);
 
-  useEffect(() => {
-    const cvs = ref.current!; const ctx = cvs.getContext("2d")!;
-    let raf = 0; let t = 0;
-    const loop = () => {
-      const r = cvs.getBoundingClientRect();
-      cvs.width = r.width * devicePixelRatio; cvs.height = r.height * devicePixelRatio;
-      const W = cvs.width, H = cvs.height;
-      ctx.fillStyle = "rgba(2,2,12,1)"; ctx.fillRect(0, 0, W, H);
-      t += 0.012;
+  useCanvasLoop(
+    ref,
+    (ctx, W, H, dpr, t) => {
+      ctx.fillStyle = "rgba(2,2,12,1)";
+      ctx.fillRect(0, 0, W, H);
       for (let b = 0; b < bands; b++) {
         const hue = 140 + b * 35;
         ctx.beginPath();
-        for (let x = 0; x <= W; x += 4) {
+        for (let x = 0; x <= W; x += 6) {
           const xn = x / W;
-          const base = H * (1 - apex) + Math.sin(xn * 6 + t + b) * 12 * devicePixelRatio;
+          const base = H * (1 - apex) + Math.sin(xn * 6 + t + b) * 12 * dpr;
           const peak = Math.exp(-((xn - 0.5) ** 2) * 14) * H * apex;
           const y = base - peak;
-          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
-        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+        ctx.lineTo(W, H);
+        ctx.lineTo(0, H);
+        ctx.closePath();
         const grd = ctx.createLinearGradient(0, 0, 0, H);
         grd.addColorStop(0, `hsla(${hue},85%,60%,0.55)`);
         grd.addColorStop(1, `hsla(${hue},85%,30%,0)`);
-        ctx.fillStyle = grd; ctx.fill();
+        ctx.fillStyle = grd;
+        ctx.fill();
       }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [bands, apex]);
+    },
+    [bands, apex],
+  );
 
   return (
     <div className="rounded-md border border-white/10 bg-card/40 p-4">

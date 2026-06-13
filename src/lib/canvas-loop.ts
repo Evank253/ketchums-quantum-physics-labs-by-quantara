@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 export function useCanvasLoop(
-  ref: React.RefObject<HTMLCanvasElement>,
+  ref: React.RefObject<HTMLCanvasElement | null>,
   draw: (ctx: CanvasRenderingContext2D, W: number, H: number, dpr: number, t: number) => void,
   deps: unknown[] = [],
 ) {

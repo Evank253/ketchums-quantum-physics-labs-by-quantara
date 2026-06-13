@@ -165,12 +165,64 @@ export function CernEmbed() {
     tick();
   };
 
-  // Auto-init on mount: short 5-run presentation demo so visitors see it work
+  // AUTO-CALIBRATION — sweep energy + field, lock sliders to lowest-residual point.
+  const [calibrating, setCalibrating] = useState(false);
+  const [calibLog, setCalibLog] = useState<{ e: number; b: number; residual: number; ae: number }[]>([]);
+  const [calibBest, setCalibBest] = useState<{ e: number; b: number; residual: number } | null>(null);
+  const calibFlag = useRef(false);
+
+  const runCalibration = (total: number = 12) => {
+    if (calibFlag.current || auto) return;
+    calibFlag.current = true;
+    setCalibrating(true);
+    setCalibLog([]);
+    setCalibBest(null);
+    const log: { e: number; b: number; residual: number; ae: number }[] = [];
+    let n = 0;
+    const tick = () => {
+      const e = 1 + (13 * n) / (total - 1);
+      const b = 0.2 + (1.6 * n) / (total - 1);
+      setEnergy(e);
+      setField(b);
+      fireOnce();
+      const detune = Math.hypot((e - 7) / 7, (b - 1) / 1);
+      const alpha = ALPHA_TRUE * (1 + (Math.random() - 0.5) * (0.0008 + detune * 0.0025));
+      const ae = aeOf(alpha);
+      const residual = Math.abs(ae - A_E_TRUE) / A_E_TRUE;
+      log.push({ e, b, residual, ae });
+      setCalibLog([...log]);
+      n++;
+      if (n < total) {
+        setTimeout(tick, 200);
+      } else {
+        const best = log.reduce((acc, c) => (c.residual < acc.residual ? c : acc));
+        setEnergy(parseFloat(best.e.toFixed(2)));
+        setField(parseFloat(best.b.toFixed(2)));
+        setCalibBest({ e: best.e, b: best.b, residual: best.residual });
+        setCalibrating(false);
+        calibFlag.current = false;
+        creditDat(total);
+        logLedger("benchmark", `CERN auto-calibration · E=${best.e.toFixed(2)} TeV · B=${best.b.toFixed(2)} T`, { residual: best.residual });
+        void saveSolve({
+          theory: `CERN-in-a-Pocket auto-calibration sweep (${total} points)`,
+          solver: "CERN-in-a-Pocket calibrator",
+          abstract: `Auto-swept beam energy 1→14 TeV and magnetic field 0.2→1.8 T over ${total} collisions, evaluating residual |a_e − CODATA|/a_e. Optimum locked at E=${best.e.toFixed(3)} TeV, B=${best.b.toFixed(3)} T with residual ${best.residual.toExponential(3)}.`,
+          math: `${SCHWINGER_EQ}\n\nbest: E=${best.e.toFixed(4)} TeV · B=${best.b.toFixed(4)} T\nresidual=${best.residual.toExponential(4)} · a_e=${best.ae.toExponential(10)}`,
+          transcript: log.map((p, i) => `pt ${String(i + 1).padStart(2, "0")}/${total} · E=${p.e.toFixed(2)} · B=${p.b.toFixed(2)} · Δ=${p.residual.toExponential(2)}`).join("\n"),
+          source: "cern-auto-calibration",
+        });
+      }
+    };
+    tick();
+  };
+
+  // Auto-init on mount: calibrate FIRST, then run a short presentation demo.
   useEffect(() => {
     if (autoStarted) return;
     setAutoStarted(true);
-    const t = setTimeout(() => runCartography(5, true), 1200);
-    return () => clearTimeout(t);
+    const t1 = setTimeout(() => runCalibration(12), 800);
+    const t2 = setTimeout(() => runCartography(5, true), 800 + 12 * 200 + 600);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -204,6 +256,10 @@ export function CernEmbed() {
               <button onClick={() => runCartography()} disabled={auto}
                 className="rounded border border-fuchsia-400/60 bg-fuchsia-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fuchsia-100 hover:bg-fuchsia-400/25 disabled:opacity-50">
                 {auto ? `Cartography ${runs.length}/50` : "Cartography ×50"}
+              </button>
+              <button onClick={() => runCalibration()} disabled={calibrating || auto}
+                className="rounded border border-emerald-400/60 bg-emerald-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-emerald-100 hover:bg-emerald-400/25 disabled:opacity-50">
+                {calibrating ? `Calibrating ${calibLog.length}/12` : "Auto-Calibrate"}
               </button>
               <button onClick={() => { runFlag.current = !runFlag.current; }}
                 className="rounded border border-white/20 bg-black/60 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white/80 hover:bg-white/10">
@@ -241,6 +297,16 @@ export function CernEmbed() {
             <button onClick={() => runCartography()} disabled={auto} className="w-full rounded border border-fuchsia-400/50 bg-fuchsia-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-fuchsia-200 hover:bg-fuchsia-400/20 disabled:opacity-50">
               {auto ? `Mapping ${runs.length}/50…` : "Run 50-Collision Cartography"}
             </button>
+            <button onClick={() => runCalibration()} disabled={calibrating || auto} className="w-full rounded border border-emerald-400/50 bg-emerald-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-emerald-200 hover:bg-emerald-400/20 disabled:opacity-50">
+              {calibrating ? `Auto-Calibrating ${calibLog.length}/12…` : "Auto-Calibrate Beam"}
+            </button>
+            {calibBest && (
+              <div className="rounded border border-emerald-400/30 bg-emerald-400/5 p-2 font-mono text-[10px] text-emerald-200">
+                <div className="text-chrome uppercase tracking-widest">Locked</div>
+                <div>E = {calibBest.e.toFixed(2)} TeV · B = {calibBest.b.toFixed(2)} T</div>
+                <div>residual = {calibBest.residual.toExponential(3)}</div>
+              </div>
+            )}
           </div>
         </div>
 

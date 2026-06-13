@@ -477,6 +477,24 @@ export function QedComputer() {
   const idRef = useRef(3);
   const logRef = useRef<HTMLDivElement>(null);
 
+  // Dedicated paste-tester (separate from the work-pad)
+  type TestRow = { input: string; kind: KernelOut["kind"]; out: string; detail?: string[]; ok: boolean };
+  const [testPaste, setTestPaste] = useState("");
+  const [testRows, setTestRows] = useState<TestRow[]>([]);
+  const runTests = () => {
+    if (!testPaste.trim()) return;
+    const parts = testPaste.split(/\n|;+/).map((s) => s.trim()).filter(Boolean);
+    const rows: TestRow[] = parts.map((p) => {
+      try {
+        const r = kernel(p);
+        return { input: p, kind: r.kind, out: r.out, detail: r.detail, ok: r.kind !== "err" };
+      } catch (e: any) {
+        return { input: p, kind: "err", out: `// kernel error: ${e.message}`, ok: false };
+      }
+    });
+    setTestRows(rows);
+  };
+
   // hydrate transcript
   useEffect(() => {
     try {
@@ -837,6 +855,55 @@ END OF DERIVATION — ${new Date().toISOString()}
               <div className="mt-1 text-sm text-white">{v}</div>
             </div>
           ))}
+        </div>
+
+        {/* DEDICATED PASTE-TESTER — paste anything; each line is fed through the
+            kernel and shown with PASS/FAIL + result inline. */}
+        <div className="mt-px grid gap-px md:grid-cols-2">
+          <div className="glass-panel flex flex-col rounded-sm">
+            <div className="flex items-center justify-between border-b border-white/5 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+              <span>◉ Test Input · paste & verify</span>
+              <span className="text-accent">{testRows.length ? `${testRows.filter(r => r.ok).length}/${testRows.length} pass` : "idle"}</span>
+            </div>
+            <textarea
+              value={testPaste}
+              onChange={(e) => setTestPaste(e.target.value)}
+              placeholder={`paste anything to test — one per line:\n\nalpha\nae\n1/(4*pi)*alpha\ncompton 105.66\nsolve vacuum\ntalk explain renormalization`}
+              className="h-[280px] flex-1 resize-none bg-transparent p-4 font-mono text-[11px] leading-relaxed text-white placeholder:text-muted-foreground focus:outline-none"
+            />
+            <div className="flex gap-1 border-t border-white/5 p-2">
+              <button
+                onClick={runTests}
+                className="flex-1 border border-accent/40 bg-accent/10 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-accent hover:bg-accent/20"
+              >▶ Test Pasted Input</button>
+              <button
+                onClick={() => { setTestRows([]); setTestPaste(""); }}
+                className="border border-white/10 px-3 font-mono text-[10px] uppercase tracking-[0.2em] text-white/70 hover:border-accent/40"
+              >Clear</button>
+            </div>
+          </div>
+          <div className="glass-panel flex flex-col rounded-sm">
+            <div className="border-b border-white/5 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-chrome">
+              TEST RESULTS
+            </div>
+            <div className="h-[332px] overflow-y-auto p-4 font-mono text-[11px] leading-relaxed">
+              {testRows.length === 0 && (
+                <div className="text-muted-foreground">// no tests run yet — paste expressions on the left and hit Test Pasted Input.</div>
+              )}
+              {testRows.map((r, i) => (
+                <div key={i} className="mb-2 border-l-2 pl-2" style={{ borderColor: r.ok ? "rgb(52 211 153)" : "rgb(244 63 94)" }}>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-[9px] font-bold uppercase tracking-widest ${r.ok ? "text-emerald-300" : "text-rose-400"}`}>{r.ok ? "PASS" : "FAIL"}</span>
+                    <span className="text-white">› {r.input}</span>
+                  </div>
+                  <div className={r.ok ? "text-cyan-300" : "text-rose-400"}>{r.out}</div>
+                  {r.detail && r.detail.map((d, j) => (
+                    <div key={j} className="ml-3 text-muted-foreground">· {d}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>

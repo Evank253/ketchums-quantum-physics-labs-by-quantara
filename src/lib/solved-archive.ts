@@ -2,6 +2,7 @@
 // insert into Lovable Cloud (public.solved_theories). Read merges both.
 import { supabase } from "@/integrations/supabase/client";
 import { getOperator, stampNow } from "@/lib/operator-identity";
+import { runCernSweep, appendReportToTranscript } from "@/lib/cern-pocket";
 
 export type ArchivedSolve = {
   id: string;

@@ -15,8 +15,6 @@ export type ArchivedSolve = {
 
 const LS_KEY = "quantara.solved-archive.v1";
 
-function readLocal(): ArchivedSolve[] {
-  if (typeof window === "undefined") return [];
 function dedupe(list: ArchivedSolve[]): ArchivedSolve[] {
   const byKey = new Map<string, ArchivedSolve>();
   for (const e of list) {
@@ -32,6 +30,8 @@ function dedupe(list: ArchivedSolve[]): ArchivedSolve[] {
   );
 }
 
+function readLocal(): ArchivedSolve[] {
+  if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(LS_KEY);
     const arr = raw ? (JSON.parse(raw) as ArchivedSolve[]) : [];

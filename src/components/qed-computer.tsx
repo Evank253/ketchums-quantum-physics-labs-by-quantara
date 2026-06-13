@@ -523,9 +523,9 @@ export function QedComputer() {
 
   const run = (raw: string) => {
     if (!raw.trim()) return;
-    push({ kind: "in", text: raw });
+    push({ kind: "in", text: `[${ENGINES[engineId].name}] ${raw}` });
     try {
-      const r = kernel(raw);
+      const r = engineId === "qed" ? kernel(raw) : ENGINES[engineId].kernel(raw);
       push({ kind: r.kind === "ok" ? "out" : r.kind, text: r.out, detail: r.detail });
     } catch (e: any) {
       push({ kind: "err", text: `// kernel error: ${e.message}` });

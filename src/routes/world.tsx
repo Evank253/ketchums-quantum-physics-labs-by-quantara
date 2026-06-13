@@ -421,6 +421,8 @@ function WorldPage() {
   useEffect(() => {
     init();
     initGame();
+    seedSystemFindings();
+    setDiscoveries(readDiscoveries());
     const stop = startLoop();
     const unsub = subscribeDat(setDat);
     const unsubD = subscribeDiscoveries(() => setDiscoveries(readDiscoveries()));

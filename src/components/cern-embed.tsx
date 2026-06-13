@@ -385,6 +385,51 @@ export function CernEmbed() {
             </div>
           )}
         </div>
+
+        {/* Theory-Pack auto-calibration panel */}
+        <div className="mt-4 rounded-md border border-emerald-400/20 bg-emerald-400/[0.03] p-4">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 font-mono text-[10px] uppercase tracking-widest">
+            <span className="text-emerald-300">Theory-Pack · auto-precision sweep</span>
+            <div className="flex items-center gap-2">
+              <span className="text-chrome">{theoryResults.length}/{THEORY_PACK.length}</span>
+              <button
+                onClick={runTheoryPack}
+                disabled={theoryRunning}
+                className="rounded border border-emerald-400/50 bg-emerald-400/10 px-2 py-1 text-emerald-200 hover:bg-emerald-400/20 disabled:opacity-50"
+              >
+                {theoryRunning ? `Calibrating ${THEORY_PACK[theoryIdx]?.symbol ?? ""}…` : "Re-run Theory Pack"}
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {THEORY_PACK.map((t, i) => {
+              const r = theoryResults[i];
+              const active = theoryRunning && i === theoryIdx;
+              return (
+                <div
+                  key={t.id}
+                  className={`rounded border p-3 font-mono text-[10px] ${
+                    r ? "border-emerald-400/30 bg-emerald-400/[0.04] text-emerald-100"
+                      : active ? "border-cyan-400/50 bg-cyan-400/[0.06] text-cyan-100 animate-pulse"
+                      : "border-white/10 bg-black/30 text-white/50"
+                  }`}
+                >
+                  <div className="text-chrome uppercase tracking-widest">{t.symbol} · {t.name}</div>
+                  <div className="mt-1 truncate">{t.equation}</div>
+                  <div className="mt-1">target = {t.target} {t.unit}</div>
+                  {r ? (
+                    <>
+                      <div className="text-emerald-200">pred = {r.predicted.toPrecision(10)}</div>
+                      <div className="text-emerald-300">Δ = {r.residual.toExponential(3)} · locked ✓</div>
+                    </>
+                  ) : (
+                    <div className="text-white/40">{active ? "calibrating…" : "queued"}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   );

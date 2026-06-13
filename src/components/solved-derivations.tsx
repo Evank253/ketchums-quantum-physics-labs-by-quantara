@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { saveSolve } from "@/lib/solved-archive";
+import { useEffect, useState } from "react";
+import { saveSolve, mergedArchive, type ArchivedSolve } from "@/lib/solved-archive";
 
 // ============================================================================
 // Solved Derivations — full start-to-finish mathematical walk-throughs for
@@ -215,13 +215,72 @@ function buildQEDFull(): Derivation {
   };
 }
 
-const DERIVATIONS: Derivation[] = [buildQEDFull(), buildQED(), buildQCD()];
+const BUILTIN: Derivation[] = [buildQEDFull(), buildQED(), buildQCD()];
+
+function classify(theory: string, abstract: string): "QED" | "QCD" {
+  const t = (theory + " " + abstract).toLowerCase();
+  if (/qcd|αₛ|alpha_s|gluon|strong coupling|quark/.test(t)) return "QCD";
+  return "QED";
+}
+
+function archiveToDerivation(a: ArchivedSolve): Derivation | null {
+  if (!a.math || a.math.trim().length < 20) return null;
+  // Split math by blank lines into steps
+  const blocks = a.math.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  const steps: Step[] = blocks.map((b, i) => {
+    const lines = b.split("\n");
+    const head = lines[0].trim();
+    const isLabel = /^[\d\w].{0,80}[:·.]/.test(head) && lines.length > 1;
+    return isLabel
+      ? { label: head, math: lines.slice(1).join("\n").trim() }
+      : { label: `Step ${i + 1}`, math: b };
+  });
+  // Try to recover a result line
+  const resultMatch = a.math.match(/RESULT[^\n:]*:\s*([^\n]+)/i);
+  return {
+    id: `deriv-arch-${a.id}`,
+    kind: classify(a.theory, a.abstract || ""),
+    theory: a.theory,
+    goal: a.abstract?.slice(0, 220) || "Archived solution from the Quantara ledger.",
+    steps,
+    result: resultMatch ? resultMatch[1].trim() : `Solved by ${a.solver}`,
+    residual: new Date(a.created_at).toUTCString(),
+    abstract: a.abstract || "Archived solution.",
+  };
+}
 
 export function SolvedDerivations() {
+  const [derivations, setDerivations] = useState<Derivation[]>(BUILTIN);
   const [saved, setSaved] = useState<Record<string, "idle" | "saving" | "ok" | "err">>({});
   const [open, setOpen] = useState<Record<string, boolean>>({
-    [DERIVATIONS[0].id]: true,
+    [BUILTIN[0].id]: true,
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const archive = await mergedArchive();
+        if (cancelled) return;
+        const builtinKeys = new Set(BUILTIN.map((d) => d.theory.trim().toLowerCase()));
+        const extras: Derivation[] = [];
+        const seen = new Set<string>();
+        for (const a of archive) {
+          const key = a.theory.trim().toLowerCase();
+          if (builtinKeys.has(key) || seen.has(key)) continue;
+          const d = archiveToDerivation(a);
+          if (d) {
+            extras.push(d);
+            seen.add(key);
+          }
+        }
+        setDerivations([...BUILTIN, ...extras]);
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const archive = async (d: Derivation) => {
     setSaved((s) => ({ ...s, [d.id]: "saving" }));
@@ -262,7 +321,7 @@ export function SolvedDerivations() {
         </div>
 
         <div className="grid gap-6">
-          {DERIVATIONS.map((d) => {
+          {derivations.map((d: Derivation) => {
             const isOpen = !!open[d.id];
             const state = saved[d.id] ?? "idle";
             return (
@@ -311,7 +370,7 @@ export function SolvedDerivations() {
 
                 {isOpen && (
                   <div className="grid gap-px bg-white/5 md:grid-cols-2">
-                    {d.steps.map((s, i) => (
+                    {d.steps.map((s: Step, i: number) => (
                       <div key={i} className="bg-card/60 p-4">
                         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-300/80">
                           {s.label}

@@ -19,6 +19,8 @@ import { MeridianSkyline } from "@/components/meridian-skyline";
 import { HorizonDawn } from "@/components/horizon-dawn";
 import { MathTestingHub } from "@/components/math-testing-hub";
 import { StepHint } from "@/components/step-hint";
+import { LazyVideo } from "@/components/lazy-video";
+
 
 
 import entityHero from "@/assets/entity-hero.jpg";
@@ -206,15 +208,11 @@ function UniverseFilm() {
   return (
     <section className="relative border-t border-white/5">
       <div className="relative h-[90vh] w-full overflow-hidden">
-        <video
+        <LazyVideo
           src={universeVideo.url}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
           className="absolute inset-0 h-full w-full object-cover grayscale-[30%]"
         />
+
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,var(--background)_95%)]" />
 
@@ -270,15 +268,11 @@ function Telepathy() {
         </div>
 
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-white/5">
-          <video
+          <LazyVideo
             src={brainVideo.url}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
             className="absolute inset-0 h-full w-full object-cover"
           />
+
           {/* scanline + grain */}
           <div className="scan-effect pointer-events-none absolute inset-0" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-background/30" />

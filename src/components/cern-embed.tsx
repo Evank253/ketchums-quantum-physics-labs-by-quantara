@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { logLedger } from "@/lib/learning-ledger";
 import { creditDat } from "@/lib/dat-tokens";
 import { saveSolve } from "@/lib/solved-archive";
+import { useColdRaf } from "@/hooks/use-cold-raf";
 
 type P = {
   x: number; y: number; vx: number; vy: number;

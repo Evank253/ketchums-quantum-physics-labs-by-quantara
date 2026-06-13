@@ -370,7 +370,7 @@ export function SolvedDerivations() {
 
                 {isOpen && (
                   <div className="grid gap-px bg-white/5 md:grid-cols-2">
-                    {d.steps.map((s, i) => (
+                    {d.steps.map((s: Step, i: number) => (
                       <div key={i} className="bg-card/60 p-4">
                         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-300/80">
                           {s.label}

@@ -10,6 +10,7 @@ import { useGameplay, type InventoryEntry } from "@/lib/world-gameplay";
 import { readDat, subscribeDat, creditDat, writeDat } from "@/lib/dat-tokens";
 import { TouchJoystick, TouchButton, useIsTouch } from "@/components/touch-joystick";
 import { enqueueUpload, readDiscoveries, removeDiscovery, subscribeDiscoveries, type Discovery } from "@/lib/discoveries";
+import { seedSystemFindings } from "@/lib/seed-findings";
 import { useQuality, type QualityTier } from "@/lib/quality";
 import { ThreatWatch } from "@/components/threat-watch";
 
@@ -420,6 +421,8 @@ function WorldPage() {
   useEffect(() => {
     init();
     initGame();
+    seedSystemFindings();
+    setDiscoveries(readDiscoveries());
     const stop = startLoop();
     const unsub = subscribeDat(setDat);
     const unsubD = subscribeDiscoveries(() => setDiscoveries(readDiscoveries()));

@@ -563,3 +563,38 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
+function OperatorBadge({ onChange }: { onChange?: () => void }) {
+  const [name, setName] = useState<string>(() => getOperator());
+  const [editing, setEditing] = useState(false);
+  const commit = (v: string) => {
+    setOperator(v);
+    setName(getOperator());
+    setEditing(false);
+    onChange?.();
+  };
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        defaultValue={name}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
+          if (e.key === "Escape") setEditing(false);
+        }}
+        className="border border-white/15 bg-background/60 px-3 py-1.5 font-mono text-[11px] text-white outline-none focus:border-accent"
+        placeholder="Your name"
+      />
+    );
+  }
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      title="Click to change the auto-credited solver name (saved locally on this device)"
+      className="border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white/80 hover:bg-white/10"
+    >
+      Solver · <span className="text-emerald-300">{name}</span> ✎
+    </button>
+  );
+}

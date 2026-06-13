@@ -542,7 +542,11 @@ export function QedComputer() {
 
   const sendChat = () => {
     if (!chatInput.trim()) return;
-    run(chatInput.startsWith("talk ") ? chatInput : `talk ${chatInput}`);
+    if (engineId === "qed") {
+      run(chatInput.startsWith("talk ") ? chatInput : `talk ${chatInput}`);
+    } else {
+      run(chatInput);
+    }
     setChatInput("");
   };
 

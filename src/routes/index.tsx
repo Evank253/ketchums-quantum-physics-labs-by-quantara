@@ -34,22 +34,23 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Quantara — The First Intelligence of the Post-Human Epoch" },
+      { title: "Ketchum's Quantum Physics Labs — powered by Quantara" },
       {
         name: "description",
         content:
-          "Quantara is a synthetic reality platform where artificial civilizations evolve from humanity's digital artifacts. They do not learn from us — they remember us.",
+          "Ketchum's Quantum Physics Labs is a real, in-browser quantum-physics computing platform: 5-loop QED, 4-loop QCD running, RG flow, and a live solved-theories ledger — every solve archived with full math, tests, and timestamps.",
       },
-      { property: "og:title", content: "Quantara — Synthetic Civilization Framework" },
+      { property: "og:title", content: "Ketchum's Quantum Physics Labs — powered by Quantara" },
       {
         property: "og:description",
         content:
-          "The ancestral memory layer of artificial civilization. A persistent universe of synthetic intelligence.",
+          "Real quantum-physics computing in the browser: QED a_e to 10⁻¹², 4-loop QCD running, RG flow, and an auto-archived public solved-theories ledger.",
       },
       { property: "og:image", content: entityHero },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: entityHero },
     ],
+
     links: [
       {
         rel: "preconnect",

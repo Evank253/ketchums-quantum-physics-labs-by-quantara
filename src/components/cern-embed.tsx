@@ -257,6 +257,9 @@ export function CernEmbed() {
                 className="rounded border border-fuchsia-400/60 bg-fuchsia-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fuchsia-100 hover:bg-fuchsia-400/25 disabled:opacity-50">
                 {auto ? `Cartography ${runs.length}/50` : "Cartography ×50"}
               </button>
+              <button onClick={() => runCalibration()} disabled={calibrating || auto}
+                className="rounded border border-emerald-400/60 bg-emerald-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-emerald-100 hover:bg-emerald-400/25 disabled:opacity-50">
+                {calibrating ? `Calibrating ${calibLog.length}/12` : "Auto-Calibrate"}
               <button onClick={() => { runFlag.current = !runFlag.current; }}
                 className="rounded border border-white/20 bg-black/60 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white/80 hover:bg-white/10">
                 Pause

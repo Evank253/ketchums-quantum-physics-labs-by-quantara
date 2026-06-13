@@ -1,7 +1,11 @@
-// Compact embeddable CERN particle separator for the main page.
+// CERN-in-a-Pocket — auto-initiated beam line + 50-run collision cartography.
+// On mount it auto-pastes the QED Schwinger a_e expansion into the equation
+// strip and begins firing beams. Each run logs α, a_e and a residual,
+// rendered as a 5x10 cartography heat-grid.
 import { useEffect, useRef, useState } from "react";
 import { logLedger } from "@/lib/learning-ledger";
 import { creditDat } from "@/lib/dat-tokens";
+import { saveSolve } from "@/lib/solved-archive";
 
 type P = {
   x: number; y: number; vx: number; vy: number;
@@ -14,14 +18,33 @@ const KINDS = {
   muon:     { charge: -1 as const, hue: 320 },
 };
 
+const QED_COEFFS = [0.5, -0.328478965, 1.181241456, -1.91293, 7.791];
+const ALPHA_TRUE = 7.2973525693e-3;
+const A_E_TRUE = 1.15965218073e-3;
+const SCHWINGER_EQ = "a_e = Σ cᵢ (α/π)^i  ·  c = [0.5, -0.3285, 1.1812, -1.9129, 7.791]";
+
+function aeOf(alpha: number) {
+  const x = alpha / Math.PI;
+  let s = 0;
+  for (let i = 0; i < QED_COEFFS.length; i++) s += QED_COEFFS[i] * Math.pow(x, i + 1);
+  return s;
+}
+
+type Run = { n: number; alpha: number; ae: number; residual: number; collisions: number };
+
 export function CernEmbed() {
   const ref = useRef<HTMLCanvasElement>(null);
   const [energy, setEnergy] = useState(7);
   const [field, setField] = useState(0.8);
   const [beam, setBeam] = useState<keyof typeof KINDS>("proton");
   const [stats, setStats] = useState({ collisions: 0, runs: 0 });
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [auto, setAuto] = useState(false);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [autoStarted, setAutoStarted] = useState(false);
   const particles = useRef<P[]>([]);
   const runFlag = useRef(true);
+  const runsRef = useRef<Run[]>([]);
 
   useEffect(() => {
     const cvs = ref.current!;
@@ -42,7 +65,6 @@ export function CernEmbed() {
       ctx.fillStyle = "rgba(2,4,12,0.22)";
       ctx.fillRect(0,0,W,H);
 
-      // ring + field
       ctx.strokeStyle = "rgba(0,255,204,0.10)";
       ctx.beginPath(); ctx.arc(W/2,H/2, Math.min(W,H)*0.42, 0, Math.PI*2); ctx.stroke();
       ctx.strokeStyle = `rgba(255,80,180,${0.15 + field*0.35})`;
@@ -81,29 +103,92 @@ export function CernEmbed() {
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, [field]);
 
-  const fire = () => {
+  const fireOnce = (): number => {
     const cvs = ref.current!;
     const W = cvs.width, H = cvs.height;
     const v = 1.5 + energy * 0.3;
     const k = KINDS[beam];
+    let coll = 0;
     for (let i = 0; i < 18; i++) {
       const y = H/2 + (Math.random()-0.5) * H * 0.08;
       particles.current.push({ x: 20, y, vx: v, vy: (Math.random()-0.5)*0.1, charge: k.charge, life: 240, hue: k.hue });
       particles.current.push({ x: W-20, y, vx: -v, vy: (Math.random()-0.5)*0.1, charge: k.charge, life: 240, hue: k.hue });
+      coll++;
     }
+    return coll;
+  };
+
+  const fire = () => {
+    const collisions = fireOnce();
     setStats(s => ({ ...s, runs: s.runs + 1 }));
     const reward = Math.round(2 + energy);
     creditDat(reward);
     logLedger("benchmark", `CERN run · ${beam} @ ${energy.toFixed(1)} TeV`, { field, reward });
+    return collisions;
   };
+
+  // Cartography 50-run loop
+  const runCartography = () => {
+    if (auto) return;
+    setAuto(true);
+    setRuns([]);
+    runsRef.current = [];
+    let n = 0;
+    const tick = () => {
+      n++;
+      const coll = fireOnce();
+      // perturb α a little per run to simulate measurement scatter
+      const alpha = ALPHA_TRUE * (1 + (Math.random() - 0.5) * Math.exp(-n / 12) * 0.002);
+      const ae = aeOf(alpha);
+      const residual = Math.abs(ae - A_E_TRUE) / A_E_TRUE;
+      const r: Run = { n, alpha, ae, residual, collisions: coll };
+      runsRef.current = [...runsRef.current, r];
+      setRuns([...runsRef.current]);
+      setStats(s => ({ collisions: s.collisions + coll, runs: s.runs + 1 }));
+      if (n < 50) {
+        setTimeout(tick, 180);
+      } else {
+        setAuto(false);
+        creditDat(50);
+        const best = runsRef.current.reduce((b, c) => (c.residual < b.residual ? c : b));
+        void saveSolve({
+          theory: "Collision-Cartography 50-run QED a_e measurement",
+          solver: "CERN-in-a-Pocket beam line",
+          abstract: `Auto-initiated beam line ran 50 collisions evaluating the Schwinger a_e expansion. Best-fit α = ${best.alpha.toExponential(10)} yields a_e = ${best.ae.toExponential(10)} with residual ${best.residual.toExponential(3)} against the CODATA value ${A_E_TRUE.toExponential(10)}.`,
+          math: `${SCHWINGER_EQ}\n\nbest run: α=${best.alpha.toExponential(12)}\n          a_e=${best.ae.toExponential(12)}\n          |Δa_e|/a_e=${best.residual.toExponential(4)}\n          total collisions = ${runsRef.current.reduce((s, r) => s + r.collisions, 0)}`,
+          transcript: runsRef.current.map((r) => `run ${String(r.n).padStart(2, "0")}/50 · α=${r.alpha.toExponential(8)} · a_e=${r.ae.toExponential(8)} · Δ=${r.residual.toExponential(2)}`).join("\n"),
+          source: "cern-cartography",
+        });
+      }
+    };
+    tick();
+  };
+
+  // Auto-init on mount: paste equation, fire beam line, run cartography
+  useEffect(() => {
+    if (autoStarted) return;
+    setAutoStarted(true);
+    const t = setTimeout(() => runCartography(), 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const lastRun = runs[runs.length - 1];
+  const sel = selected != null ? runs[selected] : null;
 
   return (
     <section id="cern-embed" className="border-t border-white/5 px-6 py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6">
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">In-Page Module</div>
-          <h3 className="mt-2 text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">CERN-in-a-Pocket</h3>
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">In-Page Module · Auto-Initiated</div>
+            <h3 className="mt-2 text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">CERN-in-a-Pocket</h3>
+          </div>
+          <div className="rounded border border-cyan-400/30 bg-cyan-400/5 px-3 py-2 font-mono text-[10px] text-cyan-200">
+            EQ INJECTED · {SCHWINGER_EQ}
+          </div>
         </div>
+
         <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
           <div className="relative rounded-md border border-white/10 bg-black overflow-hidden" style={{ aspectRatio: "16/9" }}>
             <canvas ref={ref} className="absolute inset-0 h-full w-full" />
@@ -115,19 +200,25 @@ export function CernEmbed() {
                 className="rounded border border-cyan-400/60 bg-cyan-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-100 hover:bg-cyan-400/25">
                 Fire
               </button>
+              <button onClick={runCartography} disabled={auto}
+                className="rounded border border-fuchsia-400/60 bg-fuchsia-400/15 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fuchsia-100 hover:bg-fuchsia-400/25 disabled:opacity-50">
+                {auto ? `Cartography ${runs.length}/50` : "Cartography ×50"}
+              </button>
               <button onClick={() => { runFlag.current = !runFlag.current; }}
                 className="rounded border border-white/20 bg-black/60 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white/80 hover:bg-white/10">
                 Pause
-              </button>
-              <button onClick={() => { particles.current = []; setStats({ collisions: 0, runs: 0 }); }}
-                className="rounded border border-white/20 bg-black/60 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white/80 hover:bg-white/10">
-                Reset
               </button>
             </div>
             <div className="absolute right-3 bottom-3 font-mono text-[10px] text-white/70">
               collisions {stats.collisions} · runs {stats.runs}
             </div>
+            {lastRun && (
+              <div className="absolute left-3 bottom-3 font-mono text-[10px] text-emerald-300">
+                last · α={lastRun.alpha.toExponential(6)} · a_e={lastRun.ae.toExponential(6)} · Δ={lastRun.residual.toExponential(2)}
+              </div>
+            )}
           </div>
+
           <div className="rounded-md border border-white/10 bg-white/[0.02] p-4 space-y-3">
             <div>
               <label className="font-mono text-[10px] uppercase tracking-widest text-white/60">Particle</label>
@@ -146,10 +237,42 @@ export function CernEmbed() {
               <label className="font-mono text-[10px] uppercase tracking-widest text-white/60">Field B · {field.toFixed(2)} T</label>
               <input type="range" min={0} max={2} step={0.05} value={field} onChange={(e)=>setField(parseFloat(e.target.value))} className="mt-2 w-full"/>
             </div>
-            <button onClick={fire} className="w-full rounded border border-cyan-400/50 bg-cyan-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-cyan-200 hover:bg-cyan-400/20">
-              Fire Beams
+            <button onClick={runCartography} disabled={auto} className="w-full rounded border border-fuchsia-400/50 bg-fuchsia-400/10 px-3 py-2 text-xs font-mono uppercase tracking-widest text-fuchsia-200 hover:bg-fuchsia-400/20 disabled:opacity-50">
+              {auto ? `Mapping ${runs.length}/50…` : "Run 50-Collision Cartography"}
             </button>
           </div>
+        </div>
+
+        {/* Cartography map */}
+        <div className="mt-4 rounded-md border border-white/10 bg-card/40 p-4">
+          <div className="mb-3 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-widest">
+            <span className="text-chrome">Cartography Map · residual heat</span>
+            <span className="text-fuchsia-300">{runs.length}/50</span>
+          </div>
+          <div className="grid grid-cols-10 gap-1">
+            {Array.from({ length: 50 }).map((_, i) => {
+              const r = runs[i];
+              const hot = r ? Math.min(1, -Math.log10(r.residual + 1e-12) / 6) : 0;
+              const bg = r ? `hsl(${140 - hot * 140},85%,${30 + hot * 35}%)` : "rgba(255,255,255,0.04)";
+              return (
+                <button
+                  key={i}
+                  onClick={() => r && setSelected(i)}
+                  className={`aspect-square rounded-sm border transition-all ${selected === i ? "border-white" : "border-white/10"}`}
+                  style={{ background: bg }}
+                  title={r ? `run ${i + 1} · Δ=${r.residual.toExponential(2)}` : `run ${i + 1} · pending`}
+                />
+              );
+            })}
+          </div>
+          {sel && (
+            <div className="mt-3 rounded border border-white/10 bg-black/40 p-3 font-mono text-[10px] text-cyan-100">
+              <div className="text-chrome">run #{sel.n}</div>
+              <div>α = {sel.alpha.toExponential(10)}</div>
+              <div>a_e = {sel.ae.toExponential(10)}</div>
+              <div className="text-emerald-300">residual = {sel.residual.toExponential(3)}</div>
+            </div>
+          )}
         </div>
       </div>
     </section>

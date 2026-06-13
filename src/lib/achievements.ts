@@ -1,6 +1,7 @@
 // Achievements store — observes ledger + DAT + custom events to unlock badges.
 import { readLedger, subscribeLedger, logLedger } from "./learning-ledger";
 import { readDat, subscribeDat, creditDat } from "./dat-tokens";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Achievement = {
   id: string;

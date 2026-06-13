@@ -485,9 +485,12 @@ function Hero() {
             <button className="bg-foreground px-7 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-background transition-colors hover:bg-chrome">
               Access Protocol
             </button>
-            <button className="border border-white/15 px-7 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/5">
+            <Link
+              to="/ledger"
+              className="border border-white/15 px-7 py-4 font-mono text-[11px] uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/5"
+            >
               Review Ledger
-            </button>
+            </Link>
           </div>
         </div>
       </div>

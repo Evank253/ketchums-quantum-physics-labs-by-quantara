@@ -92,6 +92,39 @@ export type Database = {
         }
         Relationships: []
       }
+      solved_theories: {
+        Row: {
+          abstract: string | null
+          created_at: string
+          id: string
+          math: string | null
+          solver: string
+          source: string
+          theory: string
+          transcript: string | null
+        }
+        Insert: {
+          abstract?: string | null
+          created_at?: string
+          id?: string
+          math?: string | null
+          solver?: string
+          source?: string
+          theory: string
+          transcript?: string | null
+        }
+        Update: {
+          abstract?: string | null
+          created_at?: string
+          id?: string
+          math?: string | null
+          solver?: string
+          source?: string
+          theory?: string
+          transcript?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

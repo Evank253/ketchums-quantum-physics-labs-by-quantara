@@ -188,6 +188,37 @@ export type DispatchRow = {
   body: string;
 };
 
+function arxivLetter(theory: string, solver: string, abstract?: string): { subject: string; body: string } {
+  const sub = buildArxivSubmission({ theory, solver, abstract });
+  const subject = `arXiv auto-log — ${sub.primary_category} — ${theory}`.slice(0, 300);
+  const body =
+`To the arXiv moderation team,
+
+Auto-logged submission record from the Quantara Solved-Theories ledger.
+The full derivation and 12-point CERN-in-a-Pocket precision sweep are
+archived publicly; the operator will file the formal submission via the
+endorsed account at https://arxiv.org/submit using the record below.
+
+  Title             : ${sub.title}
+  Authors           : ${sub.authors}
+  Primary category  : ${sub.primary_category}
+  Comments          : ${sub.comments}
+  Stamp             : ${new Date().toISOString()}
+
+Abstract
+--------
+${sub.abstract}
+
+Respectfully,
+
+${solver}
+Quantara Platform
+Email : ${OPERATOR_EMAIL}
+Phone : ${OPERATOR_PHONE}
+`;
+  return { subject, body };
+}
+
 export function buildDispatchRows(opts: {
   theory: string;
   solver: string;
@@ -196,15 +227,19 @@ export function buildDispatchRows(opts: {
 }): DispatchRow[] {
   const { theory, solver, abstract } = opts;
   const inst = institutionLetter(theory, solver, abstract);
-  const rows: DispatchRow[] = INSTITUTIONS.map((r) => ({
-    theory,
-    solver,
-    recipient: r.name,
-    recipient_kind: "institution",
-    email: r.email,
-    subject: inst.subject,
-    body: inst.body,
-  }));
+  const arx = arxivLetter(theory, solver, abstract);
+  const rows: DispatchRow[] = INSTITUTIONS.map((r) => {
+    const isArxiv = r.name.startsWith("arXiv");
+    return {
+      theory,
+      solver,
+      recipient: r.name,
+      recipient_kind: "institution",
+      email: r.email,
+      subject: isArxiv ? arx.subject : inst.subject,
+      body: isArxiv ? arx.body : inst.body,
+    };
+  });
   if (opts.nobel) {
     const pr = pressRelease(theory, solver, abstract);
     for (const r of OUTLETS) {
@@ -221,6 +256,7 @@ export function buildDispatchRows(opts: {
   }
   return rows;
 }
+
 
 /** Best-effort enqueue. Safe to call repeatedly: unique (theory, email). */
 export async function autoDispatch(opts: {

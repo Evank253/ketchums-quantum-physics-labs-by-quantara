@@ -1,9 +1,12 @@
 // Solved-theory archive: writes to localStorage immediately AND fires an
-// insert into Lovable Cloud (public.solved_theories). Read merges both.
+// insert into Lovable Cloud (public.solved_theories) via a server function
+// that validates the solver identity and source allowlist.
 import { supabase } from "@/integrations/supabase/client";
 import { getOperator, stampNow } from "@/lib/operator-identity";
 import { runCernSweep, appendReportToTranscript } from "@/lib/cern-pocket";
 import { autoDispatch } from "@/lib/notification-dispatch";
+import { recordSolveServer } from "@/lib/ledger-writes.functions";
+
 
 
 export type ArchivedSolve = {

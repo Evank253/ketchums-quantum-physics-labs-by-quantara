@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useWorld } from "@/lib/world-store";
 import { ENGINES, ENGINE_ORDER, type EngineId } from "@/lib/physics-engines";
-import { supabase } from "@/integrations/supabase/client";
+
 
 // ---------------------------------------------------------------------------
 // QED COMPUTER — operator-facing terminal.

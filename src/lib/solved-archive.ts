@@ -1,9 +1,12 @@
 // Solved-theory archive: writes to localStorage immediately AND fires an
-// insert into Lovable Cloud (public.solved_theories). Read merges both.
+// insert into Lovable Cloud (public.solved_theories) via a server function
+// that validates the solver identity and source allowlist.
 import { supabase } from "@/integrations/supabase/client";
 import { getOperator, stampNow } from "@/lib/operator-identity";
 import { runCernSweep, appendReportToTranscript } from "@/lib/cern-pocket";
 import { autoDispatch } from "@/lib/notification-dispatch";
+import { recordSolveServer } from "@/lib/ledger-writes.functions";
+
 
 
 export type ArchivedSolve = {
@@ -83,24 +86,20 @@ export async function saveSolve(input: {
   const list = readLocal();
   writeLocal([entry, ...list]);
 
-  // best-effort DB insert
+  // best-effort DB insert via server function (RLS blocks anon writes)
   try {
-    const { data, error } = await supabase
-      .from("solved_theories")
-      .upsert(
-        {
-          theory: entry.theory,
-          solver: entry.solver,
-          abstract: entry.abstract || null,
-          math: entry.math || null,
-          transcript: entry.transcript || null,
-          source: entry.source,
-        },
-        { onConflict: "theory" },
-      )
-      .select()
-      .single();
-    if (!error && data) {
+    const res = await recordSolveServer({
+      data: {
+        theory: entry.theory,
+        abstract: entry.abstract || null,
+        math: entry.math || null,
+        transcript: entry.transcript || null,
+        source: entry.source,
+      },
+    });
+    const data: any = res?.row;
+    if (data) {
+
       // upgrade local entry's id to the DB id
       const upgraded: ArchivedSolve = {
         ...entry,

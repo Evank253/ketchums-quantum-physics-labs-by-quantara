@@ -52,22 +52,16 @@ function getOperator(): string | null {
   try { return window.localStorage.getItem(OPERATOR_KEY) || null; } catch { return null; }
 }
 
-// Fire-and-forget public record. Safe to call repeatedly; we only call it
-// once per local unlock and the table is append-only / publicly readable.
+// Fire-and-forget public record via server function (validates against the
+// canonical ACHIEVEMENTS catalog and stamps the server-side operator).
 async function publishAchievement(a: Achievement) {
   try {
-    await supabase.from("public_achievements").insert({
-      achievement_id: a.id,
-      title: a.title,
-      description: a.desc,
-      tier: a.tier,
-      reward: a.reward,
-      operator: getOperator(),
-    });
+    await recordAchievementServer({ data: { achievement_id: a.id } });
   } catch {
     // Silent — local unlock still stands; will not retry to avoid spam.
   }
 }
+
 
 let evaluating = false;
 let scheduled = false;

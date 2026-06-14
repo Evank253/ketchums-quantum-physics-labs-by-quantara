@@ -96,7 +96,7 @@ export const recordAchievementServer = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => AchievementInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const a = ACHIEVEMENTS.find((x) => x.id === data.achievement_id);
+    const a = ACHIEVEMENTS.find((x: { id: string }) => x.id === data.achievement_id);
     if (!a) throw new Error("Unknown achievement");
     const { error } = await supabaseAdmin.from("public_achievements").insert({
       achievement_id: a.id,

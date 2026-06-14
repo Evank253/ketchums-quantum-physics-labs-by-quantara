@@ -258,28 +258,27 @@ export function buildDispatchRows(opts: {
 }
 
 
-/** Best-effort enqueue. Safe to call repeatedly: unique (theory, email). */
+/** Best-effort enqueue via server function. The browser cannot write to
+ *  notification_dispatch directly (RLS denies anon INSERT); the server
+ *  function re-derives recipients from the hard-coded allowlist. */
 export async function autoDispatch(opts: {
   theory: string;
   solver: string;
   abstract?: string;
   transcript?: string;
 }): Promise<{ queued: number; nobel: boolean }> {
-  const nobel = isNobelTier(opts);
-  const rows = buildDispatchRows({
-    theory: opts.theory,
-    solver: opts.solver,
-    abstract: opts.abstract,
-    nobel,
-  });
   try {
-    const { error } = await supabase
-      .from("notification_dispatch")
-      .upsert(rows, { onConflict: "theory,email", ignoreDuplicates: true });
-    if (error) return { queued: 0, nobel };
-    return { queued: rows.length, nobel };
+    const { enqueueDispatchServer } = await import("@/lib/ledger-writes.functions");
+    const res = await enqueueDispatchServer({
+      data: {
+        theory: opts.theory,
+        abstract: opts.abstract ?? null,
+        transcript: opts.transcript ?? null,
+      },
+    });
+    return { queued: res.queued ?? 0, nobel: !!res.nobel };
   } catch {
-    return { queued: 0, nobel };
+    return { queued: 0, nobel: isNobelTier(opts) };
   }
 }
 
@@ -291,19 +290,10 @@ export async function dispatchStats(): Promise<{
   press: number;
 }> {
   try {
-    const { data } = await supabase
-      .from("notification_dispatch")
-      .select("status, recipient_kind")
-      .limit(10000);
-    const rows = data || [];
-    return {
-      total: rows.length,
-      queued: rows.filter((r: any) => r.status === "queued").length,
-      sent: rows.filter((r: any) => r.status === "sent").length,
-      failed: rows.filter((r: any) => r.status === "failed").length,
-      press: rows.filter((r: any) => r.recipient_kind === "press").length,
-    };
+    const { getDispatchStatsServer } = await import("@/lib/ledger-writes.functions");
+    return await getDispatchStatsServer();
   } catch {
     return { total: 0, queued: 0, sent: 0, failed: 0, press: 0 };
   }
 }
+

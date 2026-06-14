@@ -86,24 +86,20 @@ export async function saveSolve(input: {
   const list = readLocal();
   writeLocal([entry, ...list]);
 
-  // best-effort DB insert
+  // best-effort DB insert via server function (RLS blocks anon writes)
   try {
-    const { data, error } = await supabase
-      .from("solved_theories")
-      .upsert(
-        {
-          theory: entry.theory,
-          solver: entry.solver,
-          abstract: entry.abstract || null,
-          math: entry.math || null,
-          transcript: entry.transcript || null,
-          source: entry.source,
-        },
-        { onConflict: "theory" },
-      )
-      .select()
-      .single();
-    if (!error && data) {
+    const res = await recordSolveServer({
+      data: {
+        theory: entry.theory,
+        abstract: entry.abstract || null,
+        math: entry.math || null,
+        transcript: entry.transcript || null,
+        source: entry.source,
+      },
+    });
+    const data: any = res?.row;
+    if (data) {
+
       // upgrade local entry's id to the DB id
       const upgraded: ArchivedSolve = {
         ...entry,

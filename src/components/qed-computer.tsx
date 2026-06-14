@@ -639,17 +639,19 @@ END — ${new Date().toISOString()}
     }
     let saveNote = "// saved to public solved_theories ledger";
     try {
-      const { error } = await supabase.from("solved_theories").insert({
-        theory: built.title,
-        solver: `Quantara ${eng.name} Engine`,
-        abstract: built.abstract.slice(0, 4000),
-        math: built.doc.slice(0, 16000),
-        source: `engine:${eng.id}`,
+      const { recordSolveServer } = await import("@/lib/ledger-writes.functions");
+      await recordSolveServer({
+        data: {
+          theory: built.title,
+          abstract: built.abstract.slice(0, 4000),
+          math: built.doc.slice(0, 16000),
+          source: `engine:${eng.id}`,
+        },
       });
-      if (error) saveNote = `// save failed: ${error.message}`;
     } catch (e: any) {
       saveNote = `// save error: ${e?.message ?? e}`;
     }
+
     push({ kind: "sys", text: `// full ${eng.name} derivation copied to clipboard (${(built.doc.length / 1024).toFixed(1)} KB)` });
     push({ kind: "sys", text: saveNote });
     setSavedMsg(`${eng.name} solved · copied · saved`);

@@ -2,7 +2,7 @@
 // institutions; Nobel-tier solves additionally fire a press release to 17
 // major outlets. Rows live in public.notification_dispatch and are drained
 // by the send worker once an email sending domain is verified.
-import { supabase } from "@/integrations/supabase/client";
+
 
 export const OPERATOR_EMAIL = "Evan.ketchum2026@outlook.com";
 export const OPERATOR_PHONE = "+1 (253) 780-5928";

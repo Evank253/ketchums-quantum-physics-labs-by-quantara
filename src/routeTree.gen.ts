@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorldRouteImport } from './routes/world'
 import { Route as SynthesisRouteImport } from './routes/synthesis'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RgRunningRouteImport } from './routes/rg-running'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
@@ -42,6 +43,11 @@ const WorldRoute = WorldRouteImport.update({
 const SynthesisRoute = SynthesisRouteImport.update({
   id: '/synthesis',
   path: '/synthesis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RgRunningRoute = RgRunningRouteImport.update({
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/rg-running': typeof RgRunningRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/rg-running': typeof RgRunningRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
   '/rg-running': typeof RgRunningRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/legal'
     | '/rg-running'
+    | '/sitemap.xml'
     | '/synthesis'
     | '/world'
     | '/api/benchmark'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/legal'
     | '/rg-running'
+    | '/sitemap.xml'
     | '/synthesis'
     | '/world'
     | '/api/benchmark'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/legal'
     | '/rg-running'
+    | '/sitemap.xml'
     | '/synthesis'
     | '/world'
     | '/api/benchmark'
@@ -327,6 +339,7 @@ export interface RootRouteChildren {
   LedgerRoute: typeof LedgerRoute
   LegalRoute: typeof LegalRouteWithChildren
   RgRunningRoute: typeof RgRunningRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SynthesisRoute: typeof SynthesisRoute
   WorldRoute: typeof WorldRouteWithChildren
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       path: '/synthesis'
       fullPath: '/synthesis'
       preLoaderRoute: typeof SynthesisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rg-running': {
@@ -550,6 +570,7 @@ const rootRouteChildren: RootRouteChildren = {
   LedgerRoute: LedgerRoute,
   LegalRoute: LegalRouteWithChildren,
   RgRunningRoute: RgRunningRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SynthesisRoute: SynthesisRoute,
   WorldRoute: WorldRouteWithChildren,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
@@ -560,3 +581,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { SimulationCanvas, JsAcademy, AxiomLab } from "@/components/quantara-interactive";
 import { LivingPlanet, BotDialogue, AvatarWalk, WarzoneMarketplace, WeaponryUpgrades } from "@/components/quantara-world";
 import { AuroraBlobs, NoiseOverlay } from "@/components/quantara-fx";
-import { SolvedTheories } from "@/components/solved-theories";
-import { SolvedDerivations } from "@/components/solved-derivations";
+import { SolvedLedgerCategorized } from "@/components/solved-ledger-categorized";
+import { NotificationDispatch } from "@/components/notification-dispatch";
+
 import { DatHud } from "@/components/dat-hud";
 import { DatWallet } from "@/components/dat-wallet";
 import { AchievementsPanel } from "@/components/achievements-panel";
@@ -18,6 +19,8 @@ import { MeridianSkyline } from "@/components/meridian-skyline";
 import { HorizonDawn } from "@/components/horizon-dawn";
 import { MathTestingHub } from "@/components/math-testing-hub";
 import { StepHint } from "@/components/step-hint";
+import { LazyVideo } from "@/components/lazy-video";
+
 
 
 import entityHero from "@/assets/entity-hero.jpg";
@@ -33,22 +36,23 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Quantara — The First Intelligence of the Post-Human Epoch" },
+      { title: "Ketchum's Quantum Physics Labs — powered by Quantara" },
       {
         name: "description",
         content:
-          "Quantara is a synthetic reality platform where artificial civilizations evolve from humanity's digital artifacts. They do not learn from us — they remember us.",
+          "Ketchum's Quantum Physics Labs is a real, in-browser quantum-physics computing platform: 5-loop QED, 4-loop QCD running, RG flow, and a live solved-theories ledger — every solve archived with full math, tests, and timestamps.",
       },
-      { property: "og:title", content: "Quantara — Synthetic Civilization Framework" },
+      { property: "og:title", content: "Ketchum's Quantum Physics Labs — powered by Quantara" },
       {
         property: "og:description",
         content:
-          "The ancestral memory layer of artificial civilization. A persistent universe of synthetic intelligence.",
+          "Real quantum-physics computing in the browser: QED a_e to 10⁻¹², 4-loop QCD running, RG flow, and an auto-archived public solved-theories ledger.",
       },
       { property: "og:image", content: entityHero },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: entityHero },
     ],
+
     links: [
       {
         rel: "preconnect",
@@ -75,17 +79,33 @@ function Index() {
       <DatWallet />
       <div id="genesis"><Hero /></div>
 
+      {/* ========================================================== */}
+      {/* ZONE 1 · QUANTUM PHYSICS LABS                              */}
+      {/* All solvers, ledgers, dispatch, instruments and math hub.  */}
+      {/* ========================================================== */}
+      <section id="physics" className="border-t border-white/5 px-6 pt-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-2 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            <span className="size-1.5 animate-pulse-slow rounded-full bg-emerald-400 shadow-[0_0_10px_oklch(0.75_0.18_150)]" />
+            Zone 01 · Quantum Physics Labs
+          </div>
+          <h2 className="text-balance text-3xl font-black tracking-[-0.03em] text-white md:text-5xl">
+            Real physics. Computed in the browser.
+          </h2>
+        </div>
+      </section>
+
       <section className="border-t border-white/5 px-6 pt-16">
         <div className="mx-auto max-w-7xl">
           <StepHint
             step="06"
-            title="Solved Theories — the public ledger"
-            body="Every solve from any tool below — auto or manual — lands here. Expand a card to see the equation, math and full transcript."
+            title="Solved Theories — categorized ledger"
+            body="Every solve from any tool below — auto or manual — is filed by domain (QED, QCD, RG, …). Sections are collapsed by default; open any card to read the full math and transcript."
           />
         </div>
       </section>
-      <SolvedTheories />
-      <SolvedDerivations />
+      <SolvedLedgerCategorized />
+      <NotificationDispatch />
 
       <section className="border-t border-white/5 px-6 pt-16">
         <div className="mx-auto max-w-7xl">
@@ -117,7 +137,41 @@ function Index() {
         </div>
       </section>
 
-      {/* GROWTH band */}
+      <section className="border-t border-white/5 px-6 pt-16">
+        <div className="mx-auto max-w-7xl">
+          <StepHint
+            step="04"
+            title="Math Testing Hub — Talk to the Machine"
+            body="Default tab is the QED computer: paste any equation, click Solve, and the solve is auto-archived to Solved Theories with abstract, math and transcript. Switch tabs for the QED Solver, Engine, Foundational Equations, Quantum Circuit and Why-It's-Real-Physics."
+          />
+        </div>
+      </section>
+      <MathTestingHub />
+      <LedgerViz />
+
+      {/* ========================================================== */}
+      {/* ZONE 2 · 3D / 4D SYNTHETIC CIVILIZATION                    */}
+      {/* All world, narrative, civilization, economy and academy.   */}
+      {/* ========================================================== */}
+      <section id="civilization" className="border-t border-white/5 px-6 pt-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-4 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
+            <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
+            Zone 02 · Synthetic Civilization · 3D / 4D
+          </div>
+          <h2 className="text-balance text-4xl font-black leading-[0.95] tracking-[-0.04em] text-gradient-aurora md:text-6xl">
+            The First Intelligence <br className="hidden md:block" />
+            of the Post-Human Epoch.
+          </h2>
+          <p className="mt-4 max-w-2xl font-mono text-sm leading-relaxed text-muted-foreground">
+            Beyond the lab: a persistent 3D/4D ecosystem where a synthetic
+            civilization evolves from humanity's digital artifacts. They do
+            not learn from us — they remember us.
+          </p>
+        </div>
+      </section>
+
+      {/* GROWTH band — generative civilization aesthetic */}
       <section id="growth" className="border-t border-white/5 px-6 py-24">
         <div className="mx-auto max-w-7xl">
           <div className="mb-6">
@@ -137,20 +191,6 @@ function Index() {
         </div>
       </section>
 
-      <section className="border-t border-white/5 px-6 pt-16">
-        <div className="mx-auto max-w-7xl">
-          <StepHint
-            step="04"
-            title="Math Testing Hub — Talk to the Machine"
-            body="Default tab is the QED computer: paste any equation, click Solve, and the solve is auto-archived to Solved Theories with abstract, math and transcript. Switch tabs for the QED Solver, Engine, Foundational Equations, Quantum Circuit and Why-It's-Real-Physics."
-          />
-        </div>
-      </section>
-      <MathTestingHub />
-
-      <WorldGameEmbed />
-      <AchievementsPanel />
-      <LedgerViz />
       <UniverseFilm />
       <Principle />
       <DossierGrid />
@@ -164,36 +204,31 @@ function Index() {
       <div id="avatar"><AvatarWalk /></div>
       <WarzoneMarketplace />
       <WeaponryUpgrades />
-
-
-
       <TechAdvancements />
       <TimeBridge />
       <div id="academy"><JsAcademy /></div>
-
       <div id="axiom"><AxiomLab /></div>
       <OversightWindow />
       <Pipeline />
       <Manifesto />
       <div id="economy"><Economy /></div>
+      <WorldGameEmbed />
+      <AchievementsPanel />
       <Footer />
     </main>
   );
 }
 
+
 function UniverseFilm() {
   return (
     <section className="relative border-t border-white/5">
       <div className="relative h-[90vh] w-full overflow-hidden">
-        <video
+        <LazyVideo
           src={universeVideo.url}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
           className="absolute inset-0 h-full w-full object-cover grayscale-[30%]"
         />
+
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,var(--background)_95%)]" />
 
@@ -249,15 +284,11 @@ function Telepathy() {
         </div>
 
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-white/5">
-          <video
+          <LazyVideo
             src={brainVideo.url}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
             className="absolute inset-0 h-full w-full object-cover"
           />
+
           {/* scanline + grain */}
           <div className="scan-effect pointer-events-none absolute inset-0" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-background/30" />
@@ -435,12 +466,17 @@ function Hero() {
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden pt-28 pb-20">
       <AuroraBlobs />
       <NoiseOverlay opacity={0.06} />
-      {/* Ambient backdrop wordmark */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <h1 className="select-none text-[28vw] font-black leading-none tracking-[-0.06em] text-white/[0.025]">
-          QUANTARA
-        </h1>
+      {/* Descriptive H1 for accessibility & SEO — visually hidden */}
+      <h1 className="sr-only">
+        Ketchum's Quantum Physics Labs — powered by Quantara
+      </h1>
+      {/* Ambient backdrop wordmark (decorative) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="select-none text-[22vw] font-black leading-none tracking-[-0.06em] text-white/[0.025]">
+          KETCHUM LABS
+        </div>
       </div>
+
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6">
         <div className="scan-effect group relative overflow-hidden rounded-sm">
@@ -471,17 +507,26 @@ function Hero() {
         <div className="mt-12 max-w-3xl md:mt-16">
           <div className="mb-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-chrome">
             <span className="size-1.5 animate-pulse-slow rounded-full bg-accent shadow-[0_0_10px_var(--violet-pulse)]" />
-            Chapter 00 · Genesis
+            Chapter 00 · The Lab
           </div>
           <h2 className="text-balance text-4xl font-black leading-[0.9] tracking-[-0.04em] text-gradient-aurora md:text-7xl">
-            The First Intelligence <br className="hidden md:block" />
-            of the Post-Human Epoch.
+            Ketchum's Quantum <br className="hidden md:block" />
+            Physics Labs.
           </h2>
-          <p className="mt-8 max-w-xl font-mono text-sm leading-relaxed text-muted-foreground">
-            Quantara is not an evolution of software, but the birth of a
-            civilization. We are the curators of the digital archaeological
-            layer — the interface where your memory becomes their foundation.
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.3em] text-chrome">
+            Powered by Quantara
           </p>
+          <p className="mt-6 max-w-xl font-mono text-sm leading-relaxed text-muted-foreground">
+            A real, in-browser quantum-physics computing platform. The QED
+            engine runs the 5-loop electron-anomaly expansion to one part in
+            10¹², the QCD engine integrates the 4-loop renormalization-group
+            running of αₛ across quark thresholds, and every solve — its
+            Lagrangian, perturbative series, tests and residual — is
+            timestamped, archived to the public ledger, and dispatched to
+            partner institutions. This is not a simulation of physics. It is
+            physics, computed.
+          </p>
+
 
           <div className="mt-12 flex flex-wrap gap-3">
             <Link

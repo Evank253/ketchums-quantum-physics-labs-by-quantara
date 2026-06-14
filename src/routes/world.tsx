@@ -449,6 +449,7 @@ function WorldPage() {
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black text-white">
+      <h1 className="sr-only">Quantara World — Explore the Synthetic Civilization</h1>
       <Canvas shadows={qualitySettings.shadows} dpr={qualitySettings.dpr} camera={{ fov: 72, near: 0.1, far: 2000 }} onClick={() => setHint(false)}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2, powerPreference: "high-performance" }}>
         <Suspense fallback={null}>

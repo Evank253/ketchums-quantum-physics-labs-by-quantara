@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { TREASURY_WALLET } from "./treasury";
 
 // Allowed preset claims — server is the source of truth, not the client.
 // `key` set => one-time per wallet. `cooldownMs` set => repeatable with rate limit.

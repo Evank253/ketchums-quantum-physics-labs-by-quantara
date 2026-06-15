@@ -1,88 +1,103 @@
-# Quantara Platform Terms of Use
+# Terms of Use — Ketchum's Quantum Physics Labs · Quantara
 
-**Last updated:** 2026-05-27  
-**Creator:** Evan Ketchum
+**Copyright © 2026 Evan Ketchum. All Rights Reserved.**
+**Version 2.0 — Effective 2026-06-15**
 
-These Terms govern your use of the Quantara platform, including:
+These Terms govern access to and use of **Ketchum's Quantum Physics Labs**,
+the **Quantara** platform, the **$DAT** token system, and every engine,
+world, ledger, dataset, document, and asset they contain (the **"Platform"**).
 
-- the Quantara QED Engine,
-- the Quantara World simulation (3D),
-- the Quantara Research Atlas (4D),
-- the ledger, run cards, and creator records,
-- and all associated code, assets, and documentation (together, the "Platform").
-
-By accessing or using the Platform, you agree to these Terms.
+By loading any page of the Platform you agree to these Terms **and** to the
+**LICENSE.md** (All Rights Reserved). If you do not agree, you must leave.
 
 ---
 
 ## 1. Ownership
 
-The Platform, its design, source code, simulation logic, QED engine, world mechanics, self-healing swarm architecture, 3D/4D multiversal bridge logic, and documentation are owned by:
+The Platform — including code, architecture, designs, names, logos, copy,
+math derivations, solved theories, ledger entries, world data, 3D/4D
+scenes, the self-healing swarm protocols, and the trademarks listed in
+LICENSE.md §2 — is the exclusive property of **Evan Ketchum**. Nothing on
+this site transfers any ownership or grants any license.
 
-**Creator: Evan Ketchum**
+## 2. Permitted Use
 
-Except where otherwise stated, all intellectual property in the Platform remains with the Creator.
+You may view the published Platform from a standard web browser for
+**personal, non-commercial, non-derivative evaluation only**. Every other
+use — including copying, redistribution, deployment, AI training,
+commercial use, academic use, derivative works, and reverse engineering —
+requires a separate signed agreement with the Creator.
 
----
+## 3. Prohibited Use (non-exhaustive)
 
-## 2. Scope of Use
+- Scraping, mirroring, or systematically downloading the Platform.
+- Using the Platform or any portion as training, fine-tuning, RAG,
+  embedding, distillation, or evaluation data for any AI / ML / LLM /
+  diffusion / statistical model. This is an explicit TDM opt-out.
+- Removing, obscuring, or altering copyright, trademark, or attribution.
+- Operating the Platform on behalf of an institution, company, government
+  body, or paid program without a Commercial License.
+- Interfering with security, rate limits, authentication, the $DAT minter,
+  or the audit log.
 
-There are two main use categories:
+## 4. Breakthroughs, Ledger, and $DAT
 
-1. **Research / Non-Commercial Use** — individual researchers, students, personal experiments, or academic work not tied to a paid product or service.
-2. **Commercial / Institutional Use** — companies, government labs, or universities integrating Quantara into courses, infrastructure, paid products, or internal tools.
+- Scientific credit for results produced using the Platform belongs to the
+  researcher who produced them. Platform infrastructure remains the
+  Creator's.
+- The **$DAT** token is an experimental on-chain reward on Base Sepolia
+  testnet. It is **not a security**, **not investment advice**, **not
+  redeemable for money**, and has **no monetary value**. The Creator may
+  pause, reset, migrate, or rescind $DAT at any time.
+- A fixed **Creator Royalty** (default 10%) of every $DAT mint is sent
+  on-chain to the Creator Treasury wallet:
+  `0x15B3E693Ac1B76A49cdc61FCfe8696F6dd1586DD`.
 
-Research / Non-Commercial Use is permitted under the **Quantara Research License** (`LICENSE_RESEARCH.md`) provided you comply with attribution requirements and do not commercially exploit the Platform.
+## 5. Trademarks
 
-Commercial / Institutional Use is **only** permitted under a separate **Commercial License** (`LICENSE_COMMERCIAL.md`) or a signed agreement.
+Ketchum's Quantum Physics Labs™, Ketchum's QED / QCD / Quantara / World /
+Atlas / KVE / CERN-in-a-Pocket / Wave Tamer / Gate Smith Engine™, the
+Self-Healing Swarm™ (AHM / PCL), and Quantara™ are trademarks of Evan
+Ketchum. Unauthorized use is prohibited.
 
-If you are unsure which category you fall into, you must contact the Creator before use.
+## 6. No Warranty
 
----
+The Platform is provided **"AS IS" and "AS AVAILABLE"** without warranty
+of any kind, express or implied, including merchantability, fitness for a
+particular purpose, non-infringement, accuracy, or scientific validity.
+Simulations are simulations.
 
-## 3. No Physics Guarantees
+## 7. Limitation of Liability
 
-The Platform:
+To the maximum extent permitted by law, the Creator's aggregate liability
+for any claim arising out of the Platform is **USD $0**. The Creator is
+not liable for any indirect, incidental, consequential, special, or
+exemplary damages, lost profits, or loss of data.
 
-- implements a **perturbative QED engine** and a **simulation world**,
-- does **not** claim a closed-form or nonperturbative solution of QED,
-- does **not** constitute experimental validation, medical advice, or an approved scientific result.
+## 8. Indemnity
 
-All numerical outputs and "breakthroughs" must be independently reviewed by qualified experts.
+You agree to indemnify, defend, and hold harmless the Creator from any
+claim, damage, or expense (including attorneys' fees) arising from your
+use of the Platform or violation of these Terms.
 
----
+## 9. Enforcement, Remedies, and Liquidated Damages
 
-## 4. Breakthrough Logging and Creator Records
+See LICENSE.md §5. The Creator may seek injunctive relief, disgorgement of
+profits, statutory damages, and **liquidated damages of USD $25,000 per
+infringing copy or deployment** where law permits, in addition to any
+other available remedy.
 
-The Platform logs two classes of "breakthroughs":
+## 10. Governing Law & Venue
 
-1. **Autonomous Simulation Events** — procedurally generated outputs by the Quantara World bots. Always labelled as simulation.
-2. **External Contributions** — real computations or results supplied by human users or external systems and ingested into the ledger.
+These Terms are governed by the laws of the United States and the State
+of the Creator's domicile. Sole and exclusive venue is the state and
+federal courts of that jurisdiction.
 
-For each logged external contribution, the Platform automatically creates a **Creator Record** that attributes the Platform's infrastructure and architecture to Evan Ketchum, and the specific result to the named contributing user(s).
+## 11. Changes
 
----
+The Creator may update these Terms at any time. Continued use after a
+change constitutes acceptance of the new Terms.
 
-## 5. Data and Privacy
+## 12. Contact
 
-You are responsible for ensuring you have rights to upload any data you feed into the Platform. You agree not to upload personal data or confidential information without appropriate consent and lawful basis.
-
----
-
-## 6. Liability
-
-The Platform is provided "as is" without warranties. To the maximum extent permitted by law, the Creator is not liable for any damages resulting from your use of the Platform.
-
----
-
-## 7. Changes
-
-The Creator may update these Terms from time to time. Continued use after changes take effect constitutes acceptance.
-
----
-
-## 8. Contact
-
-For licensing, commercial use, or questions:
-
-**Email:** Evan.ketchum2026@outlook.com
+**Evan Ketchum** — **Evan.ketchum2026@outlook.com**

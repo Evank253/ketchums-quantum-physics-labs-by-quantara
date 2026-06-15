@@ -69,33 +69,47 @@ export function DatWallet() {
   const callTreasury = useServerFn(getTreasuryBalance);
   const wcEnabled = !!walletConnectProjectId();
 
+  // Active EIP-1193 provider: WalletConnect when connected, else window.ethereum.
+  const eth = useCallback(
+    () => (wcProvider as any) || (typeof window !== "undefined" ? window.ethereum : null),
+    [wcProvider],
+  );
+
   // Client-only mount flag to avoid SSR/CSR mismatch
   useEffect(() => {
     setHasWallet(typeof window !== "undefined" && !!window.ethereum);
   }, []);
 
+  // Load treasury balance once on mount (no wallet needed)
+  useEffect(() => {
+    callTreasury({}).then((t) => {
+      setTreasuryBalance(t.balance ?? "0");
+    }).catch(() => {});
+  }, [callTreasury]);
+
   const refreshAccounts = useCallback(async () => {
-    if (typeof window === "undefined" || !window.ethereum) return;
+    const provider = eth();
+    if (!provider) return;
     try {
-      const accts: string[] = await window.ethereum.request({ method: "eth_accounts" });
-      const cid: string = await window.ethereum.request({ method: "eth_chainId" });
+      const accts: string[] = await provider.request({ method: "eth_accounts" });
+      const cid: string = await provider.request({ method: "eth_chainId" });
       setChainId(cid);
       setAddress(accts?.[0] ?? null);
     } catch (e: any) { setErr(e?.message ?? String(e)); }
-  }, []);
+  }, [eth]);
 
   useEffect(() => {
-    if (!hasWallet) return;
-    refreshAccounts();
+    const provider = eth();
+    if (!provider) return;
     const onAcc = (accts: string[]) => setAddress(accts?.[0] ?? null);
     const onChain = (cid: string) => setChainId(cid);
-    window.ethereum.on?.("accountsChanged", onAcc);
-    window.ethereum.on?.("chainChanged", onChain);
+    provider.on?.("accountsChanged", onAcc);
+    provider.on?.("chainChanged", onChain);
     return () => {
-      window.ethereum?.removeListener?.("accountsChanged", onAcc);
-      window.ethereum?.removeListener?.("chainChanged", onChain);
+      provider.removeListener?.("accountsChanged", onAcc);
+      provider.removeListener?.("chainChanged", onChain);
     };
-  }, [hasWallet, refreshAccounts]);
+  }, [eth, wcProvider, hasWallet]);
 
   const loadServerState = useCallback(async (addr: string) => {
     try {
@@ -122,7 +136,7 @@ export function DatWallet() {
   const connect = async () => {
     setErr(null);
     if (!hasWallet) {
-      setErr("No browser wallet detected. Install MetaMask or another EIP-1193 wallet.");
+      setErr("No browser wallet detected. Install MetaMask, Rabby, or Coinbase Wallet (links above), or use WalletConnect to scan a QR with a mobile wallet.");
       return;
     }
     try {
@@ -133,19 +147,35 @@ export function DatWallet() {
     finally { setBusy(null); }
   };
 
+  const connectWC = async () => {
+    setErr(null);
+    try {
+      setBusy("wc");
+      const { provider, address: addr, chainIdHex } = await connectWalletConnect();
+      setWcProvider(provider);
+      setAddress(addr);
+      setChainId(chainIdHex);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const switchToBaseSepolia = async () => {
     setErr(null);
-    if (!hasWallet) return;
+    const provider = eth();
+    if (!provider) return;
     try {
       setBusy("switch");
       try {
-        await window.ethereum.request({
+        await provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: BASE_SEPOLIA.chainIdHex }],
         });
       } catch (switchErr: any) {
         if (switchErr?.code === 4902) {
-          await window.ethereum.request({
+          await provider.request({
             method: "wallet_addEthereumChain",
             params: [BASE_SEPOLIA],
           });
@@ -156,7 +186,13 @@ export function DatWallet() {
     finally { setBusy(null); }
   };
 
-  const disconnect = () => setAddress(null);
+  const disconnect = async () => {
+    if (wcProvider) {
+      try { await (wcProvider as any).disconnect?.(); } catch {}
+      setWcProvider(null);
+    }
+    setAddress(null);
+  };
 
   const onBaseSepolia = chainId?.toLowerCase() === BASE_SEPOLIA.chainIdHex.toLowerCase();
 

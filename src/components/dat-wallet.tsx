@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { claimDat, getOnChainBalance, listClaims } from "@/lib/dat-mint.functions";
+import { claimDat, getOnChainBalance, listClaims, getTreasuryBalance } from "@/lib/dat-mint.functions";
+import { TREASURY_WALLET, basescanAddress, shortAddr } from "@/lib/treasury";
+import { connectWalletConnect, walletConnectProjectId } from "@/lib/wallet-connect";
 
 // Base Sepolia testnet config
 const BASE_SEPOLIA = {
@@ -54,14 +56,18 @@ export function DatWallet() {
   const [chainConfigured, setChainConfigured] = useState<boolean | null>(null);
   const [chainMissing, setChainMissing] = useState<string[]>([]);
   const [contractAddr, setContractAddr] = useState<string | null>(null);
+  const [treasuryBalance, setTreasuryBalance] = useState<string>("0");
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [hasWallet, setHasWallet] = useState(false);
+  const [wcProvider, setWcProvider] = useState<any>(null);
 
   const callClaim = useServerFn(claimDat);
   const callBalance = useServerFn(getOnChainBalance);
   const callList = useServerFn(listClaims);
+  const callTreasury = useServerFn(getTreasuryBalance);
+  const wcEnabled = !!walletConnectProjectId();
 
   // Client-only mount flag to avoid SSR/CSR mismatch
   useEffect(() => {

@@ -253,15 +253,26 @@ export function DatWallet() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {!address ? (
-            <button
-              onClick={connect}
-              disabled={busy === "connect"}
-              className="rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25 disabled:opacity-50"
-            >
-              {busy === "connect" ? "…" : "Connect wallet"}
-            </button>
+            <>
+              <button
+                onClick={connect}
+                disabled={busy === "connect"}
+                className="rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25 disabled:opacity-50"
+              >
+                {busy === "connect" ? "…" : "Connect browser wallet"}
+              </button>
+              {wcEnabled && (
+                <button
+                  onClick={connectWC}
+                  disabled={busy === "wc"}
+                  className="rounded-sm border border-violet-300/50 bg-violet-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-violet-100 hover:bg-violet-400/25 disabled:opacity-50"
+                >
+                  {busy === "wc" ? "…" : "WalletConnect (mobile QR)"}
+                </button>
+              )}
+            </>
           ) : (
             <>
               <span className="rounded-sm border border-white/15 bg-black/60 px-2 py-1 font-mono text-[11px] text-cyan-100">
@@ -278,24 +289,64 @@ export function DatWallet() {
         </div>
       </header>
 
+      {/* Creator Treasury panel — always visible */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-300/30 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent p-3">
+        <div>
+          <div className="font-mono text-[9px] uppercase tracking-[0.3em] text-amber-200/80">
+            Creator Treasury · Evan Ketchum
+          </div>
+          <div className="mt-1 font-mono text-[11px] text-amber-100">
+            <a
+              href={basescanAddress(TREASURY_WALLET)}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-white"
+            >
+              {shortAddr(TREASURY_WALLET)} ↗
+            </a>
+            <span className="ml-3 text-amber-200/70">
+              receives 10% royalty on every $DAT mint
+            </span>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-amber-200/70">
+            Treasury balance
+          </div>
+          <div className="font-mono text-xl text-amber-100">
+            {formatUnits(treasuryBalance, 18)}
+            <span className="ml-1 text-xs text-amber-200/70">$DAT</span>
+          </div>
+        </div>
+      </div>
+
       {chainConfigured === false && (
         <div className="mb-4 rounded-sm border border-amber-300/30 bg-amber-500/5 p-3 text-[11px] text-amber-200/90">
           <div className="font-mono uppercase tracking-[0.2em] text-amber-100">
             On-chain minter not configured
           </div>
           <div className="mt-1 text-amber-200/80">
-            Missing secrets: <span className="font-mono">{chainMissing.join(", ")}</span>. Deploy an
-            ERC-20 with an owner-only <code>mint(address,uint256)</code> on Base Sepolia, then add
-            <span className="font-mono"> DAT_CONTRACT_ADDRESS</span> and
-            <span className="font-mono"> DAT_MINTER_PRIVATE_KEY</span> as Lovable Cloud secrets.
-            Claims will still be recorded in the ledger but won't hit the chain yet.
+            Missing secrets: <span className="font-mono">{chainMissing.join(", ")}</span>. Deploy the
+            ERC-20 in <code>contracts/Dat.sol</code> on Base Sepolia (see{" "}
+            <code>docs/DEPLOY_DAT.md</code>), then add <span className="font-mono">DAT_CONTRACT_ADDRESS</span>{" "}
+            and <span className="font-mono">DAT_MINTER_PRIVATE_KEY</span> as Lovable Cloud secrets.
+            Claims are recorded in the ledger but won't hit the chain yet.
           </div>
         </div>
       )}
 
       {hasWallet === false && (
-        <div className="rounded-sm border border-amber-300/30 bg-amber-500/5 p-3 text-[11px] text-amber-200/90">
-          No EIP-1193 wallet found. Install MetaMask, Rabby, or any Base-compatible wallet, then reload.
+        <div className="mb-4 rounded-sm border border-violet-300/30 bg-violet-500/5 p-3 text-[11px] text-violet-100">
+          <div className="font-mono uppercase tracking-[0.2em]">No browser wallet detected</div>
+          <div className="mt-1">
+            Install one of these (then reload), or use the <strong>WalletConnect</strong> button to
+            scan a QR with a mobile wallet:
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <a href="https://metamask.io/download/" target="_blank" rel="noreferrer" className="rounded-sm border border-violet-300/40 bg-black/40 px-2 py-1 font-mono uppercase tracking-[0.2em] hover:bg-white/10">MetaMask ↗</a>
+            <a href="https://rabby.io/" target="_blank" rel="noreferrer" className="rounded-sm border border-violet-300/40 bg-black/40 px-2 py-1 font-mono uppercase tracking-[0.2em] hover:bg-white/10">Rabby ↗</a>
+            <a href="https://www.coinbase.com/wallet/downloads" target="_blank" rel="noreferrer" className="rounded-sm border border-violet-300/40 bg-black/40 px-2 py-1 font-mono uppercase tracking-[0.2em] hover:bg-white/10">Coinbase Wallet ↗</a>
+          </div>
         </div>
       )}
 

@@ -3,7 +3,9 @@
 // the dApp by scanning a QR code. Falls back gracefully if no project id is
 // configured (button is hidden by the UI).
 
-import type { EthereumProvider as EthereumProviderType } from "@walletconnect/ethereum-provider";
+type EthereumProviderType = Awaited<
+  ReturnType<typeof import("@walletconnect/ethereum-provider").EthereumProvider.init>
+>;
 
 const BASE_SEPOLIA_ID = 84_532;
 

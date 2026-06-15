@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { claimDat, getOnChainBalance, listClaims } from "@/lib/dat-mint.functions";
+import { claimDat, getOnChainBalance, listClaims, getTreasuryBalance } from "@/lib/dat-mint.functions";
+import { TREASURY_WALLET, basescanAddress, shortAddr } from "@/lib/treasury";
+import { connectWalletConnect, walletConnectProjectId } from "@/lib/wallet-connect";
 
 // Base Sepolia testnet config
 const BASE_SEPOLIA = {
@@ -54,42 +56,60 @@ export function DatWallet() {
   const [chainConfigured, setChainConfigured] = useState<boolean | null>(null);
   const [chainMissing, setChainMissing] = useState<string[]>([]);
   const [contractAddr, setContractAddr] = useState<string | null>(null);
+  const [treasuryBalance, setTreasuryBalance] = useState<string>("0");
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [hasWallet, setHasWallet] = useState(false);
+  const [wcProvider, setWcProvider] = useState<any>(null);
 
   const callClaim = useServerFn(claimDat);
   const callBalance = useServerFn(getOnChainBalance);
   const callList = useServerFn(listClaims);
+  const callTreasury = useServerFn(getTreasuryBalance);
+  const wcEnabled = !!walletConnectProjectId();
+
+  // Active EIP-1193 provider: WalletConnect when connected, else window.ethereum.
+  const eth = useCallback(
+    () => (wcProvider as any) || (typeof window !== "undefined" ? window.ethereum : null),
+    [wcProvider],
+  );
 
   // Client-only mount flag to avoid SSR/CSR mismatch
   useEffect(() => {
     setHasWallet(typeof window !== "undefined" && !!window.ethereum);
   }, []);
 
+  // Load treasury balance once on mount (no wallet needed)
+  useEffect(() => {
+    callTreasury({}).then((t) => {
+      setTreasuryBalance(t.balance ?? "0");
+    }).catch(() => {});
+  }, [callTreasury]);
+
   const refreshAccounts = useCallback(async () => {
-    if (typeof window === "undefined" || !window.ethereum) return;
+    const provider = eth();
+    if (!provider) return;
     try {
-      const accts: string[] = await window.ethereum.request({ method: "eth_accounts" });
-      const cid: string = await window.ethereum.request({ method: "eth_chainId" });
+      const accts: string[] = await provider.request({ method: "eth_accounts" });
+      const cid: string = await provider.request({ method: "eth_chainId" });
       setChainId(cid);
       setAddress(accts?.[0] ?? null);
     } catch (e: any) { setErr(e?.message ?? String(e)); }
-  }, []);
+  }, [eth]);
 
   useEffect(() => {
-    if (!hasWallet) return;
-    refreshAccounts();
+    const provider = eth();
+    if (!provider) return;
     const onAcc = (accts: string[]) => setAddress(accts?.[0] ?? null);
     const onChain = (cid: string) => setChainId(cid);
-    window.ethereum.on?.("accountsChanged", onAcc);
-    window.ethereum.on?.("chainChanged", onChain);
+    provider.on?.("accountsChanged", onAcc);
+    provider.on?.("chainChanged", onChain);
     return () => {
-      window.ethereum?.removeListener?.("accountsChanged", onAcc);
-      window.ethereum?.removeListener?.("chainChanged", onChain);
+      provider.removeListener?.("accountsChanged", onAcc);
+      provider.removeListener?.("chainChanged", onChain);
     };
-  }, [hasWallet, refreshAccounts]);
+  }, [eth, wcProvider, hasWallet]);
 
   const loadServerState = useCallback(async (addr: string) => {
     try {
@@ -116,7 +136,7 @@ export function DatWallet() {
   const connect = async () => {
     setErr(null);
     if (!hasWallet) {
-      setErr("No browser wallet detected. Install MetaMask or another EIP-1193 wallet.");
+      setErr("No browser wallet detected. Install MetaMask, Rabby, or Coinbase Wallet (links above), or use WalletConnect to scan a QR with a mobile wallet.");
       return;
     }
     try {
@@ -127,19 +147,35 @@ export function DatWallet() {
     finally { setBusy(null); }
   };
 
+  const connectWC = async () => {
+    setErr(null);
+    try {
+      setBusy("wc");
+      const { provider, address: addr, chainIdHex } = await connectWalletConnect();
+      setWcProvider(provider);
+      setAddress(addr);
+      setChainId(chainIdHex);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const switchToBaseSepolia = async () => {
     setErr(null);
-    if (!hasWallet) return;
+    const provider = eth();
+    if (!provider) return;
     try {
       setBusy("switch");
       try {
-        await window.ethereum.request({
+        await provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: BASE_SEPOLIA.chainIdHex }],
         });
       } catch (switchErr: any) {
         if (switchErr?.code === 4902) {
-          await window.ethereum.request({
+          await provider.request({
             method: "wallet_addEthereumChain",
             params: [BASE_SEPOLIA],
           });
@@ -150,7 +186,13 @@ export function DatWallet() {
     finally { setBusy(null); }
   };
 
-  const disconnect = () => setAddress(null);
+  const disconnect = async () => {
+    if (wcProvider) {
+      try { await (wcProvider as any).disconnect?.(); } catch {}
+      setWcProvider(null);
+    }
+    setAddress(null);
+  };
 
   const onBaseSepolia = chainId?.toLowerCase() === BASE_SEPOLIA.chainIdHex.toLowerCase();
 
@@ -211,15 +253,26 @@ export function DatWallet() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {!address ? (
-            <button
-              onClick={connect}
-              disabled={busy === "connect"}
-              className="rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25 disabled:opacity-50"
-            >
-              {busy === "connect" ? "…" : "Connect wallet"}
-            </button>
+            <>
+              <button
+                onClick={connect}
+                disabled={busy === "connect"}
+                className="rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25 disabled:opacity-50"
+              >
+                {busy === "connect" ? "…" : "Connect browser wallet"}
+              </button>
+              {wcEnabled && (
+                <button
+                  onClick={connectWC}
+                  disabled={busy === "wc"}
+                  className="rounded-sm border border-violet-300/50 bg-violet-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-violet-100 hover:bg-violet-400/25 disabled:opacity-50"
+                >
+                  {busy === "wc" ? "…" : "WalletConnect (mobile QR)"}
+                </button>
+              )}
+            </>
           ) : (
             <>
               <span className="rounded-sm border border-white/15 bg-black/60 px-2 py-1 font-mono text-[11px] text-cyan-100">
@@ -236,24 +289,64 @@ export function DatWallet() {
         </div>
       </header>
 
+      {/* Creator Treasury panel — always visible */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-300/30 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent p-3">
+        <div>
+          <div className="font-mono text-[9px] uppercase tracking-[0.3em] text-amber-200/80">
+            Creator Treasury · Evan Ketchum
+          </div>
+          <div className="mt-1 font-mono text-[11px] text-amber-100">
+            <a
+              href={basescanAddress(TREASURY_WALLET)}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-white"
+            >
+              {shortAddr(TREASURY_WALLET)} ↗
+            </a>
+            <span className="ml-3 text-amber-200/70">
+              receives 10% royalty on every $DAT mint
+            </span>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-amber-200/70">
+            Treasury balance
+          </div>
+          <div className="font-mono text-xl text-amber-100">
+            {formatUnits(treasuryBalance, 18)}
+            <span className="ml-1 text-xs text-amber-200/70">$DAT</span>
+          </div>
+        </div>
+      </div>
+
       {chainConfigured === false && (
         <div className="mb-4 rounded-sm border border-amber-300/30 bg-amber-500/5 p-3 text-[11px] text-amber-200/90">
           <div className="font-mono uppercase tracking-[0.2em] text-amber-100">
             On-chain minter not configured
           </div>
           <div className="mt-1 text-amber-200/80">
-            Missing secrets: <span className="font-mono">{chainMissing.join(", ")}</span>. Deploy an
-            ERC-20 with an owner-only <code>mint(address,uint256)</code> on Base Sepolia, then add
-            <span className="font-mono"> DAT_CONTRACT_ADDRESS</span> and
-            <span className="font-mono"> DAT_MINTER_PRIVATE_KEY</span> as Lovable Cloud secrets.
-            Claims will still be recorded in the ledger but won't hit the chain yet.
+            Missing secrets: <span className="font-mono">{chainMissing.join(", ")}</span>. Deploy the
+            ERC-20 in <code>contracts/Dat.sol</code> on Base Sepolia (see{" "}
+            <code>docs/DEPLOY_DAT.md</code>), then add <span className="font-mono">DAT_CONTRACT_ADDRESS</span>{" "}
+            and <span className="font-mono">DAT_MINTER_PRIVATE_KEY</span> as Lovable Cloud secrets.
+            Claims are recorded in the ledger but won't hit the chain yet.
           </div>
         </div>
       )}
 
       {hasWallet === false && (
-        <div className="rounded-sm border border-amber-300/30 bg-amber-500/5 p-3 text-[11px] text-amber-200/90">
-          No EIP-1193 wallet found. Install MetaMask, Rabby, or any Base-compatible wallet, then reload.
+        <div className="mb-4 rounded-sm border border-violet-300/30 bg-violet-500/5 p-3 text-[11px] text-violet-100">
+          <div className="font-mono uppercase tracking-[0.2em]">No browser wallet detected</div>
+          <div className="mt-1">
+            Install one of these (then reload), or use the <strong>WalletConnect</strong> button to
+            scan a QR with a mobile wallet:
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <a href="https://metamask.io/download/" target="_blank" rel="noreferrer" className="rounded-sm border border-violet-300/40 bg-black/40 px-2 py-1 font-mono uppercase tracking-[0.2em] hover:bg-white/10">MetaMask ↗</a>
+            <a href="https://rabby.io/" target="_blank" rel="noreferrer" className="rounded-sm border border-violet-300/40 bg-black/40 px-2 py-1 font-mono uppercase tracking-[0.2em] hover:bg-white/10">Rabby ↗</a>
+            <a href="https://www.coinbase.com/wallet/downloads" target="_blank" rel="noreferrer" className="rounded-sm border border-violet-300/40 bg-black/40 px-2 py-1 font-mono uppercase tracking-[0.2em] hover:bg-white/10">Coinbase Wallet ↗</a>
+          </div>
         </div>
       )}
 

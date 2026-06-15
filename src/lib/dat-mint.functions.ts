@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { TREASURY_WALLET } from "./treasury";
 
 // Allowed preset claims — server is the source of truth, not the client.
 // `key` set => one-time per wallet. `cooldownMs` set => repeatable with rate limit.
@@ -185,6 +186,56 @@ export const claimDat = createServerFn({ method: "POST" })
         result: { claim_id: pending.id, tx_hash: txHash, block_number: Number(blockNumber) },
       });
 
+      // 5. Creator Royalty — 10% to TREASURY_WALLET. Best-effort: if this leg
+      //    fails we still return success to the user (their mint already
+      //    confirmed) but we log the failure for retry.
+      const royalty = Math.max(1, Math.round(preset.amount * 0.10));
+      try {
+        const treasury = mint.normalizeAddress(TREASURY_WALLET);
+        if (treasury && treasury !== wallet) {
+          const { data: royaltyRow } = await supabaseAdmin
+            .from("dat_claims")
+            .insert({
+              wallet: treasury,
+              amount: royalty,
+              reason: `Creator royalty · 10% of ${preset.amount} $DAT to ${data.preset}`,
+              reason_key: null,
+              status: "pending",
+            })
+            .select()
+            .single();
+          const r = await mint.mintOnChain(cfgRes.cfg, treasury as `0x${string}`, royalty);
+          if (royaltyRow) {
+            await supabaseAdmin
+              .from("dat_claims")
+              .update({
+                status: "confirmed",
+                tx_hash: r.txHash,
+                block_number: Number(r.blockNumber),
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", royaltyRow.id);
+          }
+          await supabaseAdmin.from("dat_mint_audit").insert({
+            wallet: treasury,
+            action: "royalty",
+            payload: { from_claim: pending.id, amount: royalty },
+            ip,
+            status: "confirmed",
+            result: { tx_hash: r.txHash, block_number: Number(r.blockNumber) },
+          });
+        }
+      } catch (royErr: any) {
+        await supabaseAdmin.from("dat_mint_audit").insert({
+          wallet: TREASURY_WALLET,
+          action: "royalty",
+          payload: { from_claim: pending.id, amount: royalty },
+          ip,
+          status: "royalty_failed",
+          error: (royErr?.shortMessage || royErr?.message || String(royErr)).slice(0, 1000),
+        });
+      }
+
       return {
         ok: true as const,
         claim: confirmed ?? pending,
@@ -208,6 +259,42 @@ export const claimDat = createServerFn({ method: "POST" })
         result: { claim_id: pending.id },
       });
       throw new Error(`On-chain mint failed: ${message}`);
+    }
+  });
+
+export const getTreasuryBalance = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const mint = await import("./dat-mint.server");
+    const cfgRes = mint.loadMintConfig();
+    if (!cfgRes.ok) {
+      return {
+        ok: false as const,
+        configured: false as const,
+        missing: cfgRes.missing,
+        treasury: TREASURY_WALLET,
+        balance: "0",
+        decimals: 18,
+      };
+    }
+    try {
+      const raw = await mint.readBalance(cfgRes.cfg, TREASURY_WALLET as `0x${string}`);
+      return {
+        ok: true as const,
+        configured: true as const,
+        treasury: TREASURY_WALLET,
+        balance: raw.toString(),
+        decimals: mint.DAT_DECIMALS,
+        contract: cfgRes.cfg.contractAddress,
+      };
+    } catch (e: any) {
+      return {
+        ok: false as const,
+        configured: true as const,
+        treasury: TREASURY_WALLET,
+        balance: "0",
+        decimals: 18,
+        error: e?.shortMessage || e?.message || String(e),
+      };
     }
   });
 

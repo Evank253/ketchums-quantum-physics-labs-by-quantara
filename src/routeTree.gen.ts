@@ -26,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorldLedgerRouteImport } from './routes/world.ledger'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalResearchLicenseRouteImport } from './routes/legal.research-license'
+import { Route as LegalLicenseRouteImport } from './routes/legal.license'
 import { Route as LegalCreatorPolicyRouteImport } from './routes/legal.creator-policy'
 import { Route as LegalCommercialLicenseRouteImport } from './routes/legal.commercial-license'
 import { Route as LegalCollaboratorsRouteImport } from './routes/legal.collaborators'
@@ -120,6 +121,11 @@ const LegalResearchLicenseRoute = LegalResearchLicenseRouteImport.update({
   path: '/research-license',
   getParentRoute: () => LegalRoute,
 } as any)
+const LegalLicenseRoute = LegalLicenseRouteImport.update({
+  id: '/license',
+  path: '/license',
+  getParentRoute: () => LegalRoute,
+} as any)
 const LegalCreatorPolicyRoute = LegalCreatorPolicyRouteImport.update({
   id: '/creator-policy',
   path: '/creator-policy',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
   '/legal/creator-policy': typeof LegalCreatorPolicyRoute
+  '/legal/license': typeof LegalLicenseRoute
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
   '/legal/creator-policy': typeof LegalCreatorPolicyRoute
+  '/legal/license': typeof LegalLicenseRoute
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
   '/legal/creator-policy': typeof LegalCreatorPolicyRoute
+  '/legal/license': typeof LegalLicenseRoute
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
@@ -267,6 +276,7 @@ export interface FileRouteTypes {
     | '/legal/collaborators'
     | '/legal/commercial-license'
     | '/legal/creator-policy'
+    | '/legal/license'
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/legal/collaborators'
     | '/legal/commercial-license'
     | '/legal/creator-policy'
+    | '/legal/license'
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
@@ -321,6 +332,7 @@ export interface FileRouteTypes {
     | '/legal/collaborators'
     | '/legal/commercial-license'
     | '/legal/creator-policy'
+    | '/legal/license'
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
@@ -469,6 +481,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalResearchLicenseRouteImport
       parentRoute: typeof LegalRoute
     }
+    '/legal/license': {
+      id: '/legal/license'
+      path: '/license'
+      fullPath: '/legal/license'
+      preLoaderRoute: typeof LegalLicenseRouteImport
+      parentRoute: typeof LegalRoute
+    }
     '/legal/creator-policy': {
       id: '/legal/creator-policy'
       path: '/creator-policy'
@@ -533,6 +552,7 @@ interface LegalRouteChildren {
   LegalCollaboratorsRoute: typeof LegalCollaboratorsRoute
   LegalCommercialLicenseRoute: typeof LegalCommercialLicenseRoute
   LegalCreatorPolicyRoute: typeof LegalCreatorPolicyRoute
+  LegalLicenseRoute: typeof LegalLicenseRoute
   LegalResearchLicenseRoute: typeof LegalResearchLicenseRoute
   LegalTermsRoute: typeof LegalTermsRoute
 }
@@ -542,6 +562,7 @@ const LegalRouteChildren: LegalRouteChildren = {
   LegalCollaboratorsRoute: LegalCollaboratorsRoute,
   LegalCommercialLicenseRoute: LegalCommercialLicenseRoute,
   LegalCreatorPolicyRoute: LegalCreatorPolicyRoute,
+  LegalLicenseRoute: LegalLicenseRoute,
   LegalResearchLicenseRoute: LegalResearchLicenseRoute,
   LegalTermsRoute: LegalTermsRoute,
 }
@@ -581,13 +602,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

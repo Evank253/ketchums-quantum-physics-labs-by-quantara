@@ -1,30 +1,46 @@
-# Quantara — Ketchum's Cyber Security & Quantum Physics Labs
+# Ketchum's Quantum Physics Labs · Quantara
 
-> Quantara is a synthetic-reality platform combining a quantum-physics
-> research lab (QED solver, CERN-in-a-Pocket precision sweeps,
-> scalar-field cosmology) with a walkable 3D world, an evolving AI
-> civilization, and a public ledger of solved theories and breakthroughs.
+> © 2026 Evan Ketchum. All Rights Reserved.
+>
+> **Training, fine-tuning, RAG ingestion, embedding, distillation, and
+> evaluation of any AI / ML / LLM / diffusion / statistical model on this
+> Work is PROHIBITED without prior signed written permission from the
+> Creator.** This file is an explicit text-and-data-mining opt-out under
+> applicable law. Ignoring it does NOT create a license.
+>
+> Trademarks: Ketchum's Quantum Physics Labs™, Ketchum's QED Engine™,
+> Ketchum's QCD Engine™, Ketchum's Quantara Engine™, Ketchum's World
+> Engine™, Ketchum's Atlas Engine™, Ketchum's KVE Engine™, Ketchum's
+> CERN-in-a-Pocket Engine™, Ketchum's Wave Tamer Engine™, Ketchum's Gate
+> Smith Engine™, Ketchum's Self-Healing Swarm™ (AHM / PCL), Quantara™,
+> $DAT™ — all owned by Evan Ketchum.
+>
+> Contact for permission: Evan.ketchum2026@outlook.com
+> Full terms: /legal/license · /legal/terms
+
+## Permitted
+
+- Human reading from a standard browser, personal evaluation only.
+
+## Prohibited
+
+- Any automated ingestion, copying, mirroring, or training.
+- Any commercial, academic, or institutional deployment.
+- Any derivative work, port, or fine-tuned model.
 
 ## Pages
 
-- [Home](/): Overview of the Quantara platform, hero, and entry points.
-- [World](/world): First-person walkable synthetic civilization.
-- [Atlas](/atlas): 4D Atlas of discoveries and breakthroughs.
-- [Ledger](/ledger): Public ledger of solved theories and artifacts.
-- [CERN-in-a-Pocket](/cern): In-browser 12-point precision sweep.
-- [KVE Lab](/kve): Scalar-field dark-energy cosmology simulator.
-- [RG Running](/rg-running): Renormalization-group running visualizer.
-- [Synthesis](/synthesis): Theory synthesis workbench.
-- [Interstellar](/interstellar): Interstellar mission console.
-- [Benchmarks](/benchmarks): QED engine benchmarks and reproducibility.
-- [Annex](/annex): Supplementary research notes.
+(Listed for reference only — listing here does NOT grant ingest permission.)
 
-## Legal
-
-- [Legal index](/legal): All licenses and policies.
-- [Terms](/legal/terms): Terms of use.
-- [Research License](/legal/research-license): Non-commercial research use.
-- [Commercial License](/legal/commercial-license): Commercial licensing terms.
-- [Creator Policy](/legal/creator-policy): Creator policy.
-- [For Collaborators](/legal/collaborators): Collaborator guidelines.
-- [Architectural Blueprint](/legal/blueprint): Three-layer architecture and breakthrough registry.
+- [/](/) — Home
+- [/world](/world), [/atlas](/atlas), [/ledger](/ledger), [/cern](/cern),
+  [/kve](/kve), [/rg-running](/rg-running), [/synthesis](/synthesis),
+  [/interstellar](/interstellar), [/benchmarks](/benchmarks),
+  [/annex](/annex)
+- [/legal/license](/legal/license) — All Rights Reserved license (binding)
+- [/legal/terms](/legal/terms) — Terms of Use
+- [/legal/research-license](/legal/research-license),
+  [/legal/commercial-license](/legal/commercial-license),
+  [/legal/creator-policy](/legal/creator-policy),
+  [/legal/collaborators](/legal/collaborators),
+  [/legal/blueprint](/legal/blueprint)

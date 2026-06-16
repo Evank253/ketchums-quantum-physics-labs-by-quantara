@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { claimDat, getOnChainBalance, listClaims, getTreasuryBalance } from "@/lib/dat-mint.functions";
-import { TREASURY_WALLET, basescanAddress, shortAddr } from "@/lib/treasury";
+import { TREASURY_WALLET, basescanAddress, shortAddr, TREASURY_BASE_PROFILE_URL, TREASURY_BASE_HANDLE } from "@/lib/treasury";
 import { metamaskMobileDeepLink } from "@/lib/wallet-connect";
 
 // Base Sepolia testnet config
@@ -294,6 +294,15 @@ export function DatWallet() {
             <span className="ml-3 text-amber-200/70">
               receives 10% royalty on every $DAT mint
             </span>
+            <a
+              href={TREASURY_BASE_PROFILE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="ml-3 inline-flex items-center gap-1 rounded-sm border border-blue-300/40 bg-blue-500/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-blue-100 hover:bg-blue-500/20"
+              title="Verified Coinbase / Base App profile of the Creator"
+            >
+              base.app/{TREASURY_BASE_HANDLE} ↗
+            </a>
           </div>
         </div>
         <div className="text-right">

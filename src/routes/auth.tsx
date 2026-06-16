@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SignInWithBaseButton } from "@/components/sign-in-with-base";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [showEmail, setShowEmail] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,11 +61,30 @@ function AuthPage() {
         </Link>
       </div>
       <h1 className="mb-1 text-2xl font-light text-cyan-100">
-        {mode === "signup" ? "Create research account" : "Sign in"}
+        Sign in to Quantara
       </h1>
       <p className="mb-6 text-xs text-white/55">
-        Institutional dashboard, compute jobs, run cards & API keys.
+        Wallet-first authentication. Your Base wallet is your research identity, receives minted $DAT, and pays in USDC.
       </p>
+
+      <SignInWithBaseButton />
+
+      <div className="my-5 flex items-center gap-3">
+        <div className="h-px flex-1 bg-white/10" />
+        <span className="font-mono text-[9px] uppercase tracking-widest text-white/35">or</span>
+        <div className="h-px flex-1 bg-white/10" />
+      </div>
+
+      {!showEmail ? (
+        <button onClick={() => setShowEmail(true)}
+          className="w-full rounded-sm border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-white/65 hover:bg-white/5">
+          Use email &amp; password
+        </button>
+      ) : (
+      <>
+      <h2 className="mb-3 text-xs font-mono uppercase tracking-widest text-white/55">
+        {mode === "signup" ? "Create email account" : "Email sign-in"}
+      </h2>
 
       <form onSubmit={submit} className="space-y-3">
         <input

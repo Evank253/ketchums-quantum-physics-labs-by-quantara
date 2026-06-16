@@ -1,14 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { BasePayButton } from "@/components/base-pay-button";
+import { getMyCredits } from "@/lib/credits.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing · Ketchum's Quantum Physics Labs" },
-      { name: "description", content: "Reproducible computational physics benchmarking — trial, Starter, Pro, Institution." },
+      { title: "Pricing · Quantara Research Infrastructure" },
+      { name: "description", content: "Reproducible computational physics for individual researchers, university labs, and research institutions. Pay with card or USDC on Base." },
     ],
   }),
   component: PricingPage,
@@ -33,7 +36,18 @@ const TIERS: Array<{
 function PricingPage() {
   const [checkoutPrice, setCheckoutPrice] = useState<string | null>(null);
   const [email, setEmail] = useState<string | undefined>();
+  const [wallet, setWallet] = useState<string | null>(null);
   const navigate = useNavigate();
+  const fetchCredits = useServerFn(getMyCredits);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        try { const s = await fetchCredits(); setWallet(s.wallet); } catch { /* anon */ }
+      }
+    })();
+  }, []);
 
   const openCheckout = async (priceId: string | undefined) => {
     if (!priceId) { navigate({ to: "/auth" }); return; }
@@ -42,6 +56,8 @@ function PricingPage() {
     setEmail(data.user.email ?? undefined);
     setCheckoutPrice(priceId);
   };
+
+  const contactSales = () => { window.location.href = "mailto:evan.ketchum2026@outlook.com?subject=Quantara%20Enterprise%20Inquiry"; };
 
   return (
     <>
@@ -76,7 +92,7 @@ function PricingPage() {
             />
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {TIERS.map((t) => (
               <div key={t.id}
                 className={`flex flex-col rounded-sm border p-5 ${
@@ -88,17 +104,39 @@ function PricingPage() {
                   <span className="text-xs text-white/50">{t.period}</span>
                 </div>
                 <div className="mt-2 font-mono text-[10px] uppercase tracking-widest text-cyan-200/80">{t.runs}</div>
-                <ul className="mt-4 space-y-1.5 text-[12px] text-white/75">
+                <ul className="mt-4 flex-1 space-y-1.5 text-[12px] text-white/75">
                   {t.features.map((f) => (
                     <li key={f} className="flex gap-2"><span className="text-cyan-300/60">·</span><span>{f}</span></li>
                   ))}
                 </ul>
-                <button
-                  onClick={() => t.priceId ? openCheckout(t.priceId) : navigate({ to: "/auth" })}
-                  className="mt-5 rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25"
-                >
-                  {t.priceId ? "Subscribe" : "Start trial"}
-                </button>
+                <div className="mt-5 space-y-2">
+                  {t.contact ? (
+                    <button onClick={contactSales}
+                      className="w-full rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25">
+                      Contact sales
+                    </button>
+                  ) : t.priceId ? (
+                    <>
+                      <button onClick={() => openCheckout(t.priceId)}
+                        className="w-full rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25">
+                        Pay with card
+                      </button>
+                      {wallet && t.usdc && t.planKey && (
+                        <BasePayButton amountUsd={t.usdc} plan={t.planKey} walletAddress={wallet} onComplete={() => navigate({ to: "/billing" })} />
+                      )}
+                      {!wallet && t.usdc && (
+                        <Link to="/billing" className="block rounded-sm border border-blue-400/40 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-blue-200 hover:bg-blue-500/10">
+                          ⬢ Pay with USDC →
+                        </Link>
+                      )}
+                    </>
+                  ) : (
+                    <button onClick={() => navigate({ to: "/auth" })}
+                      className="w-full rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25">
+                      Start free
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

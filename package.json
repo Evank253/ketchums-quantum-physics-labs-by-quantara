@@ -15,6 +15,7 @@
     "benchmark": "tsx benchmarks/qed_benchmarks.ts"
   },
   "dependencies": {
+    "@base-org/account": "^2.5.6",
     "@cloudflare/vite-plugin": "^1.25.5",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/email-js": "^0.0.4",

@@ -10,6 +10,7 @@ export default defineConfig({
       "tests/unit/**/*.test.ts",
       "tests/integration/**/*.test.ts",
       "tests/benchmarks/**/*.test.ts",
+      "tests/security/**/*.test.ts",
     ],
     environment: "node",
   },

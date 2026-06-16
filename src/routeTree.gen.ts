@@ -43,15 +43,18 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as ApiQedRouteImport } from './routes/api/qed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
+import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin.email-health'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LovableEmailHealthRouteImport } from './routes/lovable/email/health'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
+import { Route as ApiPublicSecuritySelftestRouteImport } from './routes/api/public/security-selftest'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicHealerRunRouteImport } from './routes/api/public/healer.run'
 
 const WorldRoute = WorldRouteImport.update({
   id: '/world',
@@ -223,6 +226,11 @@ const ApiBenchmarkRoute = ApiBenchmarkRouteImport.update({
   path: '/api/benchmark',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSecurityRoute = AdminSecurityRouteImport.update({
+  id: '/admin/security',
+  path: '/admin/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLogsRoute = AdminLogsRouteImport.update({
   id: '/admin/logs',
   path: '/admin/logs',
@@ -248,6 +256,12 @@ const ApiPublicWebhookRoute = ApiPublicWebhookRouteImport.update({
   path: '/api/public/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSecuritySelftestRoute =
+  ApiPublicSecuritySelftestRouteImport.update({
+    id: '/api/public/security-selftest',
+    path: '/api/public/security-selftest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -272,6 +286,11 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHealerRunRoute = ApiPublicHealerRunRouteImport.update({
+  id: '/api/public/healer/run',
+  path: '/api/public/healer/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -298,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -310,9 +330,11 @@ export interface FileRoutesByFullPath {
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/healer/run': typeof ApiPublicHealerRunRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -343,6 +365,7 @@ export interface FileRoutesByTo {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -355,9 +378,11 @@ export interface FileRoutesByTo {
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/healer/run': typeof ApiPublicHealerRunRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -389,6 +414,7 @@ export interface FileRoutesById {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -401,9 +427,11 @@ export interface FileRoutesById {
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/healer/run': typeof ApiPublicHealerRunRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -436,6 +464,7 @@ export interface FileRouteTypes {
     | '/world'
     | '/admin/email-health'
     | '/admin/logs'
+    | '/admin/security'
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
@@ -448,9 +477,11 @@ export interface FileRouteTypes {
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
+    | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
     | '/lovable/email/suppression'
+    | '/api/public/healer/run'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -481,6 +512,7 @@ export interface FileRouteTypes {
     | '/world'
     | '/admin/email-health'
     | '/admin/logs'
+    | '/admin/security'
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
@@ -493,9 +525,11 @@ export interface FileRouteTypes {
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
+    | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
     | '/lovable/email/suppression'
+    | '/api/public/healer/run'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -526,6 +560,7 @@ export interface FileRouteTypes {
     | '/world'
     | '/admin/email-health'
     | '/admin/logs'
+    | '/admin/security'
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
@@ -538,9 +573,11 @@ export interface FileRouteTypes {
     | '/legal/research-license'
     | '/legal/terms'
     | '/world/ledger'
+    | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
     | '/lovable/email/suppression'
+    | '/api/public/healer/run'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -572,13 +609,16 @@ export interface RootRouteChildren {
   WorldRoute: typeof WorldRouteWithChildren
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminLogsRoute: typeof AdminLogsRoute
+  AdminSecurityRoute: typeof AdminSecurityRoute
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiQedRoute: typeof ApiQedRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiPublicSecuritySelftestRoute: typeof ApiPublicSecuritySelftestRoute
   ApiPublicWebhookRoute: typeof ApiPublicWebhookRoute
   LovableEmailHealthRoute: typeof LovableEmailHealthRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHealerRunRoute: typeof ApiPublicHealerRunRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -825,6 +865,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBenchmarkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/security': {
+      id: '/admin/security'
+      path: '/admin/security'
+      fullPath: '/admin/security'
+      preLoaderRoute: typeof AdminSecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/logs': {
       id: '/admin/logs'
       path: '/admin/logs'
@@ -860,6 +907,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/security-selftest': {
+      id: '/api/public/security-selftest'
+      path: '/api/public/security-selftest'
+      fullPath: '/api/public/security-selftest'
+      preLoaderRoute: typeof ApiPublicSecuritySelftestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -886,6 +940,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/payments/webhook'
       fullPath: '/api/public/payments/webhook'
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/healer/run': {
+      id: '/api/public/healer/run'
+      path: '/api/public/healer/run'
+      fullPath: '/api/public/healer/run'
+      preLoaderRoute: typeof ApiPublicHealerRunRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -948,13 +1009,16 @@ const rootRouteChildren: RootRouteChildren = {
   WorldRoute: WorldRouteWithChildren,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminLogsRoute: AdminLogsRoute,
+  AdminSecurityRoute: AdminSecurityRoute,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiQedRoute: ApiQedRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiPublicSecuritySelftestRoute: ApiPublicSecuritySelftestRoute,
   ApiPublicWebhookRoute: ApiPublicWebhookRoute,
   LovableEmailHealthRoute: LovableEmailHealthRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHealerRunRoute: ApiPublicHealerRunRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,

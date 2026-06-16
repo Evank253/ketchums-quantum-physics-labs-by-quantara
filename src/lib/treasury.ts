@@ -6,6 +6,11 @@ export const TREASURY_WALLET = "0x15B3E693Ac1B76A49cdc61FCfe8696F6dd1586DD" as c
 
 export const TREASURY_LABEL = "Ketchum Creator Treasury";
 
+// Public Base / Coinbase profile for the Creator (links the treasury wallet
+// to a verified social identity on Base App).
+export const TREASURY_BASE_PROFILE_URL = "https://base.app/profile/evanketch";
+export const TREASURY_BASE_HANDLE = "evanketch";
+
 // Default royalty: 10% of every successful claim is auto-minted to TREASURY_WALLET
 // in a separate tx, recorded in dat_claims with reason "Creator royalty".
 export const CREATOR_ROYALTY_BPS = 1_000; // 10.00%

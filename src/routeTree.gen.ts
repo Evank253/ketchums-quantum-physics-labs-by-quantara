@@ -41,6 +41,7 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as LovableEmailHealthRouteImport } from './routes/lovable/email/health'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -207,6 +208,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailHealthRoute = LovableEmailHealthRouteImport.update({
+  id: '/lovable/email/health',
+  path: '/lovable/email/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhookRoute = ApiPublicWebhookRouteImport.update({
   id: '/api/public/webhook',
   path: '/api/public/webhook',
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -309,6 +316,7 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -349,6 +357,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -390,6 +399,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -429,6 +439,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -500,6 +512,7 @@ export interface RootRouteChildren {
   ApiQedRoute: typeof ApiQedRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicWebhookRoute: typeof ApiPublicWebhookRoute
+  LovableEmailHealthRoute: typeof LovableEmailHealthRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -733,6 +746,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/health': {
+      id: '/lovable/email/health'
+      path: '/lovable/email/health'
+      fullPath: '/lovable/email/health'
+      preLoaderRoute: typeof LovableEmailHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhook': {
       id: '/api/public/webhook'
       path: '/api/public/webhook'
@@ -828,6 +848,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiQedRoute: ApiQedRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicWebhookRoute: ApiPublicWebhookRoute,
+  LovableEmailHealthRoute: LovableEmailHealthRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,

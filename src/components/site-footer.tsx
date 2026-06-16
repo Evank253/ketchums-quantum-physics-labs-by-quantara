@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { TREASURY_WALLET, basescanAddress, shortAddr } from "@/lib/treasury";
 
 const LINKS: { to: string; label: string }[] = [
+  { to: "/institution", label: "Institutional Dashboard" },
   { to: "/legal/license", label: "License (All Rights Reserved)" },
   { to: "/legal/terms", label: "Terms" },
   { to: "/legal/research-license", label: "Research License" },

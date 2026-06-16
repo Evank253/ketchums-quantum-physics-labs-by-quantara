@@ -5,6 +5,7 @@
 // the service role and validate inputs server-side.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   INSTITUTIONS,
   OUTLETS,
@@ -41,6 +42,7 @@ const AchievementInput = z.object({
 
 /** Server-validated solve write. solver is forced to the operator identity. */
 export const recordSolveServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => SolveInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -67,6 +69,7 @@ export const recordSolveServer = createServerFn({ method: "POST" })
 /** Server-validated dispatch enqueue. Recipients are forced to the hard-coded
  *  INSTITUTIONS + OUTLETS allowlist; client cannot influence email targets. */
 export const enqueueDispatchServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => DispatchInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -93,6 +96,7 @@ export const enqueueDispatchServer = createServerFn({ method: "POST" })
  *  achievement; title/tier/reward come from the server-side catalog so the
  *  client cannot inject arbitrary values or fake operator identities. */
 export const recordAchievementServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => AchievementInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

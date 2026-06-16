@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { claimDat, getOnChainBalance, listClaims, getTreasuryBalance } from "@/lib/dat-mint.functions";
 import { TREASURY_WALLET, basescanAddress, shortAddr } from "@/lib/treasury";
-import { connectWalletConnect, walletConnectProjectId } from "@/lib/wallet-connect";
+import { metamaskMobileDeepLink } from "@/lib/wallet-connect";
 
 // Base Sepolia testnet config
 const BASE_SEPOLIA = {
@@ -67,7 +67,6 @@ export function DatWallet() {
   const callBalance = useServerFn(getOnChainBalance);
   const callList = useServerFn(listClaims);
   const callTreasury = useServerFn(getTreasuryBalance);
-  const wcEnabled = !!walletConnectProjectId();
 
   // Active EIP-1193 provider: WalletConnect when connected, else window.ethereum.
   const eth = useCallback(
@@ -147,20 +146,9 @@ export function DatWallet() {
     finally { setBusy(null); }
   };
 
-  const connectWC = async () => {
-    setErr(null);
-    try {
-      setBusy("wc");
-      const { provider, address: addr, chainIdHex } = await connectWalletConnect();
-      setWcProvider(provider);
-      setAddress(addr);
-      setChainId(chainIdHex);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
-    } finally {
-      setBusy(null);
-    }
-  };
+  // Mobile entry point — opens MetaMask Mobile's in-app browser into our dApp,
+  // where window.ethereum is injected and the normal connect() flow takes over.
+  const mobileDeepLink = metamaskMobileDeepLink();
 
   const switchToBaseSepolia = async () => {
     setErr(null);
@@ -263,15 +251,14 @@ export function DatWallet() {
               >
                 {busy === "connect" ? "…" : "Connect browser wallet"}
               </button>
-              {wcEnabled && (
-                <button
-                  onClick={connectWC}
-                  disabled={busy === "wc"}
-                  className="rounded-sm border border-violet-300/50 bg-violet-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-violet-100 hover:bg-violet-400/25 disabled:opacity-50"
-                >
-                  {busy === "wc" ? "…" : "WalletConnect (mobile QR)"}
-                </button>
-              )}
+              <a
+                href={mobileDeepLink}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-sm border border-violet-300/50 bg-violet-400/15 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-violet-100 hover:bg-violet-400/25"
+              >
+                Open in MetaMask Mobile
+              </a>
             </>
           ) : (
             <>

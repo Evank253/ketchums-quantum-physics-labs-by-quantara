@@ -15,6 +15,7 @@ import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RgRunningRouteImport } from './routes/rg-running'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as MathLogRouteImport } from './routes/math-log'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as KveRouteImport } from './routes/kve'
@@ -77,6 +78,11 @@ const RgRunningRoute = RgRunningRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MathLogRoute = MathLogRouteImport.update({
+  id: '/math-log',
+  path: '/math-log',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalRoute = LegalRouteImport.update({
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -303,6 +310,7 @@ export interface FileRoutesByTo {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -345,6 +353,7 @@ export interface FileRoutesById {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -388,6 +397,7 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/math-log'
     | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
@@ -429,6 +439,7 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/math-log'
     | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
@@ -470,6 +481,7 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/math-log'
     | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
@@ -512,6 +524,7 @@ export interface RootRouteChildren {
   KveRoute: typeof KveRoute
   LedgerRoute: typeof LedgerRoute
   LegalRoute: typeof LegalRouteWithChildren
+  MathLogRoute: typeof MathLogRoute
   PricingRoute: typeof PricingRoute
   RgRunningRoute: typeof RgRunningRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -575,6 +588,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/math-log': {
+      id: '/math-log'
+      path: '/math-log'
+      fullPath: '/math-log'
+      preLoaderRoute: typeof MathLogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal': {
@@ -856,6 +876,7 @@ const rootRouteChildren: RootRouteChildren = {
   KveRoute: KveRoute,
   LedgerRoute: LedgerRoute,
   LegalRoute: LegalRouteWithChildren,
+  MathLogRoute: MathLogRoute,
   PricingRoute: PricingRoute,
   RgRunningRoute: RgRunningRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

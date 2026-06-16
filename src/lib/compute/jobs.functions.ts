@@ -97,7 +97,7 @@ export const submitComputeJob = createServerFn({ method: "POST" })
           engine_result: engineResult as Json,
           codata_result: codataResult as Json,
           literature_result: literatureResult as Json,
-          sigma,
+          sigma: isFinite(sigma) ? sigma : null,
           verdict,
           completed_at: completedAt,
         })
@@ -111,7 +111,7 @@ export const submitComputeJob = createServerFn({ method: "POST" })
         output_hash: outputHash,
         backend_version: BACKEND_VERSION,
         seed: null,
-        payload: { engineResult, codataResult, literatureResult, sigma, verdict } as Json,
+        payload: { engineResult, codataResult, literatureResult, sigma: isFinite(sigma) ? sigma : null, verdict } as Json,
       });
 
       // 6) Bump usage counter (idempotent upsert per month)

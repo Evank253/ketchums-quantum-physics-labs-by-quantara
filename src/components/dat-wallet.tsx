@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { claimDat, getOnChainBalance, listClaims, getTreasuryBalance } from "@/lib/dat-mint.functions";
-import { TREASURY_WALLET, basescanAddress, shortAddr } from "@/lib/treasury";
+import { TREASURY_WALLET, basescanAddress, shortAddr, TREASURY_BASE_PROFILE_URL, TREASURY_BASE_HANDLE } from "@/lib/treasury";
 import { metamaskMobileDeepLink } from "@/lib/wallet-connect";
 
 // Base Sepolia testnet config

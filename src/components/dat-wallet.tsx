@@ -326,8 +326,8 @@ export function DatWallet() {
         <div className="mb-4 rounded-sm border border-violet-300/30 bg-violet-500/5 p-3 text-[11px] text-violet-100">
           <div className="font-mono uppercase tracking-[0.2em]">No browser wallet detected</div>
           <div className="mt-1">
-            Install one of these (then reload), or use the <strong>WalletConnect</strong> button to
-            scan a QR with a mobile wallet:
+            Install one of these (then reload), or tap <strong>Open in MetaMask Mobile</strong> to
+            launch this dApp inside MetaMask's in-app browser on a phone:
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <a href="https://metamask.io/download/" target="_blank" rel="noreferrer" className="rounded-sm border border-violet-300/40 bg-black/40 px-2 py-1 font-mono uppercase tracking-[0.2em] hover:bg-white/10">MetaMask ↗</a>

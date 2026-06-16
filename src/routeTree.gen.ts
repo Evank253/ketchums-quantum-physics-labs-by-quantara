@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorldRouteImport } from './routes/world'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RgRunningRouteImport } from './routes/rg-running'
@@ -49,6 +50,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const WorldRoute = WorldRouteImport.update({
   id: '/world',
   path: '/world',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SynthesisRoute = SynthesisRouteImport.update({
@@ -248,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -365,6 +374,7 @@ export interface FileRouteTypes {
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
+    | '/unsubscribe'
     | '/world'
     | '/admin/logs'
     | '/api/benchmark'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
+    | '/unsubscribe'
     | '/world'
     | '/admin/logs'
     | '/api/benchmark'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
+    | '/unsubscribe'
     | '/world'
     | '/admin/logs'
     | '/api/benchmark'
@@ -480,6 +492,7 @@ export interface RootRouteChildren {
   RgRunningRoute: typeof RgRunningRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SynthesisRoute: typeof SynthesisRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   WorldRoute: typeof WorldRouteWithChildren
   AdminLogsRoute: typeof AdminLogsRoute
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
@@ -501,6 +514,13 @@ declare module '@tanstack/react-router' {
       path: '/world'
       fullPath: '/world'
       preLoaderRoute: typeof WorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/synthesis': {
@@ -800,6 +820,7 @@ const rootRouteChildren: RootRouteChildren = {
   RgRunningRoute: RgRunningRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SynthesisRoute: SynthesisRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   WorldRoute: WorldRouteWithChildren,
   AdminLogsRoute: AdminLogsRoute,
   ApiBenchmarkRoute: ApiBenchmarkRoute,

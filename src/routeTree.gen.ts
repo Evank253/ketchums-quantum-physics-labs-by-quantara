@@ -40,6 +40,7 @@ import { Route as ApiQedRouteImport } from './routes/api/qed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
+import { Route as AdminEmailHealthRouteImport } from './routes/admin.email-health'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LovableEmailHealthRouteImport } from './routes/lovable/email/health'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
@@ -203,6 +204,11 @@ const AdminLogsRoute = AdminLogsRouteImport.update({
   path: '/admin/logs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
+  id: '/admin/email-health',
+  path: '/admin/email-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
@@ -302,6 +309,7 @@ export interface FileRoutesByTo {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
@@ -343,6 +351,7 @@ export interface FileRoutesById {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
@@ -385,6 +394,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/email-health'
     | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
@@ -425,6 +435,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/email-health'
     | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
@@ -465,6 +476,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/email-health'
     | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
@@ -506,6 +518,7 @@ export interface RootRouteChildren {
   SynthesisRoute: typeof SynthesisRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   WorldRoute: typeof WorldRouteWithChildren
+  AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminLogsRoute: typeof AdminLogsRoute
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
   ApiHealthRoute: typeof ApiHealthRoute
@@ -739,6 +752,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLogsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/email-health': {
+      id: '/admin/email-health'
+      path: '/admin/email-health'
+      fullPath: '/admin/email-health'
+      preLoaderRoute: typeof AdminEmailHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -842,6 +862,7 @@ const rootRouteChildren: RootRouteChildren = {
   SynthesisRoute: SynthesisRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   WorldRoute: WorldRouteWithChildren,
+  AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminLogsRoute: AdminLogsRoute,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
   ApiHealthRoute: ApiHealthRoute,

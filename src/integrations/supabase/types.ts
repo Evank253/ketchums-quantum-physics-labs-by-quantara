@@ -77,6 +77,30 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          body: string
+          created_at: string
+          display_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          display_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       compute_jobs: {
         Row: {
           codata_result: Json | null
@@ -287,6 +311,42 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          body: string
+          category: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_approved: boolean
+          is_public: boolean
+          rating: number | null
+          user_id: string | null
+        }
+        Insert: {
+          body: string
+          category?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_approved?: boolean
+          is_public?: boolean
+          rating?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          category?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_approved?: boolean
+          is_public?: boolean
+          rating?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }

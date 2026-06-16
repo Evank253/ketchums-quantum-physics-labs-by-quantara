@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import { SiteFooter } from "@/components/site-footer";
 import { ColdComputeHud } from "@/components/cold-compute-hud";
+import { FeedbackWidget } from "@/components/feedback-widget";
 
 function NotFoundComponent() {
   return (
@@ -146,6 +147,7 @@ function RootComponent() {
       <Outlet />
       <SiteFooter />
       <ColdComputeHud />
+      <FeedbackWidget />
     </QueryClientProvider>
   );
 }

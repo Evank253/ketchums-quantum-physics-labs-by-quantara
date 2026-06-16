@@ -80,7 +80,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: isRecurring ? "subscription" : "payment",
         ui_mode: "embedded_page",
-        return_url: data.returnUrl,
+        return_url: validateReturnUrl(data.returnUrl),
         customer: customerId,
         metadata: { userId: context.userId },
         ...(isRecurring && { subscription_data: { metadata: { userId: context.userId } } }),
@@ -113,7 +113,7 @@ export const createPortalSession = createServerFn({ method: "POST" })
       const stripe = createStripeClient(data.environment);
       const portal = await stripe.billingPortal.sessions.create({
         customer: sub.stripe_customer_id as string,
-        ...(data.returnUrl && { return_url: data.returnUrl }),
+        ...(data.returnUrl && { return_url: validateReturnUrl(data.returnUrl) }),
       });
       return { url: portal.url };
     } catch (error) {

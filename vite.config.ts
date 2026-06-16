@@ -6,14 +6,4 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
-  // Harden the production client bundle: no sourcemaps, drop console/debugger,
-  // aggressive minify. Keeps internal logic out of the shipped JS.
-  build: {
-    sourcemap: false,
-    minify: "esbuild",
-  },
-  esbuild: {
-    drop: ["console", "debugger"],
-    legalComments: "none",
-  },
 });

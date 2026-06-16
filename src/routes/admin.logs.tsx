@@ -31,7 +31,7 @@ function AdminLogsPage() {
   const [err, setErr] = useState<string | null>(null);
 
   const reload = useCallback(() => {
-    Promise.all([callAnnex({}), callLogs({})])
+    Promise.all([callAnnex({ data: {} }), callLogs({ data: {} })])
       .then(([a, l]) => { setAnnex(a.runs ?? []); setLogs(l.logs ?? []); })
       .catch((e) => setErr(e?.message ?? String(e)));
   }, [callAnnex, callLogs]);
@@ -49,7 +49,7 @@ function AdminLogsPage() {
 
   async function rerunAnnex() {
     setBusy(true); setErr(null);
-    try { await callRun({}); reload(); }
+    try { await callRun({ data: undefined as any }); reload(); }
     catch (e: any) { setErr(e?.message ?? String(e)); }
     finally { setBusy(false); }
   }

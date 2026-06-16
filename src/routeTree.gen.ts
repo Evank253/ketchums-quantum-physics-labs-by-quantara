@@ -34,11 +34,15 @@ import { Route as LegalCreatorPolicyRouteImport } from './routes/legal.creator-p
 import { Route as LegalCommercialLicenseRouteImport } from './routes/legal.commercial-license'
 import { Route as LegalCollaboratorsRouteImport } from './routes/legal.collaborators'
 import { Route as LegalBlueprintRouteImport } from './routes/legal.blueprint'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ApiQedRouteImport } from './routes/api/qed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -167,6 +171,11 @@ const LegalBlueprintRoute = LegalBlueprintRouteImport.update({
   path: '/blueprint',
   getParentRoute: () => LegalRoute,
 } as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiQedRoute = ApiQedRouteImport.update({
   id: '/api/qed',
   path: '/api/qed',
@@ -187,11 +196,28 @@ const AdminLogsRoute = AdminLogsRouteImport.update({
   path: '/admin/logs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhookRoute = ApiPublicWebhookRouteImport.update({
   id: '/api/public/webhook',
   path: '/api/public/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -227,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
@@ -236,8 +263,11 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -261,6 +291,7 @@ export interface FileRoutesByTo {
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
@@ -270,8 +301,11 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -296,6 +330,7 @@ export interface FileRoutesById {
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/blueprint': typeof LegalBlueprintRoute
   '/legal/collaborators': typeof LegalCollaboratorsRoute
   '/legal/commercial-license': typeof LegalCommercialLicenseRoute
@@ -305,8 +340,11 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -332,6 +370,7 @@ export interface FileRouteTypes {
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
+    | '/email/unsubscribe'
     | '/legal/blueprint'
     | '/legal/collaborators'
     | '/legal/commercial-license'
@@ -341,8 +380,11 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -366,6 +408,7 @@ export interface FileRouteTypes {
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
+    | '/email/unsubscribe'
     | '/legal/blueprint'
     | '/legal/collaborators'
     | '/legal/commercial-license'
@@ -375,8 +418,11 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/'
@@ -400,6 +446,7 @@ export interface FileRouteTypes {
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
+    | '/email/unsubscribe'
     | '/legal/blueprint'
     | '/legal/collaborators'
     | '/legal/commercial-license'
@@ -409,8 +456,11 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -435,9 +485,13 @@ export interface RootRouteChildren {
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiQedRoute: typeof ApiQedRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicWebhookRoute: typeof ApiPublicWebhookRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -617,6 +671,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalBlueprintRouteImport
       parentRoute: typeof LegalRoute
     }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/qed': {
       id: '/api/qed'
       path: '/api/qed'
@@ -645,11 +706,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLogsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhook': {
       id: '/api/public/webhook'
       path: '/api/public/webhook'
       fullPath: '/api/public/webhook'
       preLoaderRoute: typeof ApiPublicWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
@@ -723,9 +805,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBenchmarkRoute: ApiBenchmarkRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiQedRoute: ApiQedRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicWebhookRoute: ApiPublicWebhookRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

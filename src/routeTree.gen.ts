@@ -13,6 +13,7 @@ import { Route as WorldRouteImport } from './routes/world'
 import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RgRunningRouteImport } from './routes/rg-running'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as KveRouteImport } from './routes/kve'
@@ -36,6 +37,7 @@ import { Route as LegalBlueprintRouteImport } from './routes/legal.blueprint'
 import { Route as ApiQedRouteImport } from './routes/api/qed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
+import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
 
 const WorldRoute = WorldRouteImport.update({
@@ -56,6 +58,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const RgRunningRoute = RgRunningRouteImport.update({
   id: '/rg-running',
   path: '/rg-running',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalRoute = LegalRouteImport.update({
@@ -173,6 +180,11 @@ const ApiBenchmarkRoute = ApiBenchmarkRouteImport.update({
   path: '/api/benchmark',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLogsRoute = AdminLogsRouteImport.update({
+  id: '/admin/logs',
+  path: '/admin/logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhookRoute = ApiPublicWebhookRouteImport.update({
   id: '/api/public/webhook',
   path: '/api/public/webhook',
@@ -192,10 +204,12 @@ export interface FileRoutesByFullPath {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -222,10 +236,12 @@ export interface FileRoutesByTo {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -253,10 +269,12 @@ export interface FileRoutesById {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -285,10 +303,12 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
     | '/world'
+    | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
@@ -315,10 +335,12 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
     | '/world'
+    | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
@@ -345,10 +367,12 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
     | '/world'
+    | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
     | '/api/qed'
@@ -376,10 +400,12 @@ export interface RootRouteChildren {
   KveRoute: typeof KveRoute
   LedgerRoute: typeof LedgerRoute
   LegalRoute: typeof LegalRouteWithChildren
+  PricingRoute: typeof PricingRoute
   RgRunningRoute: typeof RgRunningRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SynthesisRoute: typeof SynthesisRoute
   WorldRoute: typeof WorldRouteWithChildren
+  AdminLogsRoute: typeof AdminLogsRoute
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiQedRoute: typeof ApiQedRoute
@@ -414,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/rg-running'
       fullPath: '/rg-running'
       preLoaderRoute: typeof RgRunningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal': {
@@ -577,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBenchmarkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/logs': {
+      id: '/admin/logs'
+      path: '/admin/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AdminLogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhook': {
       id: '/api/public/webhook'
       path: '/api/public/webhook'
@@ -632,10 +672,12 @@ const rootRouteChildren: RootRouteChildren = {
   KveRoute: KveRoute,
   LedgerRoute: LedgerRoute,
   LegalRoute: LegalRouteWithChildren,
+  PricingRoute: PricingRoute,
   RgRunningRoute: RgRunningRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SynthesisRoute: SynthesisRoute,
   WorldRoute: WorldRouteWithChildren,
+  AdminLogsRoute: AdminLogsRoute,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiQedRoute: ApiQedRoute,

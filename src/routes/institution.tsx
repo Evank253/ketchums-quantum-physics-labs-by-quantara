@@ -9,7 +9,8 @@ import {
   listMyRunCards,
 } from "@/lib/compute/jobs.functions";
 import { getMyRoles } from "@/lib/compute/roles.functions";
-import { issueApiKey, listApiKeys, revokeApiKey } from "@/lib/compute/api-keys.functions";
+import { issueApiKey, listApiKeys, revokeApiKey, rotateApiKey } from "@/lib/compute/api-keys.functions";
+import { getMySubscription } from "@/lib/subscriptions.functions";
 import { QED_MODEL_ID } from "@/lib/compute/engines/qed";
 import { formatSigma } from "@/lib/compute/sigma";
 
@@ -342,6 +343,7 @@ function KeysTab({ isInstitution }: { isInstitution: boolean }) {
   const callList = useServerFn(listApiKeys);
   const callIssue = useServerFn(issueApiKey);
   const callRevoke = useServerFn(revokeApiKey);
+  const callRotate = useServerFn(rotateApiKey);
   const [keys, setKeys] = useState<any[]>([]);
   const [label, setLabel] = useState("");
   const [issued, setIssued] = useState<string | null>(null);
@@ -365,6 +367,14 @@ function KeysTab({ isInstitution }: { isInstitution: boolean }) {
     await callRevoke({ data: { id } });
     reload();
   }
+  async function rotate(id: string) {
+    setErr(null); setIssued(null);
+    try {
+      const r = await callRotate({ data: { id } });
+      setIssued(r.apiKey);
+      reload();
+    } catch (e: any) { setErr(e?.message ?? String(e)); }
+  }
 
   if (!isInstitution) {
     return (
@@ -377,7 +387,7 @@ function KeysTab({ isInstitution }: { isInstitution: boolean }) {
   return (
     <section className="rounded-sm border border-white/10 bg-black/40 p-5">
       <h2 className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-200/80">API keys</h2>
-      <p className="mt-1 text-xs text-white/55">Issued once. Only the SHA-256 hash is stored — we cannot recover lost keys.</p>
+      <p className="mt-1 text-xs text-white/55">Issued once. Only the SHA-256 hash is stored — we cannot recover lost keys. Rotation revokes the old key and issues a new one with the same label.</p>
 
       <div className="mt-4 flex gap-2">
         <input
@@ -411,9 +421,14 @@ function KeysTab({ isInstitution }: { isInstitution: boolean }) {
               </div>
             </div>
             {!k.revoked_at && (
-              <button onClick={() => revoke(k.id)} className="rounded-sm border border-red-400/40 bg-red-500/10 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-red-200 hover:bg-red-500/20">
-                Revoke
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => rotate(k.id)} className="rounded-sm border border-cyan-300/40 bg-cyan-500/10 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-cyan-200 hover:bg-cyan-500/20">
+                  Rotate
+                </button>
+                <button onClick={() => revoke(k.id)} className="rounded-sm border border-red-400/40 bg-red-500/10 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-red-200 hover:bg-red-500/20">
+                  Revoke
+                </button>
+              </div>
             )}
           </div>
         ))}
@@ -424,29 +439,37 @@ function KeysTab({ isInstitution }: { isInstitution: boolean }) {
 
 // ─── Subscription ──────────────────────────────────────────────────────────
 function SubscriptionTab({ roles }: { roles: string[] }) {
-  const tier = roles.includes("institution") ? "institution" : roles.includes("pro") ? "pro" : "free";
+  const callSub = useServerFn(getMySubscription);
+  const [sub, setSub] = useState<any>(null);
+  useEffect(() => { callSub({}).then(setSub).catch(() => {}); }, [callSub]);
+
+  const trialMs = sub?.trialEndsAt ? new Date(sub.trialEndsAt).getTime() - Date.now() : 0;
+  const trialDays = Math.max(0, Math.ceil(trialMs / 86400000));
+
   return (
     <section className="rounded-sm border border-white/10 bg-black/40 p-5">
       <h2 className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-200/80">Subscription</h2>
-      <div className="mt-3 text-xs text-white/65">
-        Current plan: <strong className="text-cyan-200">{tier}</strong>
+      <div className="mt-3 grid gap-2 text-xs text-white/65 sm:grid-cols-4">
+        <Stat label="Plan" value={sub?.plan ?? "—"} />
+        <Stat label="Status" value={sub?.allowed ? "active" : "blocked"} />
+        <Stat label="Runs used" value={`${sub?.runsUsed ?? 0} / ${sub?.runsLimit === -1 ? "∞" : (sub?.runsLimit ?? 0)}`} />
+        <Stat label="Trial left" value={sub?.plan === "trial" ? `${trialDays}d` : "—"} />
       </div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        {[
-          { id: "free", price: "$0", desc: "10 runs / month, dashboard only" },
-          { id: "pro", price: "$49", desc: "unlimited runs, no API" },
-          { id: "institution", price: "$499", desc: "unlimited runs + API keys + priority" },
-        ].map((p) => (
-          <div key={p.id} className={`rounded-sm border p-4 ${tier === p.id ? "border-cyan-300/60 bg-cyan-400/10" : "border-white/15 bg-black/50"}`}>
-            <div className="font-mono text-[9px] uppercase tracking-widest text-white/55">{p.id}</div>
-            <div className="mt-1 text-xl font-light text-cyan-100">{p.price}<span className="text-xs text-white/50">/mo</span></div>
-            <div className="mt-2 text-[11px] text-white/65">{p.desc}</div>
-          </div>
-        ))}
+      {sub && !sub.allowed && (
+        <div className="mt-4 rounded-sm border border-amber-300/40 bg-amber-500/10 p-3 text-[11px] text-amber-100">
+          {sub.reason || "Quota exceeded."}
+        </div>
+      )}
+      <div className="mt-5">
+        <Link to="/pricing" className="inline-block rounded-sm border border-cyan-300/50 bg-cyan-400/15 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-100 hover:bg-cyan-400/25">
+          View pricing & upgrade →
+        </Link>
+        {roles.includes("admin") && (
+          <Link to="/admin/logs" className="ml-2 inline-block rounded-sm border border-white/20 bg-black/50 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.2em] text-white/80 hover:bg-white/10">
+            Admin logs →
+          </Link>
+        )}
       </div>
-      <p className="mt-5 text-[11px] text-white/45">
-        Billing wiring (Stripe) is intentionally left as a separate slice — contact the operator to upgrade in the MVP.
-      </p>
     </section>
   );
 }

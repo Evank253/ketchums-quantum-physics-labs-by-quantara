@@ -1,22 +1,32 @@
-// WalletConnect v2 helper — lets MetaMask Mobile, Rabby Mobile, Trust Wallet,
-// Rainbow, Coinbase Wallet (mobile), and any WC-compatible wallet connect to
-// the dApp by scanning a QR code. Falls back gracefully if no project id is
-// configured (button is hidden by the UI).
+// WalletConnect v2 helper — browser-only. Lets MetaMask Mobile, Rabby Mobile,
+// Trust Wallet, Rainbow, and Coinbase Wallet (mobile) connect via QR code.
+//
+// The `@walletconnect/ethereum-provider` package is heavyweight and not
+// Worker-SSR safe, so we keep it OUT of any static type or value import path
+// and only load it via dynamic `import()` at click time in the browser.
 
-type EthereumProviderType = Awaited<
-  ReturnType<typeof import("@walletconnect/ethereum-provider").EthereumProvider.init>
->;
+type WCProvider = {
+  connect: () => Promise<void>;
+  disconnect?: () => Promise<void>;
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on?: (event: string, cb: (...args: unknown[]) => void) => void;
+  removeListener?: (event: string, cb: (...args: unknown[]) => void) => void;
+};
 
 const BASE_SEPOLIA_ID = 84_532;
 
 export function walletConnectProjectId(): string | null {
-  const id = (import.meta as any).env?.VITE_WALLETCONNECT_PROJECT_ID;
+  const id = (import.meta as { env?: Record<string, string | undefined> }).env
+    ?.VITE_WALLETCONNECT_PROJECT_ID;
   return typeof id === "string" && id.length > 0 ? id : null;
 }
 
-let cached: EthereumProviderType | null = null;
+let cached: WCProvider | null = null;
 
-export async function getWalletConnectProvider(): Promise<EthereumProviderType> {
+export async function getWalletConnectProvider(): Promise<WCProvider> {
+  if (typeof window === "undefined") {
+    throw new Error("WalletConnect is browser-only.");
+  }
   if (cached) return cached;
   const projectId = walletConnectProjectId();
   if (!projectId) {
@@ -24,26 +34,25 @@ export async function getWalletConnectProvider(): Promise<EthereumProviderType> 
       "WalletConnect not configured. Add VITE_WALLETCONNECT_PROJECT_ID (free at cloud.walletconnect.com).",
     );
   }
-  const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
-  cached = await EthereumProvider.init({
+  const mod = (await import(
+    /* @vite-ignore */ "@walletconnect/ethereum-provider"
+  )) as { EthereumProvider: { init: (opts: unknown) => Promise<WCProvider> } };
+  cached = await mod.EthereumProvider.init({
     projectId,
     chains: [BASE_SEPOLIA_ID],
     showQrModal: true,
     metadata: {
       name: "Ketchum's Quantum Physics Labs",
       description: "Quantara · $DAT minting on Base Sepolia",
-      url:
-        typeof window !== "undefined"
-          ? window.location.origin
-          : "https://ketchumsquantumphysicslab.live",
+      url: window.location.origin,
       icons: ["https://ketchumsquantumphysicslab.live/favicon.ico"],
     },
   });
-  return cached;
+  return cached!;
 }
 
 export async function connectWalletConnect(): Promise<{
-  provider: EthereumProviderType;
+  provider: WCProvider;
   address: string;
   chainIdHex: string;
 }> {

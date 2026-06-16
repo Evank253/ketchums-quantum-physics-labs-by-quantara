@@ -110,6 +110,54 @@ export type Database = {
         }
         Relationships: []
       }
+      base_payments: {
+        Row: {
+          addon: string | null
+          amount_usd: number
+          created_at: string
+          id: string
+          payment_id: string
+          plan: string | null
+          raw: Json | null
+          status: string
+          testnet: boolean
+          tx_hash: string | null
+          updated_at: string
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          addon?: string | null
+          amount_usd: number
+          created_at?: string
+          id?: string
+          payment_id: string
+          plan?: string | null
+          raw?: Json | null
+          status?: string
+          testnet?: boolean
+          tx_hash?: string | null
+          updated_at?: string
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          addon?: string | null
+          amount_usd?: number
+          created_at?: string
+          id?: string
+          payment_id?: string
+          plan?: string | null
+          raw?: Json | null
+          status?: string
+          testnet?: boolean
+          tx_hash?: string | null
+          updated_at?: string
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           body: string
@@ -461,6 +509,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          updated_at: string
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          updated_at?: string
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       public_achievements: {
         Row: {
           achievement_id: string
@@ -645,6 +717,30 @@ export type Database = {
         }
         Relationships: []
       }
+      siwe_nonces: {
+        Row: {
+          created_at: string
+          expires_at: string
+          nonce: string
+          used_at: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          nonce: string
+          used_at?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          nonce?: string
+          used_at?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       solved_theories: {
         Row: {
           abstract: string | null
@@ -682,6 +778,8 @@ export type Database = {
         Row: {
           cancel_at_period_end: boolean | null
           created_at: string
+          credits_granted: number
+          credits_remaining: number
           current_period_end: string | null
           current_period_start: string | null
           environment: string
@@ -689,6 +787,7 @@ export type Database = {
           plan: string
           price_id: string | null
           product_id: string | null
+          purchased_addons: Json
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -699,6 +798,8 @@ export type Database = {
         Insert: {
           cancel_at_period_end?: boolean | null
           created_at?: string
+          credits_granted?: number
+          credits_remaining?: number
           current_period_end?: string | null
           current_period_start?: string | null
           environment?: string
@@ -706,6 +807,7 @@ export type Database = {
           plan?: string
           price_id?: string | null
           product_id?: string | null
+          purchased_addons?: Json
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -716,6 +818,8 @@ export type Database = {
         Update: {
           cancel_at_period_end?: boolean | null
           created_at?: string
+          credits_granted?: number
+          credits_remaining?: number
           current_period_end?: string | null
           current_period_start?: string | null
           environment?: string
@@ -723,6 +827,7 @@ export type Database = {
           plan?: string
           price_id?: string | null
           product_id?: string | null
+          purchased_addons?: Json
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -850,6 +955,10 @@ export type Database = {
           runs_used: number
         }[]
       }
+      consume_credit: {
+        Args: { _amount?: number; _user_id: string }
+        Returns: number
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -857,6 +966,10 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      grant_plan_credits: {
+        Args: { _credits: number; _plan: string; _user_id: string }
+        Returns: undefined
       }
       has_role: {
         Args: {

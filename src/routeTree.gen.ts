@@ -17,8 +17,10 @@ import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as KveRouteImport } from './routes/kve'
 import { Route as InterstellarRouteImport } from './routes/interstellar'
+import { Route as InstitutionRouteImport } from './routes/institution'
 import { Route as CernRouteImport } from './routes/cern'
 import { Route as BenchmarksRouteImport } from './routes/benchmarks'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtlasRouteImport } from './routes/atlas'
 import { Route as AnnexRouteImport } from './routes/annex'
 import { Route as AncestralRouteImport } from './routes/ancestral'
@@ -76,6 +78,11 @@ const InterstellarRoute = InterstellarRouteImport.update({
   path: '/interstellar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InstitutionRoute = InstitutionRouteImport.update({
+  id: '/institution',
+  path: '/institution',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CernRoute = CernRouteImport.update({
   id: '/cern',
   path: '/cern',
@@ -84,6 +91,11 @@ const CernRoute = CernRouteImport.update({
 const BenchmarksRoute = BenchmarksRouteImport.update({
   id: '/benchmarks',
   path: '/benchmarks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtlasRoute = AtlasRouteImport.update({
@@ -172,8 +184,10 @@ export interface FileRoutesByFullPath {
   '/ancestral': typeof AncestralRoute
   '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
+  '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
+  '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
@@ -200,8 +214,10 @@ export interface FileRoutesByTo {
   '/ancestral': typeof AncestralRoute
   '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
+  '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
+  '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
@@ -229,8 +245,10 @@ export interface FileRoutesById {
   '/ancestral': typeof AncestralRoute
   '/annex': typeof AnnexRoute
   '/atlas': typeof AtlasRoute
+  '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
+  '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
@@ -259,8 +277,10 @@ export interface FileRouteTypes {
     | '/ancestral'
     | '/annex'
     | '/atlas'
+    | '/auth'
     | '/benchmarks'
     | '/cern'
+    | '/institution'
     | '/interstellar'
     | '/kve'
     | '/ledger'
@@ -287,8 +307,10 @@ export interface FileRouteTypes {
     | '/ancestral'
     | '/annex'
     | '/atlas'
+    | '/auth'
     | '/benchmarks'
     | '/cern'
+    | '/institution'
     | '/interstellar'
     | '/kve'
     | '/ledger'
@@ -315,8 +337,10 @@ export interface FileRouteTypes {
     | '/ancestral'
     | '/annex'
     | '/atlas'
+    | '/auth'
     | '/benchmarks'
     | '/cern'
+    | '/institution'
     | '/interstellar'
     | '/kve'
     | '/ledger'
@@ -344,8 +368,10 @@ export interface RootRouteChildren {
   AncestralRoute: typeof AncestralRoute
   AnnexRoute: typeof AnnexRoute
   AtlasRoute: typeof AtlasRoute
+  AuthRoute: typeof AuthRoute
   BenchmarksRoute: typeof BenchmarksRoute
   CernRoute: typeof CernRoute
+  InstitutionRoute: typeof InstitutionRoute
   InterstellarRoute: typeof InterstellarRoute
   KveRoute: typeof KveRoute
   LedgerRoute: typeof LedgerRoute
@@ -418,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InterstellarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/institution': {
+      id: '/institution'
+      path: '/institution'
+      fullPath: '/institution'
+      preLoaderRoute: typeof InstitutionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cern': {
       id: '/cern'
       path: '/cern'
@@ -430,6 +463,13 @@ declare module '@tanstack/react-router' {
       path: '/benchmarks'
       fullPath: '/benchmarks'
       preLoaderRoute: typeof BenchmarksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/atlas': {
@@ -584,8 +624,10 @@ const rootRouteChildren: RootRouteChildren = {
   AncestralRoute: AncestralRoute,
   AnnexRoute: AnnexRoute,
   AtlasRoute: AtlasRoute,
+  AuthRoute: AuthRoute,
   BenchmarksRoute: BenchmarksRoute,
   CernRoute: CernRoute,
+  InstitutionRoute: InstitutionRoute,
   InterstellarRoute: InterstellarRoute,
   KveRoute: KveRoute,
   LedgerRoute: LedgerRoute,

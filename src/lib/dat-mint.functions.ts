@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { TREASURY_WALLET } from "./treasury";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Allowed preset claims — server is the source of truth, not the client.
 // `key` set => one-time per wallet. `cooldownMs` set => repeatable with rate limit.
@@ -47,8 +48,10 @@ const ListInput = z.object({
 });
 
 export const claimDat = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ClaimInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    void context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const mint = await import("./dat-mint.server");
 
@@ -333,6 +336,7 @@ export const getOnChainBalance = createServerFn({ method: "POST" })
   });
 
 export const listClaims = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ListInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

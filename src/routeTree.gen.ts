@@ -21,6 +21,8 @@ import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as KveRouteImport } from './routes/kve'
 import { Route as InterstellarRouteImport } from './routes/interstellar'
 import { Route as InstitutionRouteImport } from './routes/institution'
+import { Route as FeedbackRouteImport } from './routes/feedback'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CernRouteImport } from './routes/cern'
 import { Route as BenchmarksRouteImport } from './routes/benchmarks'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -108,6 +110,16 @@ const InterstellarRoute = InterstellarRouteImport.update({
 const InstitutionRoute = InstitutionRouteImport.update({
   id: '/institution',
   path: '/institution',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedbackRoute = FeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CernRoute = CernRouteImport.update({
@@ -263,6 +275,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
+  '/chat': typeof ChatRoute
+  '/feedback': typeof FeedbackRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
@@ -305,6 +319,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
+  '/chat': typeof ChatRoute
+  '/feedback': typeof FeedbackRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
@@ -348,6 +364,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
   '/cern': typeof CernRoute
+  '/chat': typeof ChatRoute
+  '/feedback': typeof FeedbackRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
@@ -392,6 +410,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/benchmarks'
     | '/cern'
+    | '/chat'
+    | '/feedback'
     | '/institution'
     | '/interstellar'
     | '/kve'
@@ -434,6 +454,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/benchmarks'
     | '/cern'
+    | '/chat'
+    | '/feedback'
     | '/institution'
     | '/interstellar'
     | '/kve'
@@ -476,6 +498,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/benchmarks'
     | '/cern'
+    | '/chat'
+    | '/feedback'
     | '/institution'
     | '/interstellar'
     | '/kve'
@@ -519,6 +543,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BenchmarksRoute: typeof BenchmarksRoute
   CernRoute: typeof CernRoute
+  ChatRoute: typeof ChatRoute
+  FeedbackRoute: typeof FeedbackRoute
   InstitutionRoute: typeof InstitutionRoute
   InterstellarRoute: typeof InterstellarRoute
   KveRoute: typeof KveRoute
@@ -630,6 +656,20 @@ declare module '@tanstack/react-router' {
       path: '/institution'
       fullPath: '/institution'
       preLoaderRoute: typeof InstitutionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feedback': {
+      id: '/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof FeedbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cern': {
@@ -871,6 +911,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BenchmarksRoute: BenchmarksRoute,
   CernRoute: CernRoute,
+  ChatRoute: ChatRoute,
+  FeedbackRoute: FeedbackRoute,
   InstitutionRoute: InstitutionRoute,
   InterstellarRoute: InterstellarRoute,
   KveRoute: KveRoute,

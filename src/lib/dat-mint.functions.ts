@@ -338,11 +338,18 @@ export const getOnChainBalance = createServerFn({ method: "POST" })
 export const listClaims = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ListInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const mint = await import("./dat-mint.server");
     const wallet = mint.normalizeAddress(data.wallet);
     if (!wallet) throw new Error("Invalid wallet address");
+    // Authz: only admins can enumerate arbitrary wallets. Until wallets are
+    // bound to user_ids, restrict to admin to prevent IDOR (financial enum).
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden: wallet-claim history is admin-only");
     const { data: rows, error } = await supabaseAdmin
       .from("dat_claims")
       .select("id,amount,reason,reason_key,status,tx_hash,block_number,error,created_at")

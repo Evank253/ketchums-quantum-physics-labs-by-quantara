@@ -5,6 +5,25 @@ type StripeEnv = "sandbox" | "live";
 
 type CheckoutResult = { clientSecret: string } | { error: string };
 
+// Allow-list for Stripe redirect return URLs. Prevents open-redirect phishing
+// via attacker-controlled `returnUrl` forwarded to Stripe.
+const ALLOWED_RETURN_ORIGINS = new Set<string>([
+  "https://ketchumsquantumphysicslab.live",
+  "https://www.ketchumsquantumphysicslab.live",
+  "https://ketchums-quantum-physics-labs-by-quantara.lovable.app",
+  "https://id-preview--c3270ea2-02ec-4c05-8ee1-5dbf80b96149.lovable.app",
+  "http://localhost:8080",
+  "http://localhost:5173",
+]);
+function validateReturnUrl(url: string): string {
+  let parsed: URL;
+  try { parsed = new URL(url); } catch { throw new Error("Invalid returnUrl"); }
+  if (!ALLOWED_RETURN_ORIGINS.has(parsed.origin)) {
+    throw new Error("returnUrl origin not allowed");
+  }
+  return parsed.toString();
+}
+
 async function resolveOrCreateCustomer(stripe: any, options: { email?: string; userId?: string }) {
   if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) throw new Error("Invalid userId");
   if (options.userId) {

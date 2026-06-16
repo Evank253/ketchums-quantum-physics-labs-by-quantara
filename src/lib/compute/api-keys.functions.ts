@@ -52,10 +52,17 @@ export const revokeApiKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => ({ id: input.id }))
   .handler(async ({ data, context }) => {
+    const { data: row } = await context.supabase
+      .from("institution_api_keys")
+      .select("user_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row || row.user_id !== context.userId) throw new Error("not your key");
     const { error } = await context.supabase
       .from("institution_api_keys")
       .update({ revoked_at: new Date().toISOString() })
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });

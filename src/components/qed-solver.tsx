@@ -58,6 +58,7 @@ export function QedSolver() {
   const [alpha, setAlpha] = useState(7.30e-3); // poor initial guess
   const [logs, setLogs] = useState<IterationLog[]>([]);
   const [diagrams, setDiagrams] = useState(0);
+  const [showValidation, setShowValidation] = useState(true);
   const [solved, setSolved] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -257,35 +258,59 @@ export function QedSolver() {
           </div>
         </div>
 
+        {/* Validation layer toggle */}
+        <div className="mt-px flex items-center justify-end gap-2 border border-white/5 bg-card/40 px-6 py-2 font-mono">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-chrome">SHOW VALIDATION LAYER</span>
+          <button
+            onClick={() => setShowValidation((v) => !v)}
+            aria-pressed={showValidation}
+            className={`relative h-4 w-8 rounded-full border transition-colors ${
+              showValidation ? "border-emerald-400/60 bg-emerald-400/30" : "border-white/20 bg-white/5"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${
+                showValidation ? "translate-x-4" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+          <span className="text-[10px] text-white/50">{showValidation ? "CODATA comparison" : "raw engine output"}</span>
+        </div>
+
         {/* Current vs measured */}
-        <div className="mt-px grid gap-px md:grid-cols-2">
+        <div className={`mt-px grid gap-px ${showValidation ? "md:grid-cols-2" : "md:grid-cols-2"}`}>
           <div className="border border-white/5 bg-card/40 p-6 font-mono">
             <div className="text-[10px] uppercase tracking-[0.25em] text-chrome">FINE-STRUCTURE 1/α</div>
-            <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
+            <div className={`mt-2 grid gap-3 text-xs ${showValidation ? "grid-cols-2" : "grid-cols-1"}`}>
               <div>
-                <div className="text-muted-foreground">PREDICTED</div>
+                <div className="text-muted-foreground">{showValidation ? "PREDICTED" : "ENGINE OUTPUT"}</div>
                 <div className="mt-1 text-base text-white">{current ? current.alphaInv.toFixed(9) : "—"}</div>
               </div>
-              <div>
-                <div className="text-muted-foreground">MEASURED (CODATA)</div>
-                <div className="mt-1 text-base text-emerald-400">{ALPHA_INV_MEASURED.toFixed(9)}</div>
-              </div>
+              {showValidation && (
+                <div>
+                  <div className="text-muted-foreground">MEASURED (CODATA)</div>
+                  <div className="mt-1 text-base text-emerald-400">{ALPHA_INV_MEASURED.toFixed(9)}</div>
+                </div>
+              )}
             </div>
           </div>
           <div className="border border-white/5 bg-card/40 p-6 font-mono">
             <div className="text-[10px] uppercase tracking-[0.25em] text-chrome">ANOMALOUS MAGNETIC MOMENT a_e</div>
-            <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
+            <div className={`mt-2 grid gap-3 text-xs ${showValidation ? "grid-cols-2" : "grid-cols-1"}`}>
               <div>
-                <div className="text-muted-foreground">SCHWINGER+ EXPANSION</div>
+                <div className="text-muted-foreground">{showValidation ? "SCHWINGER+ EXPANSION" : "ENGINE OUTPUT"}</div>
                 <div className="mt-1 text-base text-white">{current ? current.aE.toExponential(6) : "—"}</div>
               </div>
-              <div>
-                <div className="text-muted-foreground">EXPERIMENT</div>
-                <div className="mt-1 text-base text-emerald-400">{A_E_MEASURED.toExponential(6)}</div>
-              </div>
+              {showValidation && (
+                <div>
+                  <div className="text-muted-foreground">EXPERIMENT</div>
+                  <div className="mt-1 text-base text-emerald-400">{A_E_MEASURED.toExponential(6)}</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
 
         {/* Log */}
         <div className="mt-px border border-white/5 bg-card/40 p-6">

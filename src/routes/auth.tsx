@@ -124,6 +124,8 @@ function AuthPage() {
       >
         {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
       </button>
+      </>
+      )}
     </main>
   );
 }

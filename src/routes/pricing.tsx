@@ -14,18 +14,20 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-type TierId = "trial" | "starter" | "pro" | "institution";
+type TierId = "explorer" | "researcher" | "professional" | "institutional" | "enterprise";
 const TIERS: Array<{
-  id: TierId; price: string; period: string; runs: string; features: string[]; priceId?: string; highlight?: boolean;
+  id: TierId; price: string; period: string; runs: string; features: string[]; priceId?: string; planKey?: string; usdc?: number; highlight?: boolean; contact?: boolean;
 }> = [
-  { id: "trial", price: "Free", period: "7 days", runs: "5 benchmark evaluations",
-    features: ["CODATA + literature comparison", "Sigma deviation report", "Immutable run cards", "Dashboard access"] },
-  { id: "starter", price: "$29", period: "/month", runs: "100 runs / month", priceId: "starter_monthly",
-    features: ["Everything in trial", "Run history", "Export run cards (JSON)", "Email support"] },
-  { id: "pro", price: "$99", period: "/month", runs: "2,000 runs / month", priceId: "pro_monthly", highlight: true,
-    features: ["Everything in Starter", "Batch jobs", "Priority compute", "Slack/email support"] },
-  { id: "institution", price: "$499", period: "/month", runs: "Unlimited runs", priceId: "institution_monthly",
-    features: ["Everything in Pro", "API keys + rotation", "HPC export", "Cluster integration"] },
+  { id: "explorer", price: "Free", period: "5 runs", runs: "5 benchmark evaluations",
+    features: ["CODATA + literature comparison", "Sigma deviation report", "Immutable run cards", "Public dashboard"] },
+  { id: "researcher", price: "$99", period: "/month", runs: "100 runs / month", priceId: "researcher_monthly", planKey: "researcher_monthly", usdc: 99,
+    features: ["Everything in Explorer", "Run history + JSON export", "Run-card provenance", "Email support"] },
+  { id: "professional", price: "$499", period: "/month", runs: "1,000 runs / month", priceId: "professional_monthly", planKey: "professional_monthly", usdc: 499, highlight: true,
+    features: ["Everything in Researcher", "Team seats", "Priority compute queue", "Dataset exports"] },
+  { id: "institutional", price: "$2,500", period: "/month", runs: "10,000 runs / month", priceId: "institutional_monthly", planKey: "institutional_monthly", usdc: 2500,
+    features: ["Everything in Professional", "SSO + audit logs", "Dedicated support", "Compliance modules"] },
+  { id: "enterprise", price: "Contact", period: "us", runs: "Custom volume + SLAs", contact: true,
+    features: ["Private deployment", "Custom research contract", "On-prem option", "Government & defense ready"] },
 ];
 
 function PricingPage() {

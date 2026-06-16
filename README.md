@@ -1,6 +1,5 @@
 For a project called Ketchum’s Quantum Physics Labs by Quantara, I would position it as a research and simulation platform rather than claiming real quantum breakthroughs unless those results have been independently verified. That makes the README stronger, more credible, and more attractive to developers, researchers, and potential partners.
 
-:::writing{variant=“document” id=“73482”}
 
 Ketchum’s Quantum Physics Labs by Quantara
 

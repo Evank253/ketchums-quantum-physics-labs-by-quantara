@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          payload: Json | null
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json | null
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
+      annex_runs: {
+        Row: {
+          created_at: string
+          engine_value: number | null
+          id: string
+          payload: Json | null
+          reference_value: number | null
+          sigma: number | null
+          theory_id: string
+          theory_name: string
+          triggered_by: string | null
+          verdict: string | null
+        }
+        Insert: {
+          created_at?: string
+          engine_value?: number | null
+          id?: string
+          payload?: Json | null
+          reference_value?: number | null
+          sigma?: number | null
+          theory_id: string
+          theory_name: string
+          triggered_by?: string | null
+          verdict?: string | null
+        }
+        Update: {
+          created_at?: string
+          engine_value?: number | null
+          id?: string
+          payload?: Json | null
+          reference_value?: number | null
+          sigma?: number | null
+          theory_id?: string
+          theory_name?: string
+          triggered_by?: string | null
+          verdict?: string | null
+        }
+        Relationships: []
+      }
       compute_jobs: {
         Row: {
           codata_result: Json | null
@@ -334,6 +397,45 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usage_counters: {
         Row: {
           id: string
@@ -385,6 +487,16 @@ export type Database = {
         Args: { _solver: string; _theory: string }
         Returns: string
       }
+      check_user_quota: {
+        Args: { _user_id: string }
+        Returns: {
+          allowed: boolean
+          plan: string
+          reason: string
+          runs_limit: number
+          runs_used: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -401,7 +513,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "free" | "pro" | "institution" | "admin"
+      app_role: "free" | "pro" | "institution" | "admin" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -529,7 +641,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["free", "pro", "institution", "admin"],
+      app_role: ["free", "pro", "institution", "admin", "viewer"],
     },
   },
 } as const

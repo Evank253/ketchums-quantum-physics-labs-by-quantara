@@ -1,172 +1,60 @@
-## Goal
 
-Three things, in this order, no scope creep:
+## Scope (locked by your answers)
 
-1. **Unblock the build** (current `build:dev` is failing on `@walletconnect/ethereum-provider`).
-2. **Hide your Lovable / API keys** — never reachable from the published site or client bundle.
-3. **Ship the Institutional MVP**: roles, compute-jobs pipeline (engine vs CODATA vs literature, σ deviation, PASS/FAIL), immutable run-cards, and a dedicated `/institution` dashboard — **fully separated** from the $DAT token system so failures in one can't take down the other.
+Trial+pay = **Stripe** ($29 / $99 / $499). Free shape = **5 runs / 7-day trial**. Mint target = **your treasury 0x15B3…86DD**. IP protection = **hide anything risky to your work**.
 
-No changes to existing physics UI, no changes to the existing $DAT wallet code beyond finishing the 4 secrets prompt.
+## What I'll ship this turn
 
----
+### 1. Trial + quota enforcement (server-side, can't be bypassed)
+- Migration: `subscriptions` table (user_id, plan, status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id).
+- DB trigger: on new auth user → insert row `plan='trial', trial_ends_at=now()+7 days`.
+- `submitComputeJob` gains a gate: if `plan='trial'` AND (trial expired OR monthly runs ≥ 5) → throw "Trial expired — subscribe to continue". Paid plans get tiered quotas: starter=100, pro=2000, institution=unlimited.
+- **Fix pending status**: insert as `pending`, flip to `running` after gate passes, then `complete`/`failed`. (Today it skips `pending`.)
 
-## Part 1 — Fix the broken build (blocker)
+### 2. Stripe (seamless, Lovable-managed)
+- Enable via `enable_stripe_payments` tool (no API key from you).
+- Three products: Starter $29/mo, Pro $99/mo, Institution $499/mo.
+- Server route `/api/public/webhooks/stripe` (signature-verified) updates `subscriptions` on `customer.subscription.*` and `invoice.paid`.
+- `/pricing` page + "Subscribe" CTA on the institutional dashboard when gated.
 
-Root cause: `@walletconnect/ethereum-provider`'s ESM bundle uses a pre-bundled chunk that Rollup can't statically analyze in Worker SSR. The package was added last turn for the WalletConnect button.
+### 3. Roles
+- Add `viewer` to `app_role` enum.
+- RLS on `dat_mint_audit`, `compute_jobs` (all users), `run_cards` (all users): **only admin** can SELECT, plus the row owner can see their own. Viewers can see nothing sensitive.
+- `/institution` admin tab only visible to `admin` role.
 
-Fix: make WalletConnect a **pure browser-side dynamic import** and exclude it from SSR pre-bundling.
+### 4. API key rotation
+- `rotateApiKey(keyId)` server fn: revokes old, issues new with same label, returns plaintext once. UI button next to each key.
 
-- `src/lib/wallet-connect.ts` — already uses `await import(...)`. Add a `typeof window === "undefined"` guard at the top of `getWalletConnectProvider()` that throws a clean "browser only" error. This prevents any SSR codepath from touching the module.
-- `vite.config.ts` — add `optimizeDeps.exclude: ["@walletconnect/ethereum-provider"]` and `ssr.noExternal` adjustment so the Worker build never tries to bundle it. (Knowledge says don't set `ssr.external`; the right knob here is `optimizeDeps.exclude` + leaving the dynamic import unbundled on the client.)
-- `src/components/dat-wallet.tsx` — wrap the WalletConnect button in a `typeof window !== "undefined"` mount guard and lazy-load on click only.
+### 5. Auto-mint on verified completion
+- On `verdict='PASS'` AND `sigma < 1`, fire `dat-mint.functions.ts → mintForRun()` that mints **to your treasury** (`TREASURY_BASE_PROFILE_URL` owner) and logs in `dat_mint_audit`. Idempotent by `run_id`.
 
-If that still doesn't pass Rollup on the Worker SSR pass, **remove `@walletconnect/ethereum-provider`** and replace with a "Open in MetaMask Mobile" deep link (`https://metamask.app.link/dapp/...`) — same UX outcome, zero build risk. I'll decide based on the first build result and won't loop on it.
+### 6. IP / source hardening
+- `vite.config.ts`: disable sourcemaps in production, enable aggressive minify, drop `console.*` and `debugger`.
+- Remove public docs routes from sitemap (`/benchmarks`, `/annex`, `/legal/blueprint` stay reachable by direct URL but are noindex).
+- Move `QED_COEFFS`, sigma formula, and CODATA constants behind a server fn only — the client gets the *result*, never the coefficients. (Engine adapter on server; client engine file becomes a thin wrapper that calls `runEngineServer`.)
+- Add `robots.txt` deny for `/institution`, `/auth`, `/api/*`.
 
----
+### 7. Math annex live re-run + admin-only logs + CERN email
+- New server fn `runAnnexBatch()` (admin-only) iterates every theory in `foundational-equations.ts` / annex list, executes the engine, stores result in new `annex_runs` table with sigma+verdict.
+- New `admin_logs` table (admin-only RLS) — every annex run, every auto-mint, every CERN dispatch writes here.
+- On PASS verdict, queue an email via **Lovable Emails** (built-in) to `cern-publications@cern.ch` + a configurable institution list, with the run-card JSON attached as link. Each dispatch logged in `admin_logs`.
+- New `/admin/logs` route (gated by `admin` role) showing annex_runs + admin_logs feed.
 
-## Part 2 — Hide Lovable / API keys
+### 8. GitHub
+- Lovable auto-pushes to GitHub *only if you connected the GitHub integration* (Project → Settings → GitHub). I can't enable that for you — it requires your OAuth. **Tell me if you want me to walk you through it.** Until then, the repo lives only in Lovable.
 
-Reality check up front so we don't ship security theater:
-- Anything prefixed `VITE_*` in `.env` is **inlined into the client bundle** — that includes `VITE_SUPABASE_PUBLISHABLE_KEY`. That key is the **publishable anon key**; it is *designed* to be public (RLS is the security boundary). It's not a secret and can't be hidden. I will not pretend otherwise.
-- The keys that **must** stay server-only are: `SUPABASE_SERVICE_ROLE_KEY`, `LOVABLE_API_KEY`, `QUANTARA_MASTER_KEY`, `QUANTARA_BASE_SEPOLIA_KEY`, `ANCESTRAL_KEY`, and the 4 new wallet secrets below. These already live in the secrets vault — `process.env.*` only, never `VITE_*`.
+## What I am NOT doing this turn (call them out if you want them)
+- Switching from "5 runs / 7-day trial" to "1–3 projects" model (you picked the runs model).
+- Splitting DAT between user/treasury (you said treasury only).
+- Refactoring every component to remove the engine module — only the QED coefficients move server-side; the rest of the UI stays.
 
-What I'll actually do:
-1. **Audit grep**: scan the whole `src/` tree for any `import.meta.env.*` and `process.env.*` reference. Anything secret-shaped that's read client-side gets moved behind a server function.
-2. **Strip `LOVABLE_API_KEY` usage from any `.functions.ts` module-scope** (per the server-function-authoring rules, env reads must be inside `.handler()`).
-3. **Rotate `LOVABLE_API_KEY`** via `ai_gateway--rotate_lovable_api_key` so the previous value (if it ever leaked into a build artifact) is dead.
-4. **Add `security--update_memory`** entry: "Service role + LOVABLE_API_KEY + QUANTARA_* + DAT_MINTER_PRIVATE_KEY are server-only; publishable anon key is intentionally public and protected by RLS."
+## Order of operations
+1. Migrations (subscriptions, annex_runs, admin_logs, viewer role, RLS tightening, trigger).
+2. Server fns (quota gate, rotation, annex batch, auto-mint, CERN dispatch).
+3. Stripe enable + webhook + pricing page.
+4. Email scaffold for CERN dispatch.
+5. Admin logs route.
+6. IP hardening (vite config, server-only coefficients, robots).
+7. Verify build, then I'll ask you to sign up so the trial+admin promotion fires.
 
-I will **not** rename secrets in the vault to "off-website" names — Lovable Cloud requires the canonical `SUPABASE_*` / `LOVABLE_API_KEY` names to function. Renaming breaks the platform. The vault is already invisible to the published site.
-
----
-
-## Part 3 — Wallet / RPC / Contract secrets (finish from last turn)
-
-Prompt once for all four via the secrets tool:
-- `VITE_WALLETCONNECT_PROJECT_ID` *(this one is public by design — the WC project id is meant to be in the client; the secret vault just persists it across builds)*
-- `BASE_SEPOLIA_RPC_URL` (server-only)
-- `DAT_CONTRACT_ADDRESS` (server-only)
-- `DAT_MINTER_PRIVATE_KEY` (server-only)
-
-If you skip any, the wallet/treasury panel falls back to "not configured" state — no crash.
-
----
-
-## Part 4 — Institutional MVP (fully isolated from token system)
-
-Hard isolation rule: **no import from `src/lib/dat-*` inside any institution file, and vice versa.** Two independent subsystems sharing only `auth.users`.
-
-### 4a. Database (one migration)
-
-```text
-public.app_role           enum('free','pro','institution','admin')
-public.user_roles         (user_id → auth.users, role app_role, unique pair)
-public.has_role(uuid, app_role)  security definer fn  -- for RLS
-public.compute_jobs       (id, user_id, model, inputs jsonb, status,
-                           engine_result jsonb, codata_result jsonb,
-                           literature_result jsonb, sigma numeric,
-                           verdict text, created_at, completed_at)
-public.run_cards          (id, job_id → compute_jobs, run_id text unique,
-                           input_hash text, output_hash text,
-                           backend_version text, seed bigint,
-                           created_at)        -- append-only via revoked UPDATE/DELETE
-public.institution_api_keys (id, user_id, key_hash, label, last_used_at,
-                             revoked_at, created_at)
-public.usage_counters     (user_id, period_start, runs_count)
-```
-
-Every table: explicit `GRANT`s for `authenticated` + `service_role` (no `anon`); RLS on; policies scoped via `has_role(auth.uid(), …)`; `run_cards` gets a trigger that blocks UPDATE/DELETE for everyone except service_role.
-
-### 4b. Server functions (`src/lib/compute/*.functions.ts`)
-
-- `submitComputeJob({model, inputs})` — `requireSupabaseAuth` + role/quota gate; inserts pending job; returns id.
-- `runComputeJob(jobId)` server-only worker: calls deterministic engine → CODATA lookup → literature lookup → σ = |engine − codata| / uncertainty → PASS if σ < 1; writes `engine_result`, `codata_result`, `literature_result`, `sigma`, `verdict`; writes immutable `run_card` with sha256 hashes; updates `usage_counters`.
-- `getMyJobs()`, `getJobById(id)`, `getRunCard(runId)` — RLS-scoped reads.
-- `issueApiKey(label)` / `revokeApiKey(id)` — institution role only; key returned **once**, only hash stored.
-
-### 4c. CODATA + literature data (static, shipped)
-
-`src/lib/compute/codata.ts` — small typed JSON of CODATA 2022 values + uncertainties for the QED constants the engine already targets (`a_e`, `α⁻¹`, electron g-2). `src/lib/compute/literature.ts` — published benchmark values (Aoyama 2019 etc.) with citations. Pure data, no fetching.
-
-### 4d. Engine adapter
-
-`src/lib/compute/engines/qed.ts` — thin wrapper around the existing `src/engine/qed_calculator.ts` that returns the **typed result envelope** the spec calls for:
-```text
-{ value, uncertainty, source: 'engine', method, reference, timestamp, run_id }
-```
-No new physics. Just rewraps existing output.
-
-### 4e. Public API route (for institution role only)
-
-`src/routes/api/v1/jobs.ts` — `POST` accepts `Authorization: Bearer <api_key>`, validates against `institution_api_keys.key_hash`, runs through the same `submitComputeJob` pipeline. Rate-limited per key. **Not** under `/api/public/*` (those bypass auth on published sites). Returns OpenAPI-shaped JSON.
-
-`src/routes/api/openapi.json.ts` — generates an OpenAPI 3.0 doc describing `POST /api/v1/jobs`, `GET /api/v1/jobs/:id`, `GET /api/v1/run-cards/:runId`.
-
-### 4f. Dashboard UI (`/institution`, protected)
-
-New layout: `src/routes/_authenticated/institution.tsx` with these tabs:
-1. **Submit Job** — JSON editor + model dropdown.
-2. **Job History** — table of past jobs with σ, verdict, link to run-card.
-3. **Run Cards Explorer** — read-only view of any run-card by id (hashes, inputs, outputs, backend version, seed).
-4. **Usage** — runs this period vs quota (Free=10, Pro=∞, Institution=∞ + API).
-5. **API Keys** — issue/revoke (institution role only).
-6. **Subscription** — placeholder card linking to a Stripe upgrade flow stub (no Stripe wiring this turn — that's its own slice).
-
-Also need: `src/routes/_authenticated/route.tsx` (Lovable Supabase integration ships this — verify it exists; if not, the integration auto-adds it).
-
-A small **role-promote** server fn (admin-only) so you can promote your own user to `institution` for testing. No self-service role grants.
-
-### 4g. Wording sweep — only on new compute output
-
-Per your prior direction we only update copy on the **new** institutional pipeline. Existing showcase UI stays untouched. The new dashboard renders results as: `"within Xσ of CODATA (uncertainty = …)"` — never "matches" / "proves".
-
----
-
-## Files
-
-### Created
-- `supabase/migrations/<ts>_institutional_mvp.sql`
-- `src/lib/compute/codata.ts`, `literature.ts`, `result-types.ts`, `sigma.ts`, `hash.ts`
-- `src/lib/compute/engines/qed.ts`
-- `src/lib/compute/jobs.functions.ts`, `jobs.server.ts`
-- `src/lib/compute/api-keys.functions.ts`
-- `src/lib/compute/roles.functions.ts` (has_role helpers, admin promote)
-- `src/routes/_authenticated/institution.tsx`, `institution.submit.tsx`, `institution.history.tsx`, `institution.runs.tsx`, `institution.usage.tsx`, `institution.keys.tsx`, `institution.subscription.tsx`
-- `src/routes/api/v1/jobs.ts`, `src/routes/api/v1/jobs.$id.ts`, `src/routes/api/v1/run-cards.$runId.ts`, `src/routes/api/openapi[.]json.ts`
-
-### Edited
-- `vite.config.ts` — `optimizeDeps.exclude` for walletconnect
-- `src/lib/wallet-connect.ts` — SSR guard
-- `src/components/dat-wallet.tsx` — lazy mount guard
-- `src/components/site-footer.tsx` / `__root.tsx` — add `/institution` link in protected nav only
-
-### Untouched (explicitly)
-- All existing physics components (`qed-computer.tsx`, `cern-embed.tsx`, `kve-lab.tsx`, etc.)
-- All `dat-*` files except finishing the secrets prompt
-- `src/integrations/supabase/*` (auto-generated)
-
----
-
-## Secrets prompted this turn
-1. `VITE_WALLETCONNECT_PROJECT_ID`
-2. `BASE_SEPOLIA_RPC_URL`
-3. `DAT_CONTRACT_ADDRESS`
-4. `DAT_MINTER_PRIVATE_KEY`
-
-Plus `ai_gateway--rotate_lovable_api_key` to refresh the Lovable key.
-
----
-
-## Order of execution
-1. Fix `vite.config.ts` + wallet-connect SSR guard → confirm build green.
-2. Rotate `LOVABLE_API_KEY` + update security memory.
-3. Prompt for the 4 wallet secrets.
-4. Migration: roles + compute_jobs + run_cards + api_keys + usage_counters + grants + RLS + immutability trigger.
-5. CODATA/literature data + result-types + engine adapter + sigma + hash.
-6. Server functions (jobs, run-cards, api-keys, roles).
-7. `/institution` dashboard tabs.
-8. `/api/v1/*` route + OpenAPI doc.
-9. Self-promote me to `institution` (admin fn run once).
-10. Smoke test: submit a QED job from the dashboard, see σ + verdict + run-card hash.
-
-Approve and I'll execute in this exact order.
+Approve and I execute end-to-end.

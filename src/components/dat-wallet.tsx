@@ -306,8 +306,23 @@ export function DatWallet() {
           </div>
         </div>
         <div className="text-right">
-          <div className="font-mono text-[9px] uppercase tracking-widest text-amber-200/70">
+          <div className="flex items-center justify-end gap-2 font-mono text-[9px] uppercase tracking-widest text-amber-200/70">
             Treasury balance
+            <button
+              type="button"
+              onClick={() => {
+                setBusy("treasury");
+                callTreasury({})
+                  .then((t) => setTreasuryBalance(t.balance ?? "0"))
+                  .catch((e: any) => setErr(e?.message ?? String(e)))
+                  .finally(() => setBusy(null));
+              }}
+              disabled={busy === "treasury"}
+              className="rounded-sm border border-amber-300/40 bg-black/40 px-1.5 py-0.5 text-[8px] text-amber-200 hover:bg-amber-500/10 disabled:opacity-50"
+              title="Refresh on-chain balance"
+            >
+              {busy === "treasury" ? "…" : "↻"}
+            </button>
           </div>
           <div className="font-mono text-xl text-amber-100">
             {formatUnits(treasuryBalance, 18)}

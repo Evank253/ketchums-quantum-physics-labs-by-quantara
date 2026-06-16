@@ -77,6 +77,39 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          op: string
+          row_id: string | null
+          table_name: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          op: string
+          row_id?: string | null
+          table_name: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          op?: string
+          row_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           body: string
@@ -511,6 +544,107 @@ export type Database = {
           },
         ]
       }
+      security_alerts: {
+        Row: {
+          body: string | null
+          created_at: string
+          emailed_at: string | null
+          finding_id: string | null
+          id: string
+          payload: Json | null
+          read_at: string | null
+          severity: string
+          source: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          emailed_at?: string | null
+          finding_id?: string | null
+          id?: string
+          payload?: Json | null
+          read_at?: string | null
+          severity: string
+          source: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          emailed_at?: string | null
+          finding_id?: string | null
+          id?: string
+          payload?: Json | null
+          read_at?: string | null
+          severity?: string
+          source?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_alerts_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "security_findings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_findings: {
+        Row: {
+          affected_resource: string | null
+          created_at: string
+          description: string | null
+          detected_at: string
+          external_id: string | null
+          fix_log: Json | null
+          fix_strategy: string | null
+          id: string
+          payload: Json | null
+          resolved_at: string | null
+          severity: string
+          source: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affected_resource?: string | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          external_id?: string | null
+          fix_log?: Json | null
+          fix_strategy?: string | null
+          id?: string
+          payload?: Json | null
+          resolved_at?: string | null
+          severity: string
+          source: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affected_resource?: string | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          external_id?: string | null
+          fix_log?: Json | null
+          fix_strategy?: string | null
+          id?: string
+          payload?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       solved_theories: {
         Row: {
           abstract: string | null
@@ -622,6 +756,39 @@ export type Database = {
         }
         Relationships: []
       }
+      system_quarantine: {
+        Row: {
+          active: boolean
+          cleared_at: string | null
+          created_at: string
+          key: string
+          reason: string | null
+          triggered_at: string | null
+          triggered_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cleared_at?: string | null
+          created_at?: string
+          key: string
+          reason?: string | null
+          triggered_at?: string | null
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cleared_at?: string | null
+          created_at?: string
+          key?: string
+          reason?: string | null
+          triggered_at?: string | null
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       usage_counters: {
         Row: {
           id: string
@@ -698,6 +865,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_quarantined: { Args: { _key: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string

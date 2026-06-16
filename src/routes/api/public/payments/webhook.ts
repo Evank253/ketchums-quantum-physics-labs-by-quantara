@@ -31,7 +31,7 @@ async function handleSubscriptionUpsert(subscription: any, env: StripeEnv) {
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
   const plan = planFromPrice(priceId);
 
-  await getSupabase()
+  await (getSupabase() as any)
     .from("subscriptions")
     .upsert(
       {
@@ -53,7 +53,7 @@ async function handleSubscriptionUpsert(subscription: any, env: StripeEnv) {
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
-  await getSupabase()
+  await (getSupabase() as any)
     .from("subscriptions")
     .update({ status: "canceled", plan: "expired", updated_at: new Date().toISOString() })
     .eq("stripe_subscription_id", subscription.id)

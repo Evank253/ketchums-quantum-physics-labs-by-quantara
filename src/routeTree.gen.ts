@@ -39,6 +39,7 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const WorldRoute = WorldRouteImport.update({
   id: '/world',
@@ -190,6 +191,12 @@ const ApiPublicWebhookRoute = ApiPublicWebhookRouteImport.update({
   path: '/api/public/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -254,6 +262,7 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -287,6 +296,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -385,6 +397,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -410,6 +423,7 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiQedRoute: typeof ApiQedRoute
   ApiPublicWebhookRoute: typeof ApiPublicWebhookRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -624,6 +638,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -682,6 +703,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiQedRoute: ApiQedRoute,
   ApiPublicWebhookRoute: ApiPublicWebhookRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

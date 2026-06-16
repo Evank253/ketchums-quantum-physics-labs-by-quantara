@@ -22,25 +22,21 @@ export function TouchJoystick({ side, size = 130, onChange, label }: JoystickPro
 
   useEffect(() => {
     const el = ref.current; if (!el) return;
+    // Listen on the element for the initial press, but track move/up on the
+    // window so the joystick never "sticks" if the browser steals the gesture
+    // (system back-swipe, scroll handoff, lost pointercancel on iOS Safari).
     const reset = () => {
       pointerId.current = null;
       setKnob({ x: 0, y: 0 });
       setActive(false);
       onChange({ x: 0, y: 0 });
     };
-    const onDown = (e: PointerEvent) => {
-      if (pointerId.current !== null) return;
-      pointerId.current = e.pointerId;
-      el.setPointerCapture(e.pointerId);
-      setActive(true);
-      handle(e);
-    };
-    const handle = (e: PointerEvent) => {
+    const handle = (clientX: number, clientY: number) => {
       const rect = el.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
       const d = Math.hypot(dx, dy) || 1;
       const clamped = Math.min(d, knobMax);
       const kx = (dx / d) * clamped;
@@ -48,24 +44,38 @@ export function TouchJoystick({ side, size = 130, onChange, label }: JoystickPro
       setKnob({ x: kx, y: ky });
       onChange({ x: kx / knobMax, y: ky / knobMax });
     };
+    const onDown = (e: PointerEvent) => {
+      if (pointerId.current !== null) return;
+      pointerId.current = e.pointerId;
+      try { el.setPointerCapture(e.pointerId); } catch {}
+      setActive(true);
+      e.preventDefault();
+      handle(e.clientX, e.clientY);
+    };
     const onMove = (e: PointerEvent) => {
       if (pointerId.current !== e.pointerId) return;
-      handle(e);
+      e.preventDefault();
+      handle(e.clientX, e.clientY);
     };
     const onUp = (e: PointerEvent) => {
       if (pointerId.current !== e.pointerId) return;
       try { el.releasePointerCapture(e.pointerId); } catch {}
       reset();
     };
-    el.addEventListener("pointerdown", onDown);
-    el.addEventListener("pointermove", onMove);
-    el.addEventListener("pointerup", onUp);
-    el.addEventListener("pointercancel", onUp);
+    const onBlur = () => { if (pointerId.current !== null) reset(); };
+    el.addEventListener("pointerdown", onDown, { passive: false });
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onBlur);
     return () => {
       el.removeEventListener("pointerdown", onDown);
-      el.removeEventListener("pointermove", onMove);
-      el.removeEventListener("pointerup", onUp);
-      el.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onBlur);
     };
   }, [knobMax, onChange]);
 

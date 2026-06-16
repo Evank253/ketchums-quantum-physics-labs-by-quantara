@@ -1,4 +1,17 @@
-export function renderErrorPage(): string {
+export function renderErrorPage(opts: { id?: string; message?: string; stack?: string } = {}): string {
+  const { id, message, stack } = opts;
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const detail =
+    message || stack
+      ? `<details style="margin-top:1rem;text-align:left"><summary style="cursor:pointer;color:#374151">Technical details</summary>
+           ${message ? `<p style="margin:0.5rem 0;color:#b91c1c;font-family:ui-monospace,monospace;font-size:12px">${esc(message)}</p>` : ""}
+           ${stack ? `<pre style="max-height:18rem;overflow:auto;background:#0b0b0b;color:#e5e7eb;padding:0.75rem;border-radius:0.375rem;font-size:11px;line-height:1.4">${esc(stack)}</pre>` : ""}
+         </details>`
+      : "";
+  const idLine = id
+    ? `<p style="font-family:ui-monospace,monospace;font-size:11px;color:#6b7280;margin:0 0 1rem">error id: ${esc(id)}</p>`
+    : "";
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -7,7 +20,7 @@ export function renderErrorPage(): string {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body { font: 15px/1.5 system-ui, -apple-system, sans-serif; background: #fafafa; color: #111; display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 1.5rem; }
-      .card { max-width: 28rem; width: 100%; text-align: center; padding: 2rem; }
+      .card { max-width: 36rem; width: 100%; text-align: center; padding: 2rem; }
       h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
       p { color: #4b5563; margin: 0 0 1.5rem; }
       .actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
@@ -20,10 +33,12 @@ export function renderErrorPage(): string {
     <div class="card">
       <h1>This page didn't load</h1>
       <p>Something went wrong on our end. You can try refreshing or head back home.</p>
+      ${idLine}
       <div class="actions">
         <button class="primary" onclick="location.reload()">Try again</button>
         <a class="secondary" href="/">Go home</a>
       </div>
+      ${detail}
     </div>
   </body>
 </html>`;

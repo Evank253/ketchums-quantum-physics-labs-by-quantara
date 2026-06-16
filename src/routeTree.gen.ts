@@ -15,6 +15,7 @@ import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RgRunningRouteImport } from './routes/rg-running'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as MathLogRouteImport } from './routes/math-log'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as KveRouteImport } from './routes/kve'
@@ -40,7 +41,9 @@ import { Route as ApiQedRouteImport } from './routes/api/qed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
+import { Route as AdminEmailHealthRouteImport } from './routes/admin.email-health'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as LovableEmailHealthRouteImport } from './routes/lovable/email/health'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -75,6 +78,11 @@ const RgRunningRoute = RgRunningRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MathLogRoute = MathLogRouteImport.update({
+  id: '/math-log',
+  path: '/math-log',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalRoute = LegalRouteImport.update({
@@ -202,9 +210,19 @@ const AdminLogsRoute = AdminLogsRouteImport.update({
   path: '/admin/logs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
+  id: '/admin/email-health',
+  path: '/admin/email-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailHealthRoute = LovableEmailHealthRouteImport.update({
+  id: '/lovable/email/health',
+  path: '/lovable/email/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicWebhookRoute = ApiPublicWebhookRouteImport.update({
@@ -250,12 +268,14 @@ export interface FileRoutesByFullPath {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
@@ -270,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -289,12 +310,14 @@ export interface FileRoutesByTo {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
@@ -309,6 +332,7 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -329,12 +353,14 @@ export interface FileRoutesById {
   '/kve': typeof KveRoute
   '/ledger': typeof LedgerRoute
   '/legal': typeof LegalRouteWithChildren
+  '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
@@ -349,6 +375,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/world/ledger': typeof WorldLedgerRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
+  '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -370,12 +397,14 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/math-log'
     | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/email-health'
     | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
@@ -390,6 +419,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -409,12 +439,14 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/math-log'
     | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/email-health'
     | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
@@ -429,6 +461,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -448,12 +481,14 @@ export interface FileRouteTypes {
     | '/kve'
     | '/ledger'
     | '/legal'
+    | '/math-log'
     | '/pricing'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/email-health'
     | '/admin/logs'
     | '/api/benchmark'
     | '/api/health'
@@ -468,6 +503,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/world/ledger'
     | '/api/public/webhook'
+    | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -488,18 +524,21 @@ export interface RootRouteChildren {
   KveRoute: typeof KveRoute
   LedgerRoute: typeof LedgerRoute
   LegalRoute: typeof LegalRouteWithChildren
+  MathLogRoute: typeof MathLogRoute
   PricingRoute: typeof PricingRoute
   RgRunningRoute: typeof RgRunningRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SynthesisRoute: typeof SynthesisRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   WorldRoute: typeof WorldRouteWithChildren
+  AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminLogsRoute: typeof AdminLogsRoute
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiQedRoute: typeof ApiQedRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicWebhookRoute: typeof ApiPublicWebhookRoute
+  LovableEmailHealthRoute: typeof LovableEmailHealthRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -549,6 +588,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/math-log': {
+      id: '/math-log'
+      path: '/math-log'
+      fullPath: '/math-log'
+      preLoaderRoute: typeof MathLogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal': {
@@ -726,11 +772,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLogsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/email-health': {
+      id: '/admin/email-health'
+      path: '/admin/email-health'
+      fullPath: '/admin/email-health'
+      preLoaderRoute: typeof AdminEmailHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/health': {
+      id: '/lovable/email/health'
+      path: '/lovable/email/health'
+      fullPath: '/lovable/email/health'
+      preLoaderRoute: typeof LovableEmailHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/webhook': {
@@ -816,18 +876,21 @@ const rootRouteChildren: RootRouteChildren = {
   KveRoute: KveRoute,
   LedgerRoute: LedgerRoute,
   LegalRoute: LegalRouteWithChildren,
+  MathLogRoute: MathLogRoute,
   PricingRoute: PricingRoute,
   RgRunningRoute: RgRunningRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SynthesisRoute: SynthesisRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   WorldRoute: WorldRouteWithChildren,
+  AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminLogsRoute: AdminLogsRoute,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiQedRoute: ApiQedRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicWebhookRoute: ApiPublicWebhookRoute,
+  LovableEmailHealthRoute: LovableEmailHealthRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -837,13 +900,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

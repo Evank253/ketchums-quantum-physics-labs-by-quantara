@@ -14,6 +14,7 @@ import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SynthesisRouteImport } from './routes/synthesis'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RgRunningRouteImport } from './routes/rg-running'
+import { Route as QuantumDemoRouteImport } from './routes/quantum-demo'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as MathLogRouteImport } from './routes/math-log'
 import { Route as LegalRouteImport } from './routes/legal'
@@ -75,6 +76,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const RgRunningRoute = RgRunningRouteImport.update({
   id: '/rg-running',
   path: '/rg-running',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuantumDemoRoute = QuantumDemoRouteImport.update({
+  id: '/quantum-demo',
+  path: '/quantum-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/legal': typeof LegalRouteWithChildren
   '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
+  '/quantum-demo': typeof QuantumDemoRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
@@ -328,6 +335,7 @@ export interface FileRoutesByTo {
   '/legal': typeof LegalRouteWithChildren
   '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
+  '/quantum-demo': typeof QuantumDemoRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
@@ -373,6 +381,7 @@ export interface FileRoutesById {
   '/legal': typeof LegalRouteWithChildren
   '/math-log': typeof MathLogRoute
   '/pricing': typeof PricingRoute
+  '/quantum-demo': typeof QuantumDemoRoute
   '/rg-running': typeof RgRunningRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/synthesis': typeof SynthesisRoute
@@ -419,6 +428,7 @@ export interface FileRouteTypes {
     | '/legal'
     | '/math-log'
     | '/pricing'
+    | '/quantum-demo'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
@@ -463,6 +473,7 @@ export interface FileRouteTypes {
     | '/legal'
     | '/math-log'
     | '/pricing'
+    | '/quantum-demo'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
@@ -507,6 +518,7 @@ export interface FileRouteTypes {
     | '/legal'
     | '/math-log'
     | '/pricing'
+    | '/quantum-demo'
     | '/rg-running'
     | '/sitemap.xml'
     | '/synthesis'
@@ -552,6 +564,7 @@ export interface RootRouteChildren {
   LegalRoute: typeof LegalRouteWithChildren
   MathLogRoute: typeof MathLogRoute
   PricingRoute: typeof PricingRoute
+  QuantumDemoRoute: typeof QuantumDemoRoute
   RgRunningRoute: typeof RgRunningRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SynthesisRoute: typeof SynthesisRoute
@@ -607,6 +620,13 @@ declare module '@tanstack/react-router' {
       path: '/rg-running'
       fullPath: '/rg-running'
       preLoaderRoute: typeof RgRunningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quantum-demo': {
+      id: '/quantum-demo'
+      path: '/quantum-demo'
+      fullPath: '/quantum-demo'
+      preLoaderRoute: typeof QuantumDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -920,6 +940,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalRoute: LegalRouteWithChildren,
   MathLogRoute: MathLogRoute,
   PricingRoute: PricingRoute,
+  QuantumDemoRoute: QuantumDemoRoute,
   RgRunningRoute: RgRunningRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SynthesisRoute: SynthesisRoute,

@@ -1,6 +1,5 @@
 // Compute-job pipeline server functions.
-// All authenticated — no public access. Service-role admin client is loaded
-// inside .handler() bodies only (never at module scope).
+// All authenticated. Service-role admin client loaded inside handlers only.
 
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -14,7 +13,7 @@ import { BACKEND_VERSION, type ComputeResult } from "./result-types";
 type SubmitInput = { model: string; inputs: Record<string, unknown> };
 type Json = any;
 
-// ─── Submit + run (single-shot for MVP) ─────────────────────────────────────
+// ─── Submit + run ──────────────────────────────────────────────────────────
 export const submitComputeJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: SubmitInput) => {
@@ -26,18 +25,30 @@ export const submitComputeJob = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 1) Insert pending job (RLS-checked as the user)
+    // ── Quota gate (trial/plan + monthly cap) ──
+    const { data: q, error: qErr } = await supabaseAdmin.rpc("check_user_quota", {
+      _user_id: userId,
+    });
+    if (qErr) throw new Error(qErr.message);
+    const quota = Array.isArray(q) ? q[0] : q;
+    if (quota && !quota.allowed) {
+      throw new Error(quota.reason || "Quota exceeded — subscribe to continue.");
+    }
+
+    // ── 1) Insert pending job ──
     const { data: row, error: insErr } = await supabase
       .from("compute_jobs")
-      .insert({ user_id: userId, model: data.model, inputs: data.inputs as Json, status: "running" })
+      .insert({ user_id: userId, model: data.model, inputs: data.inputs as Json, status: "pending" })
       .select("id")
       .single();
     if (insErr || !row) throw new Error(insErr?.message ?? "could not create job");
-
     const jobId = row.id;
 
+    // Flip to running (service-role so it can't be blocked by RLS edge cases)
+    await supabaseAdmin.from("compute_jobs").update({ status: "running" }).eq("id", jobId);
+
     try {
-      // 2) Engine
+      // ── 2) Engine ──
       let engineResult: ComputeResult;
       if (data.model === QED_MODEL_ID) {
         engineResult = runQed(data.inputs as { loops?: number; precision?: number });
@@ -45,46 +56,34 @@ export const submitComputeJob = createServerFn({ method: "POST" })
         throw new Error(`unknown model: ${data.model}`);
       }
 
-      // 3) CODATA + literature lookups
+      // ── 3) CODATA + literature ──
       const codataC = codataFor(engineResult.symbol);
       const litC = literatureFor(engineResult.symbol);
       const codataResult: ComputeResult | null = codataC
         ? {
-            symbol: codataC.symbol,
-            value: codataC.value,
-            uncertainty: codataC.uncertainty,
-            source: "codata",
-            method: "CODATA 2022 recommended value",
-            reference: codataC.source,
-            timestamp: new Date().toISOString(),
+            symbol: codataC.symbol, value: codataC.value, uncertainty: codataC.uncertainty,
+            source: "codata", method: "CODATA 2022 recommended value",
+            reference: codataC.source, timestamp: new Date().toISOString(),
           }
         : null;
       const literatureResult: ComputeResult | null = litC
         ? {
-            symbol: litC.symbol,
-            value: litC.value,
-            uncertainty: litC.uncertainty,
-            source: "literature",
-            method: "published benchmark",
-            reference: litC.citation,
-            timestamp: new Date().toISOString(),
+            symbol: litC.symbol, value: litC.value, uncertainty: litC.uncertainty,
+            source: "literature", method: "published benchmark",
+            reference: litC.citation, timestamp: new Date().toISOString(),
           }
         : null;
 
-      // 4) Sigma vs CODATA (uncertainty = quadrature of engine + reference)
       const sigma = codataResult
         ? sigmaDeviation(
             engineResult.value,
             codataResult.value,
-            Math.sqrt(
-              engineResult.uncertainty ** 2 + codataResult.uncertainty ** 2,
-            ),
+            Math.sqrt(engineResult.uncertainty ** 2 + codataResult.uncertainty ** 2),
           )
         : Infinity;
       const verdict = verdictFor(sigma);
 
-      // 5) Persist results + run card (run_card uses admin client for INSERT
-      //    because the table has no INSERT policy for authenticated)
+      // ── 4) Persist + run card ──
       const completedAt = new Date().toISOString();
       const inputHash = await hashJson({ model: data.model, inputs: data.inputs });
       const outputHash = await hashJson({ engineResult, codataResult, literatureResult });
@@ -98,23 +97,18 @@ export const submitComputeJob = createServerFn({ method: "POST" })
           codata_result: codataResult as Json,
           literature_result: literatureResult as Json,
           sigma: isFinite(sigma) ? sigma : null,
-          verdict,
-          completed_at: completedAt,
+          verdict, completed_at: completedAt,
         })
         .eq("id", jobId);
 
       await supabaseAdmin.from("run_cards").insert({
-        job_id: jobId,
-        run_id: runId,
-        user_id: userId,
-        input_hash: inputHash,
-        output_hash: outputHash,
-        backend_version: BACKEND_VERSION,
-        seed: null,
+        job_id: jobId, run_id: runId, user_id: userId,
+        input_hash: inputHash, output_hash: outputHash,
+        backend_version: BACKEND_VERSION, seed: null,
         payload: { engineResult, codataResult, literatureResult, sigma: isFinite(sigma) ? sigma : null, verdict } as Json,
       });
 
-      // 6) Bump usage counter (idempotent upsert per month)
+      // ── 5) Usage counter ──
       const periodStart = new Date().toISOString().slice(0, 7) + "-01";
       const { data: existing } = await supabaseAdmin
         .from("usage_counters")
@@ -123,17 +117,64 @@ export const submitComputeJob = createServerFn({ method: "POST" })
         .eq("period_start", periodStart)
         .maybeSingle();
       if (existing) {
-        await supabaseAdmin
-          .from("usage_counters")
-          .update({ runs_count: existing.runs_count + 1 })
-          .eq("id", existing.id);
+        await supabaseAdmin.from("usage_counters").update({ runs_count: existing.runs_count + 1 }).eq("id", existing.id);
       } else {
-        await supabaseAdmin
-          .from("usage_counters")
-          .insert({ user_id: userId, period_start: periodStart, runs_count: 1 });
+        await supabaseAdmin.from("usage_counters").insert({ user_id: userId, period_start: periodStart, runs_count: 1 });
       }
 
-      return { ok: true as const, jobId, runId, sigma: isFinite(sigma) ? sigma : -1, verdict };
+      // ── 6) Auto-mint to treasury on PASS verdict (idempotent by run_id) ──
+      let mintInfo: { ok: boolean; txHash?: string; error?: string } | null = null;
+      if (verdict === "PASS" && isFinite(sigma) && sigma < 1) {
+        try {
+          const mint = await import("@/lib/dat-mint.server");
+          const { TREASURY_WALLET } = await import("@/lib/treasury");
+          const cfg = mint.loadMintConfig();
+          if (cfg.ok) {
+            // Idempotency: skip if a mint with this run_id was already audited
+            const { data: prev } = await supabaseAdmin
+              .from("dat_mint_audit")
+              .select("id")
+              .eq("action", `auto-mint:${runId}`)
+              .maybeSingle();
+            if (!prev) {
+              const amount = 10; // verified-research reward, fixed
+              const r = await mint.mintOnChain(cfg.cfg, TREASURY_WALLET as `0x${string}`, amount);
+              await supabaseAdmin.from("dat_mint_audit").insert({
+                wallet: TREASURY_WALLET,
+                action: `auto-mint:${runId}`,
+                payload: { run_id: runId, job_id: jobId, amount, sigma, verdict },
+                status: "confirmed",
+                result: { tx_hash: r.txHash, block_number: Number(r.blockNumber) },
+              });
+              await supabaseAdmin.from("admin_logs").insert({
+                kind: "auto_mint",
+                subject: runId,
+                payload: { tx_hash: r.txHash, amount, sigma, verdict },
+              });
+              mintInfo = { ok: true, txHash: r.txHash };
+            } else {
+              mintInfo = { ok: true, txHash: "already-minted" };
+            }
+          } else {
+            mintInfo = { ok: false, error: `minter missing: ${cfg.missing.join(", ")}` };
+          }
+        } catch (e: any) {
+          mintInfo = { ok: false, error: e?.shortMessage || e?.message || String(e) };
+          await supabaseAdmin.from("admin_logs").insert({
+            kind: "auto_mint",
+            subject: runId,
+            payload: { error: mintInfo.error },
+          });
+        }
+      }
+
+      return {
+        ok: true as const,
+        jobId, runId,
+        sigma: isFinite(sigma) ? sigma : -1,
+        verdict,
+        mint: mintInfo,
+      };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       await supabaseAdmin
@@ -144,16 +185,14 @@ export const submitComputeJob = createServerFn({ method: "POST" })
     }
   });
 
-// ─── Read APIs ─────────────────────────────────────────────────────────────
+// ─── Reads ──────────────────────────────────────────────────────────────────
 export const listMyJobs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { limit?: number }) => ({ limit: Math.min(input?.limit ?? 50, 200) }))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
-      .from("compute_jobs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(data.limit);
+      .from("compute_jobs").select("*")
+      .order("created_at", { ascending: false }).limit(data.limit);
     if (error) throw new Error(error.message);
     return { jobs: (rows ?? []) as Json };
   });
@@ -168,10 +207,7 @@ export const getMyUsage = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .eq("period_start", periodStart)
       .maybeSingle();
-    return {
-      periodStart,
-      runsCount: row?.runs_count ?? 0,
-    };
+    return { periodStart, runsCount: row?.runs_count ?? 0 };
   });
 
 export const listMyRunCards = createServerFn({ method: "POST" })
@@ -179,10 +215,8 @@ export const listMyRunCards = createServerFn({ method: "POST" })
   .inputValidator((input: { limit?: number }) => ({ limit: Math.min(input?.limit ?? 50, 200) }))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
-      .from("run_cards")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(data.limit);
+      .from("run_cards").select("*")
+      .order("created_at", { ascending: false }).limit(data.limit);
     if (error) throw new Error(error.message);
     return { runCards: (rows ?? []) as Json };
   });

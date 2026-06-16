@@ -3,10 +3,17 @@
 # evaluation is PROHIBITED. This file encodes that opt-out; ignoring it does
 # not create a license. See /legal/license.
 
-# --- General search indexing is permitted ---
+# --- General search indexing ---
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /auth
+Disallow: /institution
+Disallow: /admin/
+Disallow: /admin/logs
+Disallow: /legal/blueprint
+Disallow: /annex
+Disallow: /benchmarks
 
 # --- AI / LLM / dataset crawlers: BLOCKED ---
 User-agent: GPTBot

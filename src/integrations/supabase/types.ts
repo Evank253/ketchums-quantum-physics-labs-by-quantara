@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      compute_jobs: {
+        Row: {
+          codata_result: Json | null
+          completed_at: string | null
+          created_at: string
+          engine_result: Json | null
+          error: string | null
+          id: string
+          inputs: Json
+          literature_result: Json | null
+          model: string
+          sigma: number | null
+          status: string
+          user_id: string
+          verdict: string | null
+        }
+        Insert: {
+          codata_result?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          engine_result?: Json | null
+          error?: string | null
+          id?: string
+          inputs?: Json
+          literature_result?: Json | null
+          model: string
+          sigma?: number | null
+          status?: string
+          user_id: string
+          verdict?: string | null
+        }
+        Update: {
+          codata_result?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          engine_result?: Json | null
+          error?: string | null
+          id?: string
+          inputs?: Json
+          literature_result?: Json | null
+          model?: string
+          sigma?: number | null
+          status?: string
+          user_id?: string
+          verdict?: string | null
+        }
+        Relationships: []
+      }
       dat_claims: {
         Row: {
           amount: number
@@ -89,6 +137,36 @@ export type Database = {
           result?: Json | null
           status?: string
           wallet?: string | null
+        }
+        Relationships: []
+      }
+      institution_api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          label: string
+          last_used_at: string | null
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          label: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          label?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -176,6 +254,53 @@ export type Database = {
         }
         Relationships: []
       }
+      run_cards: {
+        Row: {
+          backend_version: string
+          created_at: string
+          id: string
+          input_hash: string
+          job_id: string
+          output_hash: string
+          payload: Json
+          run_id: string
+          seed: number | null
+          user_id: string
+        }
+        Insert: {
+          backend_version: string
+          created_at?: string
+          id?: string
+          input_hash: string
+          job_id: string
+          output_hash: string
+          payload?: Json
+          run_id: string
+          seed?: number | null
+          user_id: string
+        }
+        Update: {
+          backend_version?: string
+          created_at?: string
+          id?: string
+          input_hash?: string
+          job_id?: string
+          output_hash?: string
+          payload?: Json
+          run_id?: string
+          seed?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_cards_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "compute_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solved_theories: {
         Row: {
           abstract: string | null
@@ -209,6 +334,48 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_counters: {
+        Row: {
+          id: string
+          period_start: string
+          runs_count: number
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          period_start?: string
+          runs_count?: number
+          user_id: string
+        }
+        Update: {
+          id?: string
+          period_start?: string
+          runs_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -218,9 +385,23 @@ export type Database = {
         Args: { _solver: string; _theory: string }
         Returns: string
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      promote_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _target_user: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "free" | "pro" | "institution" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -347,6 +528,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["free", "pro", "institution", "admin"],
+    },
   },
 } as const

@@ -133,7 +133,7 @@ export const submitComputeJob = createServerFn({ method: "POST" })
           .insert({ user_id: userId, period_start: periodStart, runs_count: 1 });
       }
 
-      return { ok: true as const, jobId, runId, sigma, verdict };
+      return { ok: true as const, jobId, runId, sigma: isFinite(sigma) ? sigma : -1, verdict };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       await supabaseAdmin

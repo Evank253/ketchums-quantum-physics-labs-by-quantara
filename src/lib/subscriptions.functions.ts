@@ -10,18 +10,24 @@ export const getMySubscription = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: sub } = await context.supabase
       .from("subscriptions")
-      .select("plan, status, trial_ends_at, current_period_end")
+      .select("plan, status, trial_ends_at, current_period_end, credits_remaining, credits_granted")
       .eq("user_id", context.userId)
       .maybeSingle();
 
     const { data: q } = await supabaseAdmin.rpc("check_user_quota", { _user_id: context.userId });
     const quota = Array.isArray(q) ? q[0] : q;
 
+    const { data: profile } = await context.supabase
+      .from("profiles").select("wallet_address").eq("user_id", context.userId).maybeSingle();
+
     return {
-      plan: (sub?.plan as string) ?? "trial",
+      plan: (sub?.plan as string) ?? "explorer",
       status: (sub?.status as string) ?? "active",
       trialEndsAt: sub?.trial_ends_at ?? null,
       periodEnd: sub?.current_period_end ?? null,
+      creditsRemaining: Number(sub?.credits_remaining ?? 0),
+      creditsGranted: Number(sub?.credits_granted ?? 0),
+      wallet: (profile?.wallet_address as string) ?? null,
       allowed: Boolean(quota?.allowed),
       runsUsed: Number(quota?.runs_used ?? 0),
       runsLimit: Number(quota?.runs_limit ?? 0),

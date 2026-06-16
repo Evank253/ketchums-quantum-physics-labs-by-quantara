@@ -11,12 +11,22 @@ function getSupabase() {
 }
 
 function planFromPrice(priceId: string | undefined | null): string {
-  if (!priceId) return "starter";
-  if (priceId.startsWith("starter")) return "starter";
-  if (priceId.startsWith("pro")) return "pro";
-  if (priceId.startsWith("institution")) return "institution";
-  return "starter";
+  if (!priceId) return "explorer";
+  if (priceId.startsWith("researcher")) return "researcher";
+  if (priceId.startsWith("professional")) return "professional";
+  if (priceId.startsWith("institutional")) return "institutional";
+  // legacy
+  if (priceId.startsWith("starter")) return "researcher";
+  if (priceId.startsWith("pro")) return "professional";
+  if (priceId.startsWith("institution")) return "institutional";
+  return "explorer";
 }
+
+const PLAN_CREDITS_GRANT: Record<string, number> = {
+  researcher: 100,
+  professional: 1000,
+  institutional: 10000,
+};
 
 async function handleSubscriptionUpsert(subscription: any, env: StripeEnv) {
   const userId = subscription.metadata?.userId;
@@ -50,6 +60,12 @@ async function handleSubscriptionUpsert(subscription: any, env: StripeEnv) {
       },
       { onConflict: "user_id" },
     );
+
+  // Grant credits on new subscription / plan change (idempotent enough — webhook may fire repeatedly on renewals)
+  const credits = PLAN_CREDITS_GRANT[plan];
+  if (credits && subscription.status === "active") {
+    await (getSupabase() as any).rpc("grant_plan_credits", { _user_id: userId, _plan: plan, _credits: credits });
+  }
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {

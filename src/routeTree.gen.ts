@@ -25,6 +25,7 @@ import { Route as InstitutionRouteImport } from './routes/institution'
 import { Route as FeedbackRouteImport } from './routes/feedback'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CernRouteImport } from './routes/cern'
+import { Route as BillingRouteImport } from './routes/billing'
 import { Route as BenchmarksRouteImport } from './routes/benchmarks'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtlasRouteImport } from './routes/atlas'
@@ -134,6 +135,11 @@ const ChatRoute = ChatRouteImport.update({
 const CernRoute = CernRouteImport.update({
   id: '/cern',
   path: '/cern',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingRoute = BillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BenchmarksRoute = BenchmarksRouteImport.update({
@@ -299,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/atlas': typeof AtlasRoute
   '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/billing': typeof BillingRoute
   '/cern': typeof CernRoute
   '/chat': typeof ChatRoute
   '/feedback': typeof FeedbackRoute
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/atlas': typeof AtlasRoute
   '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/billing': typeof BillingRoute
   '/cern': typeof CernRoute
   '/chat': typeof ChatRoute
   '/feedback': typeof FeedbackRoute
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/atlas': typeof AtlasRoute
   '/auth': typeof AuthRoute
   '/benchmarks': typeof BenchmarksRoute
+  '/billing': typeof BillingRoute
   '/cern': typeof CernRoute
   '/chat': typeof ChatRoute
   '/feedback': typeof FeedbackRoute
@@ -446,6 +455,7 @@ export interface FileRouteTypes {
     | '/atlas'
     | '/auth'
     | '/benchmarks'
+    | '/billing'
     | '/cern'
     | '/chat'
     | '/feedback'
@@ -494,6 +504,7 @@ export interface FileRouteTypes {
     | '/atlas'
     | '/auth'
     | '/benchmarks'
+    | '/billing'
     | '/cern'
     | '/chat'
     | '/feedback'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '/atlas'
     | '/auth'
     | '/benchmarks'
+    | '/billing'
     | '/cern'
     | '/chat'
     | '/feedback'
@@ -591,6 +603,7 @@ export interface RootRouteChildren {
   AtlasRoute: typeof AtlasRoute
   AuthRoute: typeof AuthRoute
   BenchmarksRoute: typeof BenchmarksRoute
+  BillingRoute: typeof BillingRoute
   CernRoute: typeof CernRoute
   ChatRoute: typeof ChatRoute
   FeedbackRoute: typeof FeedbackRoute
@@ -737,6 +750,13 @@ declare module '@tanstack/react-router' {
       path: '/cern'
       fullPath: '/cern'
       preLoaderRoute: typeof CernRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing': {
+      id: '/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof BillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/benchmarks': {
@@ -991,6 +1011,7 @@ const rootRouteChildren: RootRouteChildren = {
   AtlasRoute: AtlasRoute,
   AuthRoute: AuthRoute,
   BenchmarksRoute: BenchmarksRoute,
+  BillingRoute: BillingRoute,
   CernRoute: CernRoute,
   ChatRoute: ChatRoute,
   FeedbackRoute: FeedbackRoute,
@@ -1027,13 +1048,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

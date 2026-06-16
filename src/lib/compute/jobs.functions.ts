@@ -9,9 +9,10 @@ import { literatureFor } from "./literature";
 import { sigmaDeviation, verdictFor } from "./sigma";
 import { hashJson } from "./hash";
 import { runQed, QED_MODEL_ID } from "./engines/qed";
-import { BACKEND_VERSION, type ComputeResult, type JobRecord } from "./result-types";
+import { BACKEND_VERSION, type ComputeResult } from "./result-types";
 
 type SubmitInput = { model: string; inputs: Record<string, unknown> };
+type Json = any;
 
 // ─── Submit + run (single-shot for MVP) ─────────────────────────────────────
 export const submitComputeJob = createServerFn({ method: "POST" })
@@ -28,7 +29,7 @@ export const submitComputeJob = createServerFn({ method: "POST" })
     // 1) Insert pending job (RLS-checked as the user)
     const { data: row, error: insErr } = await supabase
       .from("compute_jobs")
-      .insert({ user_id: userId, model: data.model, inputs: data.inputs, status: "running" })
+      .insert({ user_id: userId, model: data.model, inputs: data.inputs as Json, status: "running" })
       .select("id")
       .single();
     if (insErr || !row) throw new Error(insErr?.message ?? "could not create job");
@@ -93,9 +94,9 @@ export const submitComputeJob = createServerFn({ method: "POST" })
         .from("compute_jobs")
         .update({
           status: "complete",
-          engine_result: engineResult,
-          codata_result: codataResult,
-          literature_result: literatureResult,
+          engine_result: engineResult as Json,
+          codata_result: codataResult as Json,
+          literature_result: literatureResult as Json,
           sigma,
           verdict,
           completed_at: completedAt,
@@ -110,7 +111,7 @@ export const submitComputeJob = createServerFn({ method: "POST" })
         output_hash: outputHash,
         backend_version: BACKEND_VERSION,
         seed: null,
-        payload: { engineResult, codataResult, literatureResult, sigma, verdict },
+        payload: { engineResult, codataResult, literatureResult, sigma, verdict } as Json,
       });
 
       // 6) Bump usage counter (idempotent upsert per month)
@@ -154,7 +155,7 @@ export const listMyJobs = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
-    return { jobs: (rows ?? []) as unknown as JobRecord[] };
+    return { jobs: (rows ?? []) as Json };
   });
 
 export const getMyUsage = createServerFn({ method: "POST" })
@@ -183,5 +184,5 @@ export const listMyRunCards = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
-    return { runCards: rows ?? [] };
+    return { runCards: (rows ?? []) as Json };
   });

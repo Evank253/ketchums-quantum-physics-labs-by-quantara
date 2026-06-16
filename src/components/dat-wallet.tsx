@@ -135,7 +135,7 @@ export function DatWallet() {
   const connect = async () => {
     setErr(null);
     if (!hasWallet) {
-      setErr("No browser wallet detected. Install MetaMask, Rabby, or Coinbase Wallet (links above), or use WalletConnect to scan a QR with a mobile wallet.");
+      setErr("No browser wallet detected. Install MetaMask, Rabby, or Coinbase Wallet (links above), or tap 'Open in MetaMask Mobile' on your phone.");
       return;
     }
     try {

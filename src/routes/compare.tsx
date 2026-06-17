@@ -70,7 +70,7 @@ function ComparePage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {rows.map((r: any) => (
                 <tr key={r.jobId} className="border-t border-white/5 hover:bg-white/[0.03]">
                   <td className="px-3 py-2 font-mono text-cyan-200">{r.symbol}</td>
                   <td className="px-3 py-2 text-white/70">{r.theory}</td>

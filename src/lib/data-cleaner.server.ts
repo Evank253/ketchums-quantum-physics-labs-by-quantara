@@ -56,26 +56,27 @@ export async function runCleanerBatch(): Promise<CleanerSummary> {
     }
   } catch {/* table may not exist */ }
 
-  // 2) Normalise feedback rows touched in the last 7 days.
+  // 2) Normalise feedback rows touched in the last 7 days (trim body + display_name).
   try {
     const since = new Date(Date.now() - 7 * 86400000).toISOString();
     const { data: fb } = await supabaseAdmin
       .from("feedback")
-      .select("id, email, message")
+      .select("id, body, display_name")
       .gte("created_at", since)
       .limit(500);
     for (const r of (fb as any[]) ?? []) {
-      const cleanMsg = (r.message ?? "").toString().replace(/\s+/g, " ").trim();
-      const cleanEmail = (r.email ?? "").toString().trim().toLowerCase() || null;
-      if (cleanMsg !== r.message || cleanEmail !== r.email) {
+      const cleanBody = (r.body ?? "").toString().replace(/\s+/g, " ").trim();
+      const cleanName = r.display_name ? r.display_name.toString().trim() : null;
+      if (cleanBody !== r.body || cleanName !== r.display_name) {
         const { error } = await supabaseAdmin
           .from("feedback")
-          .update({ message: cleanMsg, email: cleanEmail })
+          .update({ body: cleanBody, display_name: cleanName })
           .eq("id", r.id);
         if (!error) normalisedFeedback++;
       }
     }
   } catch {/* */ }
+
 
   // 3) Prune compute_jobs stuck > 30 min in 'running'.
   try {

@@ -359,3 +359,53 @@ export const listClaims = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { claims: rows ?? [] };
   });
+
+export const verifyDatChain = createServerFn({ method: "GET" }).handler(async () => {
+  const mint = await import("./dat-mint.server");
+  const cfgRes = mint.loadMintConfig();
+  if (!cfgRes.ok) {
+    return {
+      ok: false as const,
+      configured: false as const,
+      missing: cfgRes.missing,
+      treasury: TREASURY_WALLET,
+    };
+  }
+  try {
+    const pub = mint.getPublicClient(cfgRes.cfg);
+    const [balance, blockNumber, symbol] = await Promise.all([
+      mint.readBalance(cfgRes.cfg, TREASURY_WALLET as `0x${string}`),
+      pub.getBlockNumber(),
+      pub.readContract({
+        address: cfgRes.cfg.contractAddress,
+        abi: mint.ERC20_ABI,
+        functionName: "symbol",
+      }).catch(() => "DAT"),
+    ]);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: recent } = await supabaseAdmin
+      .from("dat_mint_audit")
+      .select("action, status, result, created_at")
+      .eq("status", "confirmed")
+      .order("created_at", { ascending: false })
+      .limit(5);
+    return {
+      ok: true as const,
+      configured: true as const,
+      treasury: TREASURY_WALLET,
+      contract: cfgRes.cfg.contractAddress,
+      symbol: String(symbol),
+      balance: balance.toString(),
+      decimals: mint.DAT_DECIMALS,
+      blockNumber: Number(blockNumber),
+      recentMints: recent ?? [],
+    };
+  } catch (e: any) {
+    return {
+      ok: false as const,
+      configured: true as const,
+      treasury: TREASURY_WALLET,
+      error: e?.shortMessage || e?.message || String(e),
+    };
+  }
+});

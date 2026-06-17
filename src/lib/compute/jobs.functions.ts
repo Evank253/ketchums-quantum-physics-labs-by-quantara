@@ -47,6 +47,23 @@ export const submitComputeJob = createServerFn({ method: "POST" })
     // Flip to running (service-role so it can't be blocked by RLS edge cases)
     await supabaseAdmin.from("compute_jobs").update({ status: "running" }).eq("id", jobId);
 
+    // ── Cold-compute warmup-cache lookup (AI cleaner fuels this) ──
+    try {
+      const { warmupCacheKey } = await import("@/lib/data-cleaner.server");
+      const ck = warmupCacheKey(data.model, data.inputs);
+      const { data: cached } = await supabaseAdmin
+        .from("compute_warmup_cache")
+        .select("payload, hit_count")
+        .eq("cache_key", ck)
+        .maybeSingle();
+      if (cached?.payload) {
+        await supabaseAdmin.from("compute_warmup_cache")
+          .update({ hit_count: (cached.hit_count ?? 0) + 1 })
+          .eq("cache_key", ck);
+      }
+    } catch { /* cache miss is fine */ }
+
+
     try {
       // ── 2) Engine ──
       let engineResult: ComputeResult;

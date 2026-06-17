@@ -230,6 +230,33 @@ export type Database = {
         }
         Relationships: []
       }
+      compute_warmup_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          hit_count: number
+          model: string
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          hit_count?: number
+          model: string
+          payload: Json
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          hit_count?: number
+          model?: string
+          payload?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dat_claims: {
         Row: {
           amount: number

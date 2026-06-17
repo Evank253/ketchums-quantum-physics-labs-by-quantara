@@ -23,6 +23,7 @@ import { Route as KveRouteImport } from './routes/kve'
 import { Route as InterstellarRouteImport } from './routes/interstellar'
 import { Route as InstitutionRouteImport } from './routes/institution'
 import { Route as FeedbackRouteImport } from './routes/feedback'
+import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CernRouteImport } from './routes/cern'
 import { Route as BillingRouteImport } from './routes/billing'
@@ -33,6 +34,7 @@ import { Route as AnnexRouteImport } from './routes/annex'
 import { Route as AncestralRouteImport } from './routes/ancestral'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorldLedgerRouteImport } from './routes/world.ledger'
+import { Route as RunCardRunIdRouteImport } from './routes/run-card.$runId'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalResearchLicenseRouteImport } from './routes/legal.research-license'
 import { Route as LegalLicenseRouteImport } from './routes/legal.license'
@@ -51,10 +53,13 @@ import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/em
 import { Route as LovableEmailHealthRouteImport } from './routes/lovable/email/health'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
 import { Route as ApiPublicSecuritySelftestRouteImport } from './routes/api/public/security-selftest'
+import { Route as AdminSecurityReportRouteImport } from './routes/admin.security.report'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicHooksWizSyncRouteImport } from './routes/api/public/hooks/wiz-sync'
+import { Route as ApiPublicHooksDataCleanerRouteImport } from './routes/api/public/hooks/data-cleaner'
 import { Route as ApiPublicHealerRunRouteImport } from './routes/api/public/healer.run'
 
 const WorldRoute = WorldRouteImport.update({
@@ -127,6 +132,11 @@ const FeedbackRoute = FeedbackRouteImport.update({
   path: '/feedback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -176,6 +186,11 @@ const WorldLedgerRoute = WorldLedgerRouteImport.update({
   id: '/ledger',
   path: '/ledger',
   getParentRoute: () => WorldRoute,
+} as any)
+const RunCardRunIdRoute = RunCardRunIdRouteImport.update({
+  id: '/run-card/$runId',
+  path: '/run-card/$runId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LegalTermsRoute = LegalTermsRouteImport.update({
   id: '/terms',
@@ -268,6 +283,11 @@ const ApiPublicSecuritySelftestRoute =
     path: '/api/public/security-selftest',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminSecurityReportRoute = AdminSecurityReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => AdminSecurityRoute,
+} as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -292,6 +312,17 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWizSyncRoute = ApiPublicHooksWizSyncRouteImport.update({
+  id: '/api/public/hooks/wiz-sync',
+  path: '/api/public/hooks/wiz-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksDataCleanerRoute =
+  ApiPublicHooksDataCleanerRouteImport.update({
+    id: '/api/public/hooks/data-cleaner',
+    path: '/api/public/hooks/data-cleaner',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHealerRunRoute = ApiPublicHealerRunRouteImport.update({
   id: '/api/public/healer/run',
   path: '/api/public/healer/run',
@@ -308,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/billing': typeof BillingRoute
   '/cern': typeof CernRoute
   '/chat': typeof ChatRoute
+  '/compare': typeof CompareRoute
   '/feedback': typeof FeedbackRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
@@ -324,7 +356,7 @@ export interface FileRoutesByFullPath {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/admin/security': typeof AdminSecurityRoute
+  '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -336,12 +368,16 @@ export interface FileRoutesByFullPath {
   '/legal/license': typeof LegalLicenseRoute
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/run-card/$runId': typeof RunCardRunIdRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/admin/security/report': typeof AdminSecurityReportRoute
   '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/healer/run': typeof ApiPublicHealerRunRoute
+  '/api/public/hooks/data-cleaner': typeof ApiPublicHooksDataCleanerRoute
+  '/api/public/hooks/wiz-sync': typeof ApiPublicHooksWizSyncRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -357,6 +393,7 @@ export interface FileRoutesByTo {
   '/billing': typeof BillingRoute
   '/cern': typeof CernRoute
   '/chat': typeof ChatRoute
+  '/compare': typeof CompareRoute
   '/feedback': typeof FeedbackRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
@@ -373,7 +410,7 @@ export interface FileRoutesByTo {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/admin/security': typeof AdminSecurityRoute
+  '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -385,12 +422,16 @@ export interface FileRoutesByTo {
   '/legal/license': typeof LegalLicenseRoute
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/run-card/$runId': typeof RunCardRunIdRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/admin/security/report': typeof AdminSecurityReportRoute
   '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/healer/run': typeof ApiPublicHealerRunRoute
+  '/api/public/hooks/data-cleaner': typeof ApiPublicHooksDataCleanerRoute
+  '/api/public/hooks/wiz-sync': typeof ApiPublicHooksWizSyncRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -407,6 +448,7 @@ export interface FileRoutesById {
   '/billing': typeof BillingRoute
   '/cern': typeof CernRoute
   '/chat': typeof ChatRoute
+  '/compare': typeof CompareRoute
   '/feedback': typeof FeedbackRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
@@ -423,7 +465,7 @@ export interface FileRoutesById {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/admin/security': typeof AdminSecurityRoute
+  '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -435,12 +477,16 @@ export interface FileRoutesById {
   '/legal/license': typeof LegalLicenseRoute
   '/legal/research-license': typeof LegalResearchLicenseRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/run-card/$runId': typeof RunCardRunIdRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/admin/security/report': typeof AdminSecurityReportRoute
   '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/healer/run': typeof ApiPublicHealerRunRoute
+  '/api/public/hooks/data-cleaner': typeof ApiPublicHooksDataCleanerRoute
+  '/api/public/hooks/wiz-sync': typeof ApiPublicHooksWizSyncRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -458,6 +504,7 @@ export interface FileRouteTypes {
     | '/billing'
     | '/cern'
     | '/chat'
+    | '/compare'
     | '/feedback'
     | '/institution'
     | '/interstellar'
@@ -486,12 +533,16 @@ export interface FileRouteTypes {
     | '/legal/license'
     | '/legal/research-license'
     | '/legal/terms'
+    | '/run-card/$runId'
     | '/world/ledger'
+    | '/admin/security/report'
     | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/healer/run'
+    | '/api/public/hooks/data-cleaner'
+    | '/api/public/hooks/wiz-sync'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -507,6 +558,7 @@ export interface FileRouteTypes {
     | '/billing'
     | '/cern'
     | '/chat'
+    | '/compare'
     | '/feedback'
     | '/institution'
     | '/interstellar'
@@ -535,12 +587,16 @@ export interface FileRouteTypes {
     | '/legal/license'
     | '/legal/research-license'
     | '/legal/terms'
+    | '/run-card/$runId'
     | '/world/ledger'
+    | '/admin/security/report'
     | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/healer/run'
+    | '/api/public/hooks/data-cleaner'
+    | '/api/public/hooks/wiz-sync'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -556,6 +612,7 @@ export interface FileRouteTypes {
     | '/billing'
     | '/cern'
     | '/chat'
+    | '/compare'
     | '/feedback'
     | '/institution'
     | '/interstellar'
@@ -584,12 +641,16 @@ export interface FileRouteTypes {
     | '/legal/license'
     | '/legal/research-license'
     | '/legal/terms'
+    | '/run-card/$runId'
     | '/world/ledger'
+    | '/admin/security/report'
     | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
     | '/lovable/email/suppression'
     | '/api/public/healer/run'
+    | '/api/public/hooks/data-cleaner'
+    | '/api/public/hooks/wiz-sync'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -606,6 +667,7 @@ export interface RootRouteChildren {
   BillingRoute: typeof BillingRoute
   CernRoute: typeof CernRoute
   ChatRoute: typeof ChatRoute
+  CompareRoute: typeof CompareRoute
   FeedbackRoute: typeof FeedbackRoute
   InstitutionRoute: typeof InstitutionRoute
   InterstellarRoute: typeof InterstellarRoute
@@ -622,16 +684,19 @@ export interface RootRouteChildren {
   WorldRoute: typeof WorldRouteWithChildren
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminLogsRoute: typeof AdminLogsRoute
-  AdminSecurityRoute: typeof AdminSecurityRoute
+  AdminSecurityRoute: typeof AdminSecurityRouteWithChildren
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiQedRoute: typeof ApiQedRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  RunCardRunIdRoute: typeof RunCardRunIdRoute
   ApiPublicSecuritySelftestRoute: typeof ApiPublicSecuritySelftestRoute
   ApiPublicWebhookRoute: typeof ApiPublicWebhookRoute
   LovableEmailHealthRoute: typeof LovableEmailHealthRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHealerRunRoute: typeof ApiPublicHealerRunRoute
+  ApiPublicHooksDataCleanerRoute: typeof ApiPublicHooksDataCleanerRoute
+  ApiPublicHooksWizSyncRoute: typeof ApiPublicHooksWizSyncRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -738,6 +803,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeedbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat': {
       id: '/chat'
       path: '/chat'
@@ -807,6 +879,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/world/ledger'
       preLoaderRoute: typeof WorldLedgerRouteImport
       parentRoute: typeof WorldRoute
+    }
+    '/run-card/$runId': {
+      id: '/run-card/$runId'
+      path: '/run-card/$runId'
+      fullPath: '/run-card/$runId'
+      preLoaderRoute: typeof RunCardRunIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/legal/terms': {
       id: '/legal/terms'
@@ -934,6 +1013,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSecuritySelftestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/security/report': {
+      id: '/admin/security/report'
+      path: '/report'
+      fullPath: '/admin/security/report'
+      preLoaderRoute: typeof AdminSecurityReportRouteImport
+      parentRoute: typeof AdminSecurityRoute
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -960,6 +1046,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/payments/webhook'
       fullPath: '/api/public/payments/webhook'
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/wiz-sync': {
+      id: '/api/public/hooks/wiz-sync'
+      path: '/api/public/hooks/wiz-sync'
+      fullPath: '/api/public/hooks/wiz-sync'
+      preLoaderRoute: typeof ApiPublicHooksWizSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/data-cleaner': {
+      id: '/api/public/hooks/data-cleaner'
+      path: '/api/public/hooks/data-cleaner'
+      fullPath: '/api/public/hooks/data-cleaner'
+      preLoaderRoute: typeof ApiPublicHooksDataCleanerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/healer/run': {
@@ -1004,6 +1104,18 @@ const WorldRouteChildren: WorldRouteChildren = {
 
 const WorldRouteWithChildren = WorldRoute._addFileChildren(WorldRouteChildren)
 
+interface AdminSecurityRouteChildren {
+  AdminSecurityReportRoute: typeof AdminSecurityReportRoute
+}
+
+const AdminSecurityRouteChildren: AdminSecurityRouteChildren = {
+  AdminSecurityReportRoute: AdminSecurityReportRoute,
+}
+
+const AdminSecurityRouteWithChildren = AdminSecurityRoute._addFileChildren(
+  AdminSecurityRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AncestralRoute: AncestralRoute,
@@ -1014,6 +1126,7 @@ const rootRouteChildren: RootRouteChildren = {
   BillingRoute: BillingRoute,
   CernRoute: CernRoute,
   ChatRoute: ChatRoute,
+  CompareRoute: CompareRoute,
   FeedbackRoute: FeedbackRoute,
   InstitutionRoute: InstitutionRoute,
   InterstellarRoute: InterstellarRoute,
@@ -1030,16 +1143,19 @@ const rootRouteChildren: RootRouteChildren = {
   WorldRoute: WorldRouteWithChildren,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminLogsRoute: AdminLogsRoute,
-  AdminSecurityRoute: AdminSecurityRoute,
+  AdminSecurityRoute: AdminSecurityRouteWithChildren,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiQedRoute: ApiQedRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  RunCardRunIdRoute: RunCardRunIdRoute,
   ApiPublicSecuritySelftestRoute: ApiPublicSecuritySelftestRoute,
   ApiPublicWebhookRoute: ApiPublicWebhookRoute,
   LovableEmailHealthRoute: LovableEmailHealthRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHealerRunRoute: ApiPublicHealerRunRoute,
+  ApiPublicHooksDataCleanerRoute: ApiPublicHooksDataCleanerRoute,
+  ApiPublicHooksWizSyncRoute: ApiPublicHooksWizSyncRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
@@ -1048,13 +1164,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -53,6 +53,7 @@ import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/em
 import { Route as LovableEmailHealthRouteImport } from './routes/lovable/email/health'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
 import { Route as ApiPublicSecuritySelftestRouteImport } from './routes/api/public/security-selftest'
+import { Route as AdminSecurityReportRouteImport } from './routes/admin.security.report'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -282,6 +283,11 @@ const ApiPublicSecuritySelftestRoute =
     path: '/api/public/security-selftest',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminSecurityReportRoute = AdminSecurityReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => AdminSecurityRoute,
+} as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -350,7 +356,7 @@ export interface FileRoutesByFullPath {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/admin/security': typeof AdminSecurityRoute
+  '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -364,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/run-card/$runId': typeof RunCardRunIdRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/admin/security/report': typeof AdminSecurityReportRoute
   '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
@@ -403,7 +410,7 @@ export interface FileRoutesByTo {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/admin/security': typeof AdminSecurityRoute
+  '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -417,6 +424,7 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/run-card/$runId': typeof RunCardRunIdRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/admin/security/report': typeof AdminSecurityReportRoute
   '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
@@ -457,7 +465,7 @@ export interface FileRoutesById {
   '/world': typeof WorldRouteWithChildren
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
-  '/admin/security': typeof AdminSecurityRoute
+  '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
   '/api/health': typeof ApiHealthRoute
   '/api/qed': typeof ApiQedRoute
@@ -471,6 +479,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/run-card/$runId': typeof RunCardRunIdRoute
   '/world/ledger': typeof WorldLedgerRoute
+  '/admin/security/report': typeof AdminSecurityReportRoute
   '/api/public/security-selftest': typeof ApiPublicSecuritySelftestRoute
   '/api/public/webhook': typeof ApiPublicWebhookRoute
   '/lovable/email/health': typeof LovableEmailHealthRoute
@@ -526,6 +535,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/run-card/$runId'
     | '/world/ledger'
+    | '/admin/security/report'
     | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
@@ -579,6 +589,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/run-card/$runId'
     | '/world/ledger'
+    | '/admin/security/report'
     | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
@@ -632,6 +643,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/run-card/$runId'
     | '/world/ledger'
+    | '/admin/security/report'
     | '/api/public/security-selftest'
     | '/api/public/webhook'
     | '/lovable/email/health'
@@ -672,7 +684,7 @@ export interface RootRouteChildren {
   WorldRoute: typeof WorldRouteWithChildren
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminLogsRoute: typeof AdminLogsRoute
-  AdminSecurityRoute: typeof AdminSecurityRoute
+  AdminSecurityRoute: typeof AdminSecurityRouteWithChildren
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiQedRoute: typeof ApiQedRoute
@@ -1001,6 +1013,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSecuritySelftestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/security/report': {
+      id: '/admin/security/report'
+      path: '/report'
+      fullPath: '/admin/security/report'
+      preLoaderRoute: typeof AdminSecurityReportRouteImport
+      parentRoute: typeof AdminSecurityRoute
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -1085,6 +1104,18 @@ const WorldRouteChildren: WorldRouteChildren = {
 
 const WorldRouteWithChildren = WorldRoute._addFileChildren(WorldRouteChildren)
 
+interface AdminSecurityRouteChildren {
+  AdminSecurityReportRoute: typeof AdminSecurityReportRoute
+}
+
+const AdminSecurityRouteChildren: AdminSecurityRouteChildren = {
+  AdminSecurityReportRoute: AdminSecurityReportRoute,
+}
+
+const AdminSecurityRouteWithChildren = AdminSecurityRoute._addFileChildren(
+  AdminSecurityRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AncestralRoute: AncestralRoute,
@@ -1112,7 +1143,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorldRoute: WorldRouteWithChildren,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminLogsRoute: AdminLogsRoute,
-  AdminSecurityRoute: AdminSecurityRoute,
+  AdminSecurityRoute: AdminSecurityRouteWithChildren,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiQedRoute: ApiQedRoute,

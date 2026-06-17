@@ -86,6 +86,9 @@ function AdminSecurityPage() {
           <p className="text-xs text-white/60">Nexus Auto-Healer · audit log · realtime quarantine</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
+          <Link to="/admin/security/report" className="rounded border border-white/20 bg-white/5 px-3 py-1.5 hover:bg-white/10">
+            Full report →
+          </Link>
           <button onClick={() => run(() => callTest({ data: undefined as any }), setReport)} disabled={busy}
             className="rounded border border-white/20 bg-white/5 px-3 py-1.5 hover:bg-white/10">
             Run self-test
@@ -95,6 +98,7 @@ function AdminSecurityPage() {
             ▶ Run Nexus Healer
           </button>
         </div>
+
       </header>
 
       {err && <div className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</div>}

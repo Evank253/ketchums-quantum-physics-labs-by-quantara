@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/public/security-selftest")({
     handlers: {
       GET: async ({ request }) => {
         const sent = request.headers.get("apikey") ?? "";
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
+        const expected = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
         if (!expected || sent !== expected) {
           return new Response(JSON.stringify({ error: "unauthorized" }), {
             status: 401,

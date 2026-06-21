@@ -56,9 +56,10 @@ export const verifyBasePayment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Re-verify with Base (best-effort; client status used as fallback)
+    // SECURITY: server-side verification is authoritative. Never trust clientReportedStatus
+    // for granting credits. If the Base API is unreachable or returns unknown, treat as pending.
     const server = await fetchBasePaymentStatus(data.paymentId, data.testnet);
-    const effective = server.status !== "unknown" ? server.status : data.clientReportedStatus;
+    const effective = server.status;
     const isCompleted = effective === "completed" || effective === "confirmed" || effective === "success";
 
     const meta = data.plan ? PLAN_CREDITS[data.plan] : data.addon ? ADDON_CREDITS[data.addon] : null;

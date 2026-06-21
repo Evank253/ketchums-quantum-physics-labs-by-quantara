@@ -968,6 +968,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          command: string
+          jobid: number
+          jobname: string
+          schedule: string
+        }[]
+      }
+      admin_list_cron_runs: {
+        Args: { _limit?: number }
+        Returns: {
+          end_time: string
+          job_pid: number
+          jobid: number
+          return_message: string
+          runid: number
+          start_time: string
+          status: string
+        }[]
+      }
       cern_pocket_report: {
         Args: { _solver: string; _theory: string }
         Returns: string

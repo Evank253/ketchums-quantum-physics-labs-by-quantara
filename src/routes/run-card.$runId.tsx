@@ -52,6 +52,11 @@ function RunCardPage() {
   if (!data.ok) return null;
   const { card, job, mint } = data;
   const txHash = (mint?.result as any)?.tx_hash as string | undefined;
+  const eng: any = (job as any)?.engine_result ?? {};
+  const cod: any = (job as any)?.codata_result ?? {};
+  const lit: any = (job as any)?.literature_result ?? {};
+  const residual = (eng.value != null && cod.value != null) ? eng.value - cod.value : null;
+  const citation = `KQPL Run Card ${card.runId} · backend ${card.backendVersion} · ${new Date(card.createdAt).toISOString()} · input ${card.inputHash.slice(0,12)} · output ${card.outputHash.slice(0,12)}`;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12 text-white">
@@ -62,23 +67,46 @@ function RunCardPage() {
       <div className="mt-1 font-mono text-xs text-cyan-300">{card.runId}</div>
 
       <section className="mt-6 grid grid-cols-2 gap-3 text-xs">
+        <Field label="Symbol">{eng.symbol ?? cod.symbol ?? "—"}</Field>
+        <Field label="Verdict">
+          <span className={(job as any)?.verdict === "PASS" ? "text-emerald-300" : "text-amber-300"}>
+            {(job as any)?.verdict ?? "—"}
+          </span>
+        </Field>
+        <Field label="Computed">{eng.value != null ? `${eng.value} ± ${eng.uncertainty ?? 0}` : "—"}</Field>
+        <Field label="CODATA">{cod.value != null ? `${cod.value} ± ${cod.uncertainty ?? 0}` : "—"}</Field>
+        <Field label="Residual">{residual != null ? residual.toExponential(3) : "—"}</Field>
+        <Field label="σ-deviation">{(job as any)?.sigma != null ? Number((job as any).sigma).toFixed(3) : "—"}</Field>
+        <Field label="Method">{eng.method ?? "—"}</Field>
+        <Field label="Model">{(job as any)?.model ?? "—"}</Field>
         <Field label="Backend">{card.backendVersion}</Field>
-        <Field label="Created">{new Date(card.createdAt).toLocaleString()}</Field>
-        <Field label="Model">{job?.model ?? "—"}</Field>
-        <Field label="Verdict">{job?.verdict ?? "—"}</Field>
-        <Field label="σ-deviation">{job?.sigma != null ? Number(job.sigma).toFixed(3) : "—"}</Field>
         <Field label="Seed">{card.seed ?? "—"}</Field>
-        <Field label="Input hash">{card.inputHash.slice(0, 16)}…</Field>
-        <Field label="Output hash">{card.outputHash.slice(0, 16)}…</Field>
+        <Field label="Input hash"><span className="font-mono">{card.inputHash}</span></Field>
+        <Field label="Output hash"><span className="font-mono">{card.outputHash}</span></Field>
+        <Field label="Created">{new Date(card.createdAt).toLocaleString()}</Field>
+        <Field label="Reference">{cod.reference ?? lit.reference ?? "—"}</Field>
       </section>
 
       {txHash && (
         <section className="mt-6 rounded border border-emerald-500/30 bg-emerald-500/5 p-4 text-xs">
-          <div className="font-mono text-[10px] uppercase tracking-widest text-emerald-300/80">On-chain mint</div>
+          <div className="font-mono text-[10px] uppercase tracking-widest text-emerald-300/80">On-chain $DAT mint</div>
           <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noreferrer"
              className="mt-1 block break-all font-mono text-emerald-200 hover:underline">{txHash}</a>
         </section>
       )}
+
+      <section className="mt-6 flex flex-wrap gap-2">
+        <button
+          onClick={() => { void navigator.clipboard?.writeText(citation); }}
+          className="rounded border border-white/20 px-3 py-1.5 text-xs hover:bg-white/10">
+          Copy citation
+        </button>
+        <button
+          onClick={() => { void navigator.clipboard?.writeText(JSON.stringify({ card, job, mint }, null, 2)); }}
+          className="rounded border border-white/20 px-3 py-1.5 text-xs hover:bg-white/10">
+          Copy raw JSON
+        </button>
+      </section>
 
       <section className="mt-6 rounded border border-white/10 bg-black/40 p-4">
         <h2 className="mb-2 text-sm font-semibold">Raw provenance payload</h2>
@@ -88,7 +116,7 @@ function RunCardPage() {
       </section>
 
       <section className="mt-6 text-[11px] text-white/55">
-        Cite as: <span className="font-mono text-white/80">KQPL Run Card {card.runId}, backend {card.backendVersion}, {new Date(card.createdAt).toISOString()}.</span>
+        Cite as: <span className="font-mono text-white/80">{citation}</span>
       </section>
     </main>
   );

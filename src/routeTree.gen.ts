@@ -49,6 +49,7 @@ import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin.email-health'
+import { Route as AdminCronRouteImport } from './routes/admin.cron'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LovableEmailHealthRouteImport } from './routes/lovable/email/health'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
@@ -262,6 +263,11 @@ const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
   path: '/admin/email-health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCronRoute = AdminCronRouteImport.update({
+  id: '/admin/cron',
+  path: '/admin/cron',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -354,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/security': typeof AdminSecurityRouteWithChildren
@@ -408,6 +415,7 @@ export interface FileRoutesByTo {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/security': typeof AdminSecurityRouteWithChildren
@@ -463,6 +471,7 @@ export interface FileRoutesById {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/security': typeof AdminSecurityRouteWithChildren
@@ -519,6 +528,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/cron'
     | '/admin/email-health'
     | '/admin/logs'
     | '/admin/security'
@@ -573,6 +583,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/cron'
     | '/admin/email-health'
     | '/admin/logs'
     | '/admin/security'
@@ -627,6 +638,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/cron'
     | '/admin/email-health'
     | '/admin/logs'
     | '/admin/security'
@@ -682,6 +694,7 @@ export interface RootRouteChildren {
   SynthesisRoute: typeof SynthesisRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   WorldRoute: typeof WorldRouteWithChildren
+  AdminCronRoute: typeof AdminCronRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminLogsRoute: typeof AdminLogsRoute
   AdminSecurityRoute: typeof AdminSecurityRouteWithChildren
@@ -985,6 +998,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEmailHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/cron': {
+      id: '/admin/cron'
+      path: '/admin/cron'
+      fullPath: '/admin/cron'
+      preLoaderRoute: typeof AdminCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -1141,6 +1161,7 @@ const rootRouteChildren: RootRouteChildren = {
   SynthesisRoute: SynthesisRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   WorldRoute: WorldRouteWithChildren,
+  AdminCronRoute: AdminCronRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminLogsRoute: AdminLogsRoute,
   AdminSecurityRoute: AdminSecurityRouteWithChildren,

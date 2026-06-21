@@ -89,6 +89,9 @@ function AdminSecurityPage() {
           <Link to="/admin/security/report" className="rounded border border-white/20 bg-white/5 px-3 py-1.5 hover:bg-white/10">
             Full report →
           </Link>
+          <Link to="/admin/cron" className="rounded border border-white/20 bg-white/5 px-3 py-1.5 hover:bg-white/10">
+            Cron monitor →
+          </Link>
           <button onClick={() => run(() => callTest({ data: undefined as any }), setReport)} disabled={busy}
             className="rounded border border-white/20 bg-white/5 px-3 py-1.5 hover:bg-white/10">
             Run self-test

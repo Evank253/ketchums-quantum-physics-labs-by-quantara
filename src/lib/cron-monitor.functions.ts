@@ -1,4 +1,4 @@
-// Admin-only: read pg_cron schedule + recent run history.
+// Admin-only: read pg_cron schedule + recent run history, plus on-demand triggers.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -12,25 +12,45 @@ export const getCronStatus = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const jobsRes: any = await (supabaseAdmin as any).rpc("exec_sql", { sql: "" }).then(
-      () => null,
-      () => null,
-    );
-    // Use raw SQL via PostgREST is not possible; query cron schemas through views we own.
-    // We expose two helper functions below via migration. As a fallback, return arrays from
-    // pg_cron's cron schema using `from('cron.job')` style won't work either; so we read
-    // through a SECURITY DEFINER wrapper view if present, else return empty.
-    void jobsRes;
-
-    const [{ data: jobs }, { data: runs }] = await Promise.all([
-      (supabaseAdmin as any).from("cron_jobs_view").select("*").order("jobname"),
-      (supabaseAdmin as any).from("cron_runs_view").select("*").order("start_time", { ascending: false }).limit(50),
+    const [jobsRes, runsRes] = await Promise.all([
+      (supabaseAdmin as any).rpc("admin_list_cron_jobs"),
+      (supabaseAdmin as any).rpc("admin_list_cron_runs", { _limit: 50 }),
     ]);
-
     return {
-      jobs: (jobs as any[]) ?? [],
-      runs: (runs as any[]) ?? [],
+      jobs: (jobsRes.data as any[]) ?? [],
+      runs: (runsRes.data as any[]) ?? [],
+      jobsError: jobsRes.error?.message ?? null,
+      runsError: runsRes.error?.message ?? null,
       generatedAt: new Date().toISOString(),
     };
+  });
+
+export const triggerCronTask = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { task: "data-cleaner" | "wiz-sync" | "healer" | "self-test" }) => {
+    if (!["data-cleaner", "wiz-sync", "healer", "self-test"].includes(d?.task))
+      throw new Error("Invalid task");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    switch (data.task) {
+      case "data-cleaner": {
+        const { runCleanerBatch } = await import("@/lib/data-cleaner.server");
+        return { task: data.task, result: await runCleanerBatch() };
+      }
+      case "wiz-sync": {
+        const { syncWizFindings } = await import("@/lib/wiz-sync.server");
+        return { task: data.task, result: await syncWizFindings() };
+      }
+      case "healer": {
+        const { runHealer } = await import("@/lib/nexus-healer.server");
+        return { task: data.task, result: await runHealer(supabaseAdmin as any) };
+      }
+      case "self-test": {
+        const { runSelfTest } = await import("@/lib/nexus-healer.server");
+        return { task: data.task, result: await runSelfTest(supabaseAdmin as any) };
+      }
+    }
   });

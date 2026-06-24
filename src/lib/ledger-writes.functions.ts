@@ -12,7 +12,6 @@
 // client can degrade gracefully (local-only save, "sign in to publish" UI).
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
   INSTITUTIONS,
@@ -22,7 +21,7 @@ import {
   isNobelTier,
 } from "@/lib/notification-dispatch";
 import { ACHIEVEMENTS } from "@/lib/achievements-data";
-import type { Database } from "@/integrations/supabase/types";
+import { AUTH_REQUIRED, type AuthRequiredError } from "@/lib/ledger-auth.server";
 
 const ALLOWED_EMAILS = new Set<string>([
   ...INSTITUTIONS.map((r) => r.email.toLowerCase()),

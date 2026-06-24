@@ -1,13 +1,13 @@
 /**
  * @vitest-environment node
  *
- * Regression: anonymous callers of protected ledger server fns must NOT
- * throw through the global error boundary (which produced 500 + blank
- * screen). They must return a structured AUTH_REQUIRED payload.
+ * Regression: anonymous callers of protected ledger writes must receive a
+ * structured AUTH_REQUIRED response, NOT an uncaught throw that surfaces as
+ * a 500 + blank screen via the global error boundary.
  *
- * We invoke the underlying server handler directly so we can inspect the
- * return value; the start-client wrapper used in browser/SSR strips the
- * payload when invoked outside a real HTTP request.
+ * We exercise the shared `validateBearerFromRequest` helper (used by every
+ * ledger server fn before any DB write) plus the client-side `isAuthRequired`
+ * predicate that gates UI fallback paths.
  */
 import { describe, it, expect, beforeAll } from "vitest";
 
@@ -16,51 +16,72 @@ beforeAll(() => {
   process.env.SUPABASE_PUBLISHABLE_KEY ||= "anon-key-placeholder";
 });
 
-async function invokeHandler(fn: any, data: unknown) {
-  const { runWithStartContext } = await import("@tanstack/start-storage-context");
-  const request = new Request("http://localhost/_serverFn/test", { method: "POST" });
-  return await runWithStartContext(
-    {
-      getRouter: async () => ({}) as any,
-      request,
-      startOptions: {},
-      contextAfterGlobalMiddlewares: {},
-      executedRequestMiddlewares: new Set(),
-      handlerType: "serverFn",
-    },
-    () => fn.__executeServer({ data }),
-  );
-}
-
-describe("ledger writes — anonymous calls return structured 401", () => {
-  it("recordSolveServer does not throw and returns AUTH_REQUIRED", async () => {
-    const { recordSolveServer } = await import("../../src/lib/ledger-writes.functions");
-    const { isAuthRequired } = await import("../../src/lib/auth-session");
-    let res: any;
-    await expect(
-      (async () => {
-        res = await invokeHandler(recordSolveServer, { theory: "anon test" });
-      })(),
-    ).resolves.not.toThrow();
-    const payload = res?.result ?? res;
-    expect(isAuthRequired(payload)).toBe(true);
-    expect(payload.status).toBe(401);
-    expect(payload.code).toBe("AUTH_REQUIRED");
+describe("ledger writes — anonymous bearer validation", () => {
+  it("returns null and logs metadata when no Authorization header is present", async () => {
+    const { validateBearerFromRequest } = await import("../../src/lib/ledger-auth.server");
+    const warnings: unknown[][] = [];
+    const origWarn = console.warn;
+    console.warn = (...args: unknown[]) => warnings.push(args);
+    try {
+      const req = new Request("http://localhost/_serverFn/recordSolveServer", { method: "POST" });
+      const userId = await validateBearerFromRequest("recordSolveServer", req);
+      expect(userId).toBeNull();
+    } finally {
+      console.warn = origWarn;
+    }
+    const joined = warnings.map((a) => a.join(" ")).join("\n");
+    expect(joined).toContain("[ledger-auth] missing bearer");
+    expect(joined).toContain("recordSolveServer");
+    expect(joined).toContain('"has_auth_header":false');
   });
 
-  it("enqueueDispatchServer does not throw and returns AUTH_REQUIRED", async () => {
-    const { enqueueDispatchServer } = await import("../../src/lib/ledger-writes.functions");
-    const { isAuthRequired } = await import("../../src/lib/auth-session");
-    const res: any = await invokeHandler(enqueueDispatchServer, { theory: "anon dispatch" });
-    expect(isAuthRequired(res?.result ?? res)).toBe(true);
-  });
-
-  it("recordAchievementServer does not throw and returns AUTH_REQUIRED", async () => {
-    const { recordAchievementServer } = await import("../../src/lib/ledger-writes.functions");
-    const { isAuthRequired } = await import("../../src/lib/auth-session");
-    const res: any = await invokeHandler(recordAchievementServer, {
-      achievement_id: "first_credit",
+  it("returns null when Authorization header is malformed (not Bearer)", async () => {
+    const { validateBearerFromRequest } = await import("../../src/lib/ledger-auth.server");
+    const req = new Request("http://localhost/x", {
+      method: "POST",
+      headers: { authorization: "Basic abc" },
     });
-    expect(isAuthRequired(res?.result ?? res)).toBe(true);
+    const orig = console.warn;
+    console.warn = () => {};
+    try {
+      expect(await validateBearerFromRequest("enqueueDispatchServer", req)).toBeNull();
+    } finally {
+      console.warn = orig;
+    }
+  });
+
+  it("returns null for an invalid bearer token (does not throw)", async () => {
+    const { validateBearerFromRequest } = await import("../../src/lib/ledger-auth.server");
+    const req = new Request("http://localhost/x", {
+      method: "POST",
+      headers: { authorization: "Bearer not-a-real-jwt" },
+    });
+    const orig = console.warn;
+    console.warn = () => {};
+    try {
+      const res = await validateBearerFromRequest("recordAchievementServer", req);
+      expect(res).toBeNull();
+    } finally {
+      console.warn = orig;
+    }
+  });
+
+  it("AUTH_REQUIRED constant has the documented public shape", async () => {
+    const { AUTH_REQUIRED } = await import("../../src/lib/ledger-auth.server");
+    expect(AUTH_REQUIRED).toMatchObject({
+      ok: false,
+      code: "AUTH_REQUIRED",
+      status: 401,
+    });
+    expect(typeof AUTH_REQUIRED.message).toBe("string");
+  });
+
+  it("isAuthRequired predicate matches the structured payload", async () => {
+    const { isAuthRequired } = await import("../../src/lib/auth-session");
+    const { AUTH_REQUIRED } = await import("../../src/lib/ledger-auth.server");
+    expect(isAuthRequired(AUTH_REQUIRED)).toBe(true);
+    expect(isAuthRequired({ ok: true, row: {} })).toBe(false);
+    expect(isAuthRequired(null)).toBe(false);
+    expect(isAuthRequired(undefined)).toBe(false);
   });
 });

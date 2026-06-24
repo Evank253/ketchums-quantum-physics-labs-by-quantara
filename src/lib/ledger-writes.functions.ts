@@ -40,6 +40,8 @@ const AchievementInput = z.object({
   achievement_id: z.string().trim().min(1).max(100),
 });
 
+const PUBLIC_ACHIEVEMENT_COLUMNS = "id, achievement_id, title, tier, reward, operator, unlocked_at";
+
 /** Server-validated solve write. solver is forced to the operator identity. */
 export const recordSolveServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -115,6 +117,19 @@ export const recordAchievementServer = createServerFn({ method: "POST" })
     }
     return { ok: true as const };
   });
+
+/** Safe public projection for the global achievement feed. The table itself
+ *  stays locked down to browser clients; this returns only display fields. */
+export const getPublicAchievementsServer = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("public_achievements")
+    .select(PUBLIC_ACHIEVEMENT_COLUMNS)
+    .order("unlocked_at", { ascending: false })
+    .limit(50);
+  if (error) return [];
+  return data ?? [];
+});
 
 /** Server-only stats reader. notification_dispatch is no longer publicly
  *  readable, so the client gets aggregates through this function. */

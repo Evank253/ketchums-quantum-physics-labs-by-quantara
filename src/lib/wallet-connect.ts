@@ -8,9 +8,11 @@ export function walletConnectProjectId(): string | null {
   return null;
 }
 
+export const DEFAULT_METAMASK_DEEP_LINK = "https://metamask.app.link/dapp/ketchumsquantumphysicslab.live";
+
 export function metamaskMobileDeepLink(): string {
   if (typeof window === "undefined") {
-    return "https://metamask.app.link/dapp/ketchumsquantumphysicslab.live";
+    return DEFAULT_METAMASK_DEEP_LINK;
   }
   const host = window.location.host + window.location.pathname;
   return `https://metamask.app.link/dapp/${host}`;

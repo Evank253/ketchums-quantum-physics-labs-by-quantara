@@ -9,6 +9,6 @@ describe("p", () => { it("r", async () => {
     startOptions: {}, contextAfterGlobalMiddlewares: {},
     executedRequestMiddlewares: new Set(), handlerType: "serverFn",
   }, () => (recordSolveServer as any).__executeServer({ data: { theory: "x" }}));
-  console.log("PROBE", JSON.stringify(r), "keys", r && Object.keys(r));
+  console.log("PROBE", "result=", r.result, "error=", r.error, "context=", r.context);
   expect(true).toBe(true);
 });});

@@ -17,12 +17,19 @@ beforeAll(() => {
 });
 
 async function invokeHandler(fn: any, data: unknown) {
-  // start-client exposes the validated+wrapped handler via __executeServer.
-  // It runs middleware + handler and returns the raw handler value.
-  if (typeof fn.__executeServer === "function") {
-    return await fn.__executeServer({ data });
-  }
-  return await fn({ data });
+  const { runWithStartContext } = await import("@tanstack/start-storage-context");
+  const request = new Request("http://localhost/_serverFn/test", { method: "POST" });
+  return await runWithStartContext(
+    {
+      getRouter: async () => ({}) as any,
+      request,
+      startOptions: {},
+      contextAfterGlobalMiddlewares: {},
+      executedRequestMiddlewares: new Set(),
+      handlerType: "serverFn",
+    },
+    () => fn.__executeServer({ data }),
+  );
 }
 
 describe("ledger writes — anonymous calls return structured 401", () => {

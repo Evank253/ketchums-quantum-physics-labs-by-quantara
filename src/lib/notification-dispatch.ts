@@ -275,6 +275,7 @@ export async function autoDispatch(opts: {
       return { queued: 0, nobel: isNobelTier(opts) };
     }
     const { enqueueDispatchServer } = await import("@/lib/ledger-writes.functions");
+    const { isAuthRequired } = await import("@/lib/auth-session");
     const res = await enqueueDispatchServer({
       data: {
         theory: opts.theory,
@@ -282,6 +283,7 @@ export async function autoDispatch(opts: {
         transcript: opts.transcript ?? null,
       },
     });
+    if (isAuthRequired(res)) return { queued: 0, nobel: isNobelTier(opts) };
     return { queued: res.queued ?? 0, nobel: !!res.nobel };
   } catch {
     return { queued: 0, nobel: isNobelTier(opts) };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ACHIEVEMENTS, subscribeAchievements, getUnlocked } from "@/lib/achievements";
 import { supabase } from "@/integrations/supabase/client";
+import { getPublicAchievementsServer } from "@/lib/ledger-writes.functions";
 
 type PublicUnlock = {
   id: string;
@@ -29,12 +30,8 @@ export function AchievementsPanel() {
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const { data } = await supabase
-        .from("public_achievements")
-        .select("id, achievement_id, title, tier, reward, operator, unlocked_at")
-        .order("unlocked_at", { ascending: false })
-        .limit(50);
-      if (alive && data) setFeed(data as PublicUnlock[]);
+      const data = await getPublicAchievementsServer();
+      if (alive) setFeed(data as PublicUnlock[]);
     };
     load();
     const channel = supabase

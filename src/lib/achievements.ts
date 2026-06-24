@@ -56,6 +56,10 @@ function getOperator(): string | null {
 // canonical ACHIEVEMENTS catalog and stamps the server-side operator).
 async function publishAchievement(a: Achievement) {
   try {
+    // Server fn requires auth; skip silently for anonymous visitors.
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.access_token) return;
     await recordAchievementServer({ data: { achievement_id: a.id } });
   } catch {
     // Silent — local unlock still stands; will not retry to avoid spam.

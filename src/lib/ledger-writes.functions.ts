@@ -3,9 +3,16 @@
 // public_achievements, or solved_theories directly (RLS removed those
 // policies). All writes flow through these server functions, which run with
 // the service role and validate inputs server-side.
+//
+// AUTH MODEL: these fns do their own bearer-token check inside the handler
+// instead of using `requireSupabaseAuth` middleware. The middleware THROWS
+// on missing/invalid auth which surfaces through the global error boundary
+// as a 500 + blank screen for anonymous visitors. We instead return a
+// structured `{ ok: false, code: "AUTH_REQUIRED", status: 401 }` so the
+// client can degrade gracefully (local-only save, "sign in to publish" UI).
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   INSTITUTIONS,
   OUTLETS,
@@ -14,6 +21,13 @@ import {
   isNobelTier,
 } from "@/lib/notification-dispatch";
 import { ACHIEVEMENTS } from "@/lib/achievements-data";
+import {
+  AUTH_REQUIRED,
+  type AuthRequiredError,
+  validateBearerFromRequest,
+} from "@/lib/ledger-auth.server";
+
+export type { AuthRequiredError };
 
 const ALLOWED_EMAILS = new Set<string>([
   ...INSTITUTIONS.map((r) => r.email.toLowerCase()),
@@ -42,11 +56,24 @@ const AchievementInput = z.object({
 
 const PUBLIC_ACHIEVEMENT_COLUMNS = "id, achievement_id, title, tier, reward, operator, unlocked_at";
 
+/** Validate the request's bearer token using the shared server-only helper.
+ *  Returns user id on success, or null on missing/invalid auth. */
+async function validateBearer(fnName: string): Promise<string | null> {
+  let request: Request | undefined;
+  try {
+    request = getRequest();
+  } catch {
+    request = undefined;
+  }
+  return validateBearerFromRequest(fnName, request);
+}
+
 /** Server-validated solve write. solver is forced to the operator identity. */
 export const recordSolveServer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => SolveInput.parse(d))
   .handler(async ({ data }) => {
+    const userId = await validateBearer("recordSolveServer");
+    if (!userId) return AUTH_REQUIRED;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const source = data.source && SOURCE_ALLOW.test(data.source) ? data.source : "web";
     const { data: row, error } = await supabaseAdmin
@@ -71,9 +98,10 @@ export const recordSolveServer = createServerFn({ method: "POST" })
 /** Server-validated dispatch enqueue. Recipients are forced to the hard-coded
  *  INSTITUTIONS + OUTLETS allowlist; client cannot influence email targets. */
 export const enqueueDispatchServer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => DispatchInput.parse(d))
   .handler(async ({ data }) => {
+    const userId = await validateBearer("enqueueDispatchServer");
+    if (!userId) return AUTH_REQUIRED;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nobel = isNobelTier({
       theory: data.theory,
@@ -86,21 +114,22 @@ export const enqueueDispatchServer = createServerFn({ method: "POST" })
       abstract: data.abstract ?? undefined,
       nobel,
     }).filter((r) => ALLOWED_EMAILS.has(r.email.toLowerCase()));
-    if (rows.length === 0) return { queued: 0, nobel };
+    if (rows.length === 0) return { ok: true as const, queued: 0, nobel };
     const { error } = await supabaseAdmin
       .from("notification_dispatch")
       .upsert(rows, { onConflict: "theory,email", ignoreDuplicates: true });
     if (error) throw new Error(error.message);
-    return { queued: rows.length, nobel };
+    return { ok: true as const, queued: rows.length, nobel };
   });
 
 /** Server-validated achievement record. achievement_id must be a known
  *  achievement; title/tier/reward come from the server-side catalog so the
  *  client cannot inject arbitrary values or fake operator identities. */
 export const recordAchievementServer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => AchievementInput.parse(d))
   .handler(async ({ data }) => {
+    const userId = await validateBearer("recordAchievementServer");
+    if (!userId) return AUTH_REQUIRED;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const a = ACHIEVEMENTS.find((x: { id: string }) => x.id === data.achievement_id);
     if (!a) throw new Error("Unknown achievement");

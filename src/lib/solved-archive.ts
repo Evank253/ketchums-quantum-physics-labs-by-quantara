@@ -107,7 +107,7 @@ export async function saveSolve(input: {
           source: entry.source,
         },
       });
-      const data: any = res?.row;
+      const data: any = res && (res as any).ok ? (res as any).row : null;
       if (data) {
 
         // upgrade local entry's id to the DB id

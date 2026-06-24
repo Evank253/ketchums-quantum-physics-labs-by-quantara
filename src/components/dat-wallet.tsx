@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { claimDat, getOnChainBalance, listClaims, getTreasuryBalance } from "@/lib/dat-mint.functions";
 import { TREASURY_WALLET, basescanAddress, shortAddr, TREASURY_BASE_PROFILE_URL, TREASURY_BASE_HANDLE } from "@/lib/treasury";
-import { metamaskMobileDeepLink } from "@/lib/wallet-connect";
+import { DEFAULT_METAMASK_DEEP_LINK, metamaskMobileDeepLink } from "@/lib/wallet-connect";
 
 // Base Sepolia testnet config
 const BASE_SEPOLIA = {
@@ -148,7 +148,10 @@ export function DatWallet() {
 
   // Mobile entry point — opens MetaMask Mobile's in-app browser into our dApp,
   // where window.ethereum is injected and the normal connect() flow takes over.
-  const mobileDeepLink = metamaskMobileDeepLink();
+  const [mobileDeepLink, setMobileDeepLink] = useState(DEFAULT_METAMASK_DEEP_LINK);
+  useEffect(() => {
+    setMobileDeepLink(metamaskMobileDeepLink());
+  }, []);
 
   const switchToBaseSepolia = async () => {
     setErr(null);

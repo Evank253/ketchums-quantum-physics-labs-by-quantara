@@ -639,6 +639,12 @@ END — ${new Date().toISOString()}
     }
     let saveNote = "// saved to public solved_theories ledger";
     try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.access_token) {
+        saveNote = "// saved locally; sign in to publish to public solved_theories ledger";
+        throw new Error("skip remote save without session");
+      }
       const { recordSolveServer } = await import("@/lib/ledger-writes.functions");
       await recordSolveServer({
         data: {
@@ -649,7 +655,9 @@ END — ${new Date().toISOString()}
         },
       });
     } catch (e: any) {
-      saveNote = `// save error: ${e?.message ?? e}`;
+      if (e?.message !== "skip remote save without session") {
+        saveNote = `// save error: ${e?.message ?? e}`;
+      }
     }
 
     push({ kind: "sys", text: `// full ${eng.name} derivation copied to clipboard (${(built.doc.length / 1024).toFixed(1)} KB)` });

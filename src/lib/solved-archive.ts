@@ -59,6 +59,15 @@ export function localSolves(): ArchivedSolve[] {
   return readLocal();
 }
 
+async function hasActiveSession(): Promise<boolean> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data.session?.access_token);
+  } catch {
+    return false;
+  }
+}
+
 export async function saveSolve(input: {
   theory: string;
   solver?: string;
@@ -86,32 +95,34 @@ export async function saveSolve(input: {
   const list = readLocal();
   writeLocal([entry, ...list]);
 
-  // best-effort DB insert via server function (RLS blocks anon writes)
-  try {
-    const res = await recordSolveServer({
-      data: {
-        theory: entry.theory,
-        abstract: entry.abstract || null,
-        math: entry.math || null,
-        transcript: entry.transcript || null,
-        source: entry.source,
-      },
-    });
-    const data: any = res?.row;
-    if (data) {
+  // best-effort DB insert via server function (requires an authenticated bearer)
+  if (await hasActiveSession()) {
+    try {
+      const res = await recordSolveServer({
+        data: {
+          theory: entry.theory,
+          abstract: entry.abstract || null,
+          math: entry.math || null,
+          transcript: entry.transcript || null,
+          source: entry.source,
+        },
+      });
+      const data: any = res?.row;
+      if (data) {
 
-      // upgrade local entry's id to the DB id
-      const upgraded: ArchivedSolve = {
-        ...entry,
-        id: data.id,
-        created_at: data.created_at,
-      };
-      const cur = readLocal();
-      writeLocal([upgraded, ...cur.filter((e) => e.id !== entry.id)]);
-      return upgraded;
+        // upgrade local entry's id to the DB id
+        const upgraded: ArchivedSolve = {
+          ...entry,
+          id: data.id,
+          created_at: data.created_at,
+        };
+        const cur = readLocal();
+        writeLocal([upgraded, ...cur.filter((e) => e.id !== entry.id)]);
+        return upgraded;
+      }
+    } catch {
+      // offline / RLS — local copy already saved
     }
-  } catch {
-    // offline / RLS — local copy already saved
   }
   // Fire-and-forget: notify institutions (+ press for Nobel-tier) automatically
   void autoDispatch({

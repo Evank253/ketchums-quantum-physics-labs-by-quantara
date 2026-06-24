@@ -75,6 +75,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "format-detection", content: "telephone=no" },
       { title: "Ketchum's Quantum Physics Labs · Powered by Quantara" },
       { name: "description", content: "Ketchum's Quantum Physics Labs — real quantum-physics computing (QED/QCD/KVE engines, CERN-in-a-Pocket precision sweeps) plus a 3D/4D synthetic civilization, powered by Quantara." },
       { name: "author", content: "Evan Ketchum" },

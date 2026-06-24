@@ -21,7 +21,13 @@ import {
   isNobelTier,
 } from "@/lib/notification-dispatch";
 import { ACHIEVEMENTS } from "@/lib/achievements-data";
-import { AUTH_REQUIRED, type AuthRequiredError } from "@/lib/ledger-auth.server";
+import {
+  AUTH_REQUIRED,
+  type AuthRequiredError,
+  validateBearerFromRequest,
+} from "@/lib/ledger-auth.server";
+
+export type { AuthRequiredError };
 
 const ALLOWED_EMAILS = new Set<string>([
   ...INSTITUTIONS.map((r) => r.email.toLowerCase()),

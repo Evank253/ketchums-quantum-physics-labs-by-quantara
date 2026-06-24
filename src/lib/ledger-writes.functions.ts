@@ -50,22 +50,8 @@ const AchievementInput = z.object({
 
 const PUBLIC_ACHIEVEMENT_COLUMNS = "id, achievement_id, title, tier, reward, operator, unlocked_at";
 
-export type AuthRequiredError = {
-  ok: false;
-  code: "AUTH_REQUIRED";
-  status: 401;
-  message: string;
-};
-
-const AUTH_REQUIRED: AuthRequiredError = {
-  ok: false,
-  code: "AUTH_REQUIRED",
-  status: 401,
-  message: "Sign in required to write to the public ledger.",
-};
-
-/** Validate the request's bearer token without throwing. Returns the user id
- *  on success, or null on missing/invalid auth (logging safe metadata). */
+/** Validate the request's bearer token using the shared server-only helper.
+ *  Returns user id on success, or null on missing/invalid auth. */
 async function validateBearer(fnName: string): Promise<string | null> {
   let request: Request | undefined;
   try {
@@ -73,41 +59,7 @@ async function validateBearer(fnName: string): Promise<string | null> {
   } catch {
     request = undefined;
   }
-  const authHeader = request?.headers?.get?.("authorization") ?? null;
-  const ua = request?.headers?.get?.("user-agent") ?? null;
-  const reqId = request?.headers?.get?.("x-request-id") ?? null;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.warn("[ledger-auth] missing bearer", JSON.stringify({
-      fn: fnName,
-      method: request?.method,
-      url: request?.url,
-      has_auth_header: Boolean(authHeader),
-      has_ua: Boolean(ua),
-      request_id: reqId,
-    }));
-    return null;
-  }
-  const token = authHeader.slice("Bearer ".length).trim();
-  if (!token) return null;
-  const url = process.env.SUPABASE_URL;
-  const anon = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !anon) {
-    console.error("[ledger-auth] missing supabase env");
-    return null;
-  }
-  const client = createClient<Database>(url, anon, {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-  });
-  const { data, error } = await client.auth.getClaims(token);
-  if (error || !data?.claims?.sub) {
-    console.warn("[ledger-auth] invalid token", JSON.stringify({
-      fn: fnName,
-      reason: error?.message ?? "no claims",
-      request_id: reqId,
-    }));
-    return null;
-  }
-  return data.claims.sub as string;
+  return validateBearerFromRequest(fnName, request);
 }
 
 /** Server-validated solve write. solver is forced to the operator identity. */

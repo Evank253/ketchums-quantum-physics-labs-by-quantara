@@ -268,6 +268,12 @@ export async function autoDispatch(opts: {
   transcript?: string;
 }): Promise<{ queued: number; nobel: boolean }> {
   try {
+    // Server fn requires auth; skip silently for anonymous visitors.
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data: sess } = await supabase.auth.getSession();
+    if (!sess.session?.access_token) {
+      return { queued: 0, nobel: isNobelTier(opts) };
+    }
     const { enqueueDispatchServer } = await import("@/lib/ledger-writes.functions");
     const res = await enqueueDispatchServer({
       data: {

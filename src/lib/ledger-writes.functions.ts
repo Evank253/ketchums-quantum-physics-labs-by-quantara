@@ -68,7 +68,12 @@ const AUTH_REQUIRED: AuthRequiredError = {
 /** Validate the request's bearer token without throwing. Returns the user id
  *  on success, or null on missing/invalid auth (logging safe metadata). */
 async function validateBearer(fnName: string): Promise<string | null> {
-  const request = getRequest();
+  let request: Request | undefined;
+  try {
+    request = getRequest();
+  } catch {
+    request = undefined;
+  }
   const authHeader = request?.headers?.get?.("authorization") ?? null;
   const ua = request?.headers?.get?.("user-agent") ?? null;
   const reqId = request?.headers?.get?.("x-request-id") ?? null;

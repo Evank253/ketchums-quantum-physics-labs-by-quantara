@@ -116,6 +116,7 @@
   },
   "overrides": {
     "brace-expansion": "5.0.6",
+    "js-yaml": "4.2.0",
     "undici": "7.28.0",
     "ws": "8.21.0"
   },
@@ -123,6 +124,7 @@
     "overrides": {
       "brace-expansion": "5.0.6",
       "entities": "4.5.0",
+      "js-yaml": "4.2.0",
       "undici": "7.28.0",
       "ws": "8.21.0"
     }

@@ -5,7 +5,7 @@
     "": {
       "name": "tanstack_start_ts",
       "dependencies": {
-        "@base-org/account": "2.5.7",
+        "@base-org/account": "^2.5.7",
         "@cloudflare/vite-plugin": "^1.42.3",
         "@hookform/resolvers": "^5.2.2",
         "@lovable.dev/email-js": "^0.0.4",

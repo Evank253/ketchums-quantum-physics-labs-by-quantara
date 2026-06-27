@@ -3,8 +3,33 @@ on:
   push:
     branches: [main]
   pull_request:
+
 jobs:
   build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile || bun install
+      - name: Lint
+        run: bun run lint --max-warnings=0
+        continue-on-error: true
+      - name: Typecheck
+        run: bunx tsc --noEmit
+        continue-on-error: true
+      - name: Unit tests
+        run: bunx vitest run
+      - name: Production build
+        run: bun run build
+      - name: Dev build (SSR prerender check)
+        run: bun run build:dev
+
+  security-audit:
+    name: Security Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -12,7 +37,29 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile || bun install
-      - run: bun run lint --max-warnings=0 || true
-      - run: bunx tsc --noEmit || true
-      - run: bunx vitest run
-      - run: bun run build
+      - name: Bun audit (high/critical)
+        run: bun audit --audit-level=high
+        continue-on-error: true
+      - name: Save audit report
+        if: always()
+        run: bun audit --json > audit-report.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-report
+          path: audit-report.json
+          retention-days: 30
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3

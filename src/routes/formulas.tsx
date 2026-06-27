@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { evaluate, parse } from "mathjs";
+import { evaluate, parse, simplify as mjSimplify } from "mathjs";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import {
@@ -57,7 +57,7 @@ function FormulaCard({ f }: { f: FormulaEntry }) {
     setError(null);
     try {
       const node = parse(custom);
-      const simplified = (require("mathjs") as any).simplify(node).toString();
+      const simplified = mjSimplify(node).toString();
       setResult("simplified: " + simplified);
     } catch (e: any) {
       setError(e?.message ?? String(e));

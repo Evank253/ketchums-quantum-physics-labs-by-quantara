@@ -14,6 +14,8 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { verifyMessage } from "viem";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 
 function makeNonce() {
   // 32 hex chars — matches the spec the user pasted.

@@ -22,6 +22,7 @@ import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as KveRouteImport } from './routes/kve'
 import { Route as InterstellarRouteImport } from './routes/interstellar'
 import { Route as InstitutionRouteImport } from './routes/institution'
+import { Route as FormulasRouteImport } from './routes/formulas'
 import { Route as FeedbackRouteImport } from './routes/feedback'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ChatRouteImport } from './routes/chat'
@@ -126,6 +127,11 @@ const InterstellarRoute = InterstellarRouteImport.update({
 const InstitutionRoute = InstitutionRouteImport.update({
   id: '/institution',
   path: '/institution',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormulasRoute = FormulasRouteImport.update({
+  id: '/formulas',
+  path: '/formulas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FeedbackRoute = FeedbackRouteImport.update({
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof ChatRoute
   '/compare': typeof CompareRoute
   '/feedback': typeof FeedbackRoute
+  '/formulas': typeof FormulasRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
@@ -402,6 +409,7 @@ export interface FileRoutesByTo {
   '/chat': typeof ChatRoute
   '/compare': typeof CompareRoute
   '/feedback': typeof FeedbackRoute
+  '/formulas': typeof FormulasRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
@@ -458,6 +466,7 @@ export interface FileRoutesById {
   '/chat': typeof ChatRoute
   '/compare': typeof CompareRoute
   '/feedback': typeof FeedbackRoute
+  '/formulas': typeof FormulasRoute
   '/institution': typeof InstitutionRoute
   '/interstellar': typeof InterstellarRoute
   '/kve': typeof KveRoute
@@ -515,6 +524,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/compare'
     | '/feedback'
+    | '/formulas'
     | '/institution'
     | '/interstellar'
     | '/kve'
@@ -570,6 +580,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/compare'
     | '/feedback'
+    | '/formulas'
     | '/institution'
     | '/interstellar'
     | '/kve'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/compare'
     | '/feedback'
+    | '/formulas'
     | '/institution'
     | '/interstellar'
     | '/kve'
@@ -681,6 +693,7 @@ export interface RootRouteChildren {
   ChatRoute: typeof ChatRoute
   CompareRoute: typeof CompareRoute
   FeedbackRoute: typeof FeedbackRoute
+  FormulasRoute: typeof FormulasRoute
   InstitutionRoute: typeof InstitutionRoute
   InterstellarRoute: typeof InterstellarRoute
   KveRoute: typeof KveRoute
@@ -807,6 +820,13 @@ declare module '@tanstack/react-router' {
       path: '/institution'
       fullPath: '/institution'
       preLoaderRoute: typeof InstitutionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/formulas': {
+      id: '/formulas'
+      path: '/formulas'
+      fullPath: '/formulas'
+      preLoaderRoute: typeof FormulasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/feedback': {
@@ -1148,6 +1168,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChatRoute: ChatRoute,
   CompareRoute: CompareRoute,
   FeedbackRoute: FeedbackRoute,
+  FormulasRoute: FormulasRoute,
   InstitutionRoute: InstitutionRoute,
   InterstellarRoute: InterstellarRoute,
   KveRoute: KveRoute,

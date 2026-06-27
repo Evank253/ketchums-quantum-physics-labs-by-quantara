@@ -14,6 +14,8 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { verifyMessage } from "viem";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 
 function makeNonce() {
   // 32 hex chars — matches the spec the user pasted.
@@ -108,13 +110,12 @@ export const verifySiweAndLink = createServerFn({ method: "POST" })
 
 // Link a wallet to the currently signed-in user (no new account creation).
 export const linkWalletToCurrentUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: { address: string; message: string; signature: string }) => {
     if (!/^0x[a-fA-F0-9]{40}$/.test(data.address)) throw new Error("Invalid address");
     return data;
   })
-  .handler(async ({ data }) => {
-    const { requireSupabaseAuth } = await import("@/integrations/supabase/auth-middleware");
-    // requireSupabaseAuth normally used via middleware — but we need a tighter scoped flow here.
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const wallet = data.address.toLowerCase();
 
@@ -128,13 +129,35 @@ export const linkWalletToCurrentUser = createServerFn({ method: "POST" })
     const nonceMatch = data.message.match(/Nonce:\s*([a-f0-9]+)/i);
     const nonce = nonceMatch?.[1];
     if (!nonce) throw new Error("Missing nonce");
-    const { data: nonceRow } = await supabaseAdmin.from("siwe_nonces").select("used_at, expires_at").eq("nonce", nonce).maybeSingle();
+    const { data: nonceRow } = await supabaseAdmin
+      .from("siwe_nonces")
+      .select("used_at, expires_at")
+      .eq("nonce", nonce)
+      .maybeSingle();
     if (!nonceRow || nonceRow.used_at || new Date(nonceRow.expires_at as string) < new Date()) {
       throw new Error("Invalid or expired nonce");
     }
-    await supabaseAdmin.from("siwe_nonces").update({ used_at: new Date().toISOString(), wallet_address: wallet }).eq("nonce", nonce);
 
-    // Caller must have written their userId into a recent header; but we keep it simple:
-    // require client to also send currentUserId derived from session. Server still verifies signature & nonce.
-    return { ok: true, wallet };
+    // Reject if wallet already linked to a different user.
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id")
+      .eq("wallet_address", wallet)
+      .maybeSingle();
+    if (existing?.user_id && existing.user_id !== context.userId) {
+      throw new Error("Wallet already linked to another account");
+    }
+
+    await supabaseAdmin
+      .from("siwe_nonces")
+      .update({ used_at: new Date().toISOString(), wallet_address: wallet })
+      .eq("nonce", nonce);
+
+    // Persist wallet link to the authenticated user's profile.
+    await supabaseAdmin
+      .from("profiles")
+      .upsert({ user_id: context.userId, wallet_address: wallet }, { onConflict: "user_id" });
+
+    return { ok: true, wallet, linked: true };
   });
+

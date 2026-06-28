@@ -113,6 +113,21 @@ export const verifyBasePayment = createServerFn({ method: "POST" })
 
     if (!isCompleted) return { ok: false, status: effective };
 
+    // SECURITY: testnet payments must never grant production credits.
+    if (data.testnet) {
+      console.warn(
+        "[base-pay] testnet payment completed — credits NOT granted",
+        JSON.stringify({ payment_id: data.paymentId, user_id: context.userId }),
+      );
+      await supabaseAdmin.from("security_alerts").insert({
+        kind: "base_pay_testnet_credit_attempt",
+        severity: "medium",
+        message: "Testnet payment completed; credits intentionally withheld",
+        metadata: { payment_id: data.paymentId, user_id: context.userId, plan: data.plan ?? null, addon: data.addon ?? null },
+      } as any);
+      return { ok: false, status: "testnet_not_credited" } as const;
+    }
+
     // Allocate credits
     if (data.plan && PLAN_CREDITS[data.plan]) {
       const { plan, credits } = PLAN_CREDITS[data.plan];

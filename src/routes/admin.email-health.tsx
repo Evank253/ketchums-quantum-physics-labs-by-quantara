@@ -40,7 +40,12 @@ function EmailHealthPage() {
     let cancelled = false;
     const load = async () => {
       try {
-        const r = await fetch("/lovable/email/health", { cache: "no-store" });
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        const r = await fetch("/lovable/email/health", {
+          cache: "no-store",
+          headers: token ? { authorization: `Bearer ${token}` } : {},
+        });
         const j = await r.json();
         if (!cancelled) setHealth(j);
       } catch (e: any) {

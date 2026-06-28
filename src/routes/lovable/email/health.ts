@@ -9,7 +9,48 @@ import { TEMPLATES } from '@/lib/email-templates/registry'
 export const Route = createFileRoute('/lovable/email/health')({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        // Auth gate: accept either the service-role key (apikey header) for
+        // server-to-server probes, or a Supabase admin JWT (Authorization).
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+        const sentApiKey = request.headers.get('apikey') ?? ''
+        let authorized = Boolean(serviceKey) && sentApiKey === serviceKey
+
+        if (!authorized) {
+          const authHeader = request.headers.get('authorization') ?? ''
+          if (authHeader.startsWith('Bearer ')) {
+            const token = authHeader.slice('Bearer '.length).trim()
+            const url = process.env.SUPABASE_URL
+            const anon = process.env.SUPABASE_PUBLISHABLE_KEY
+            if (token && url && anon) {
+              try {
+                const { createClient } = await import('@supabase/supabase-js')
+                const client = createClient(url, anon, {
+                  auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+                })
+                const { data, error } = await client.auth.getClaims(token)
+                const uid = data?.claims?.sub as string | undefined
+                if (!error && uid) {
+                  const { data: isAdmin } = await client.rpc('has_role', {
+                    _user_id: uid,
+                    _role: 'admin',
+                  })
+                  if (isAdmin) authorized = true
+                }
+              } catch {
+                authorized = false
+              }
+            }
+          }
+        }
+
+        if (!authorized) {
+          return new Response(JSON.stringify({ error: 'unauthorized' }), {
+            status: 401,
+            headers: { 'content-type': 'application/json' },
+          })
+        }
+
         const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
 
         const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()

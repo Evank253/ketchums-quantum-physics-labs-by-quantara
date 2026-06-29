@@ -536,6 +536,57 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_inventions: {
+        Row: {
+          breakdown: Json
+          category: string
+          civilization: string | null
+          created_at: string
+          emailed_at: string | null
+          id: string
+          legal: string | null
+          materials: Json
+          problem: string | null
+          report_md: string
+          safety: string | null
+          steps: Json
+          summary: string
+          title: string
+        }
+        Insert: {
+          breakdown?: Json
+          category: string
+          civilization?: string | null
+          created_at?: string
+          emailed_at?: string | null
+          id?: string
+          legal?: string | null
+          materials?: Json
+          problem?: string | null
+          report_md: string
+          safety?: string | null
+          steps?: Json
+          summary: string
+          title: string
+        }
+        Update: {
+          breakdown?: Json
+          category?: string
+          civilization?: string | null
+          created_at?: string
+          emailed_at?: string | null
+          id?: string
+          legal?: string | null
+          materials?: Json
+          problem?: string | null
+          report_md?: string
+          safety?: string | null
+          steps?: Json
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

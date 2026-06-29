@@ -13,20 +13,31 @@ export const Route = createFileRoute("/api/public/inventions/run")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env.INVENTIONS_CRON_SECRET ?? "";
-        if (!expected) {
-          return new Response(JSON.stringify({ error: "not_configured" }), {
-            status: 503,
-            headers: { "content-type": "application/json" },
-          });
-        }
         const auth = request.headers.get("authorization") ?? "";
         const sent =
           (auth.startsWith("Bearer ") ? auth.slice(7) : "") ||
           request.headers.get("x-cron-secret") ||
           "";
-        if (!sent || !timingSafeEqual(sent, expected)) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: tokenRow } = await (supabaseAdmin as any)
+          .from("system_settings")
+          .select("value")
+          .eq("key", "inventions_cron_token")
+          .maybeSingle();
+        const expectedDb = typeof tokenRow?.value === "string" ? tokenRow.value : "";
+        const expectedEnv = process.env.INVENTIONS_CRON_SECRET ?? "";
+        const ok =
+          (expectedDb && timingSafeEqual(sent, expectedDb)) ||
+          (expectedEnv && timingSafeEqual(sent, expectedEnv));
+        if (!ok) {
           console.warn("[inventions.run] unauthorized");
+          try {
+            await (supabaseAdmin as any).from("audit_log").insert({
+              table_name: "owner_inventions",
+              op: "UNAUTHORIZED",
+              new_data: { ip: request.headers.get("x-forwarded-for") ?? null },
+            });
+          } catch {}
           return new Response(JSON.stringify({ error: "unauthorized" }), {
             status: 401,
             headers: { "content-type": "application/json" },

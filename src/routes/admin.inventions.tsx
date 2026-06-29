@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { listOwnerInventions, discoverNow } from "@/lib/owner-inventions.functions";
+import {
+  listOwnerInventions,
+  discoverNow,
+  getRunSettings,
+  updateRunSettings,
+} from "@/lib/owner-inventions.functions";
 
 export const Route = createFileRoute("/admin/inventions")({
   ssr: false,

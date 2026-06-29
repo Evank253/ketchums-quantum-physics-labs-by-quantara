@@ -44,7 +44,6 @@ export const Route = createFileRoute("/api/public/inventions/run")({
           });
         }
         try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { discoverInvention } = await import("@/lib/owner-inventions.server");
           const out = await discoverInvention(supabaseAdmin as any, { trigger: "cron" });
           const status = out.ok ? 200 : out.reason === "error" ? 500 : 202;

@@ -129,6 +129,38 @@ function AdminInventionsPage() {
             {err}
           </div>
         )}
+
+        <section className="mt-6 rounded border border-white/10 bg-card/40 p-4">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-chrome">Run controls</div>
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={enabled}
+                onChange={toggleEnabled}
+                className="h-4 w-4 accent-current"
+              />
+              <span>Auto-discovery {enabled ? "ON" : "OFF"}</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <span>Min interval (s):</span>
+              <input
+                type="number"
+                min={60}
+                max={86400}
+                value={intervalSec}
+                onChange={(e) => setIntervalSec(Number(e.target.value) || 300)}
+                className="w-24 rounded border border-white/10 bg-black/40 px-2 py-1 text-sm"
+              />
+              <button
+                onClick={saveInterval}
+                className="rounded border border-white/20 px-2 py-1 text-xs hover:bg-white/10"
+              >
+                Save
+              </button>
+            </label>
+          </div>
+        </section>
         <div className="mt-8 space-y-3">
           {rows.length === 0 && (
             <div className="rounded border border-white/10 bg-card/40 p-6 text-sm text-muted-foreground">

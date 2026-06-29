@@ -49,6 +49,7 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiBenchmarkRouteImport } from './routes/api/benchmark'
 import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
+import { Route as AdminInventionsRouteImport } from './routes/admin.inventions'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin.email-health'
 import { Route as AdminCronRouteImport } from './routes/admin.cron'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
@@ -60,6 +61,7 @@ import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lova
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicInventionsRunRouteImport } from './routes/api/public/inventions/run'
 import { Route as ApiPublicHooksWizSyncRouteImport } from './routes/api/public/hooks/wiz-sync'
 import { Route as ApiPublicHooksDataCleanerRouteImport } from './routes/api/public/hooks/data-cleaner'
 import { Route as ApiPublicHealerRunRouteImport } from './routes/api/public/healer.run'
@@ -264,6 +266,11 @@ const AdminLogsRoute = AdminLogsRouteImport.update({
   path: '/admin/logs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminInventionsRoute = AdminInventionsRouteImport.update({
+  id: '/admin/inventions',
+  path: '/admin/inventions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
   id: '/admin/email-health',
   path: '/admin/email-health',
@@ -324,6 +331,11 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicInventionsRunRoute = ApiPublicInventionsRunRouteImport.update({
+  id: '/api/public/inventions/run',
+  path: '/api/public/inventions/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksWizSyncRoute = ApiPublicHooksWizSyncRouteImport.update({
   id: '/api/public/hooks/wiz-sync',
   path: '/api/public/hooks/wiz-sync',
@@ -369,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/world': typeof WorldRouteWithChildren
   '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
+  '/admin/inventions': typeof AdminInventionsRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -392,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/api/public/healer/run': typeof ApiPublicHealerRunRoute
   '/api/public/hooks/data-cleaner': typeof ApiPublicHooksDataCleanerRoute
   '/api/public/hooks/wiz-sync': typeof ApiPublicHooksWizSyncRoute
+  '/api/public/inventions/run': typeof ApiPublicInventionsRunRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -425,6 +439,7 @@ export interface FileRoutesByTo {
   '/world': typeof WorldRouteWithChildren
   '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
+  '/admin/inventions': typeof AdminInventionsRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -448,6 +463,7 @@ export interface FileRoutesByTo {
   '/api/public/healer/run': typeof ApiPublicHealerRunRoute
   '/api/public/hooks/data-cleaner': typeof ApiPublicHooksDataCleanerRoute
   '/api/public/hooks/wiz-sync': typeof ApiPublicHooksWizSyncRoute
+  '/api/public/inventions/run': typeof ApiPublicInventionsRunRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -482,6 +498,7 @@ export interface FileRoutesById {
   '/world': typeof WorldRouteWithChildren
   '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
+  '/admin/inventions': typeof AdminInventionsRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/security': typeof AdminSecurityRouteWithChildren
   '/api/benchmark': typeof ApiBenchmarkRoute
@@ -505,6 +522,7 @@ export interface FileRoutesById {
   '/api/public/healer/run': typeof ApiPublicHealerRunRoute
   '/api/public/hooks/data-cleaner': typeof ApiPublicHooksDataCleanerRoute
   '/api/public/hooks/wiz-sync': typeof ApiPublicHooksWizSyncRoute
+  '/api/public/inventions/run': typeof ApiPublicInventionsRunRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -540,6 +558,7 @@ export interface FileRouteTypes {
     | '/world'
     | '/admin/cron'
     | '/admin/email-health'
+    | '/admin/inventions'
     | '/admin/logs'
     | '/admin/security'
     | '/api/benchmark'
@@ -563,6 +582,7 @@ export interface FileRouteTypes {
     | '/api/public/healer/run'
     | '/api/public/hooks/data-cleaner'
     | '/api/public/hooks/wiz-sync'
+    | '/api/public/inventions/run'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -596,6 +616,7 @@ export interface FileRouteTypes {
     | '/world'
     | '/admin/cron'
     | '/admin/email-health'
+    | '/admin/inventions'
     | '/admin/logs'
     | '/admin/security'
     | '/api/benchmark'
@@ -619,6 +640,7 @@ export interface FileRouteTypes {
     | '/api/public/healer/run'
     | '/api/public/hooks/data-cleaner'
     | '/api/public/hooks/wiz-sync'
+    | '/api/public/inventions/run'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -652,6 +674,7 @@ export interface FileRouteTypes {
     | '/world'
     | '/admin/cron'
     | '/admin/email-health'
+    | '/admin/inventions'
     | '/admin/logs'
     | '/admin/security'
     | '/api/benchmark'
@@ -675,6 +698,7 @@ export interface FileRouteTypes {
     | '/api/public/healer/run'
     | '/api/public/hooks/data-cleaner'
     | '/api/public/hooks/wiz-sync'
+    | '/api/public/inventions/run'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -709,6 +733,7 @@ export interface RootRouteChildren {
   WorldRoute: typeof WorldRouteWithChildren
   AdminCronRoute: typeof AdminCronRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
+  AdminInventionsRoute: typeof AdminInventionsRoute
   AdminLogsRoute: typeof AdminLogsRoute
   AdminSecurityRoute: typeof AdminSecurityRouteWithChildren
   ApiBenchmarkRoute: typeof ApiBenchmarkRoute
@@ -723,6 +748,7 @@ export interface RootRouteChildren {
   ApiPublicHealerRunRoute: typeof ApiPublicHealerRunRoute
   ApiPublicHooksDataCleanerRoute: typeof ApiPublicHooksDataCleanerRoute
   ApiPublicHooksWizSyncRoute: typeof ApiPublicHooksWizSyncRoute
+  ApiPublicInventionsRunRoute: typeof ApiPublicInventionsRunRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -1011,6 +1037,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLogsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/inventions': {
+      id: '/admin/inventions'
+      path: '/admin/inventions'
+      fullPath: '/admin/inventions'
+      preLoaderRoute: typeof AdminInventionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/email-health': {
       id: '/admin/email-health'
       path: '/admin/email-health'
@@ -1086,6 +1119,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/payments/webhook'
       fullPath: '/api/public/payments/webhook'
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/inventions/run': {
+      id: '/api/public/inventions/run'
+      path: '/api/public/inventions/run'
+      fullPath: '/api/public/inventions/run'
+      preLoaderRoute: typeof ApiPublicInventionsRunRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/wiz-sync': {
@@ -1184,6 +1224,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorldRoute: WorldRouteWithChildren,
   AdminCronRoute: AdminCronRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
+  AdminInventionsRoute: AdminInventionsRoute,
   AdminLogsRoute: AdminLogsRoute,
   AdminSecurityRoute: AdminSecurityRouteWithChildren,
   ApiBenchmarkRoute: ApiBenchmarkRoute,
@@ -1198,6 +1239,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHealerRunRoute: ApiPublicHealerRunRoute,
   ApiPublicHooksDataCleanerRoute: ApiPublicHooksDataCleanerRoute,
   ApiPublicHooksWizSyncRoute: ApiPublicHooksWizSyncRoute,
+  ApiPublicInventionsRunRoute: ApiPublicInventionsRunRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,

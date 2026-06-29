@@ -41,12 +41,23 @@ function AdminInventionsPage() {
 
   const callList = useServerFn(listOwnerInventions);
   const callDiscover = useServerFn(discoverNow);
+  const callGetSettings = useServerFn(getRunSettings);
+  const callUpdateSettings = useServerFn(updateRunSettings);
+
+  const [enabled, setEnabled] = useState(true);
+  const [intervalSec, setIntervalSec] = useState(300);
 
   const reload = useCallback(() => {
     callList({} as any)
       .then((r: any) => setRows(r.rows ?? []))
       .catch((e) => setErr(e?.message ?? String(e)));
-  }, [callList]);
+    callGetSettings({} as any)
+      .then((s: any) => {
+        setEnabled(s.enabled);
+        setIntervalSec(s.interval_seconds);
+      })
+      .catch(() => {});
+  }, [callList, callGetSettings]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {

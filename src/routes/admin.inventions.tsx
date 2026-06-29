@@ -83,6 +83,25 @@ function AdminInventionsPage() {
     }
   };
 
+  const toggleEnabled = async () => {
+    const next = !enabled;
+    setEnabled(next);
+    try {
+      await callUpdateSettings({ data: { enabled: next } } as any);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+      setEnabled(!next);
+    }
+  };
+
+  const saveInterval = async () => {
+    try {
+      await callUpdateSettings({ data: { interval_seconds: intervalSec } } as any);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    }
+  };
+
   if (!authed) return null;
 
   return (

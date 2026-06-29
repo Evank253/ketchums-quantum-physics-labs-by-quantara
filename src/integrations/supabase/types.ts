@@ -458,6 +458,36 @@ export type Database = {
         }
         Relationships: []
       }
+      inbox_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+          subject: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+          subject?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
       institution_api_keys: {
         Row: {
           created_at: string
@@ -544,10 +574,12 @@ export type Database = {
           created_at: string
           emailed_at: string | null
           id: string
+          last_run_at: string | null
           legal: string | null
           materials: Json
           problem: string | null
           report_md: string
+          report_md_enc: string | null
           safety: string | null
           steps: Json
           summary: string
@@ -560,10 +592,12 @@ export type Database = {
           created_at?: string
           emailed_at?: string | null
           id?: string
+          last_run_at?: string | null
           legal?: string | null
           materials?: Json
           problem?: string | null
           report_md: string
+          report_md_enc?: string | null
           safety?: string | null
           steps?: Json
           summary: string
@@ -576,10 +610,12 @@ export type Database = {
           created_at?: string
           emailed_at?: string | null
           id?: string
+          last_run_at?: string | null
           legal?: string | null
           materials?: Json
           problem?: string | null
           report_md?: string
+          report_md_enc?: string | null
           safety?: string | null
           steps?: Json
           summary?: string
@@ -972,6 +1008,27 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       usage_counters: {
         Row: {
           id: string
@@ -1077,6 +1134,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      invention_decrypt: {
+        Args: { _cipher: string; _key: string }
+        Returns: string
+      }
+      invention_encrypt: {
+        Args: { _key: string; _plaintext: string }
+        Returns: string
       }
       is_quarantined: { Args: { _key: string }; Returns: boolean }
       move_to_dlq: {

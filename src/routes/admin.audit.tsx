@@ -50,9 +50,10 @@ function AdminAuditPage() {
   useEffect(() => {
     if (authed === false) navigate({ to: "/auth" });
     if (!authed) return;
-    callRoles({ data: {} })
+    callRoles()
       .then((r) => setIsAdmin((r.roles ?? []).includes("admin")))
       .catch(() => setIsAdmin(false));
+
   }, [authed, callRoles, navigate]);
 
   const reload = useCallback(() => {

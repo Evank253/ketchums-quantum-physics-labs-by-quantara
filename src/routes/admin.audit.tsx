@@ -187,8 +187,9 @@ function AdminAuditPage() {
             {entries.length === 0 ? (
               <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">No entries.</td></tr>
             ) : entries.map((e) => (
-              <tbody key={e.id} className="contents">
+              <Fragment key={e.id}>
                 <tr className="border-t border-border/60">
+
 
                   <td className="px-3 py-2 font-mono text-[10px]">
                     {new Date(e.created_at).toLocaleString()}

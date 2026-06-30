@@ -53,6 +53,7 @@ import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as AdminInventionsRouteImport } from './routes/admin.inventions'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin.email-health'
 import { Route as AdminCronRouteImport } from './routes/admin.cron'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LovableEmailHealthRouteImport } from './routes/lovable/email/health'
 import { Route as ApiPublicWebhookRouteImport } from './routes/api/public/webhook'
@@ -287,6 +288,11 @@ const AdminCronRoute = AdminCronRouteImport.update({
   path: '/admin/cron',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/admin/audit',
+  path: '/admin/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -386,6 +392,7 @@ export interface FileRoutesByFullPath {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/inventions': typeof AdminInventionsRoute
@@ -445,6 +452,7 @@ export interface FileRoutesByTo {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/inventions': typeof AdminInventionsRoute
@@ -505,6 +513,7 @@ export interface FileRoutesById {
   '/synthesis': typeof SynthesisRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/world': typeof WorldRouteWithChildren
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/cron': typeof AdminCronRoute
   '/admin/email-health': typeof AdminEmailHealthRoute
   '/admin/inventions': typeof AdminInventionsRoute
@@ -566,6 +575,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/audit'
     | '/admin/cron'
     | '/admin/email-health'
     | '/admin/inventions'
@@ -625,6 +635,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/audit'
     | '/admin/cron'
     | '/admin/email-health'
     | '/admin/inventions'
@@ -684,6 +695,7 @@ export interface FileRouteTypes {
     | '/synthesis'
     | '/unsubscribe'
     | '/world'
+    | '/admin/audit'
     | '/admin/cron'
     | '/admin/email-health'
     | '/admin/inventions'
@@ -744,6 +756,7 @@ export interface RootRouteChildren {
   SynthesisRoute: typeof SynthesisRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   WorldRoute: typeof WorldRouteWithChildren
+  AdminAuditRoute: typeof AdminAuditRoute
   AdminCronRoute: typeof AdminCronRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
   AdminInventionsRoute: typeof AdminInventionsRoute
@@ -1078,6 +1091,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCronRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/admin/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -1243,6 +1263,7 @@ const rootRouteChildren: RootRouteChildren = {
   SynthesisRoute: SynthesisRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   WorldRoute: WorldRouteWithChildren,
+  AdminAuditRoute: AdminAuditRoute,
   AdminCronRoute: AdminCronRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
   AdminInventionsRoute: AdminInventionsRoute,

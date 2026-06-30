@@ -233,7 +233,7 @@ function AdminAuditPage() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

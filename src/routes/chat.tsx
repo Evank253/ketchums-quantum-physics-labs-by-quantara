@@ -4,8 +4,11 @@
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { sendChatMessage } from "@/lib/chat.functions";
 import { pushLoad, popLoad } from "@/lib/thermal-governor";
+
 
 export const Route = createFileRoute("/chat")({
   ssr: false,
@@ -95,6 +98,8 @@ function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
 
+  const sendFn = useServerFn(sendChatMessage);
+
   const send = useCallback(async () => {
     setErr(null);
     if (!user) { setErr("Sign in to post."); return; }
@@ -107,15 +112,18 @@ function ChatPage() {
     }
     lastSentRef.current = now;
     setSending(true);
-    const displayName = (user.email?.split("@")[0] ?? "anon").slice(0, 32);
-    const { error } = await supabase.from("chat_messages").insert({
-      user_id: user.id,
-      display_name: displayName,
-      body,
-    });
-    setSending(false);
-    if (error) setErr(error.message); else setText("");
-  }, [text, user]);
+    try {
+      // Server function sets display_name authoritatively from the
+      // authenticated session — caller cannot impersonate other users.
+      await sendFn({ data: { body } });
+      setText("");
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    } finally {
+      setSending(false);
+    }
+  }, [text, user, sendFn]);
+
 
   return (
     <main className="mx-auto flex h-[calc(100vh-4rem)] max-w-3xl flex-col gap-3 p-4">

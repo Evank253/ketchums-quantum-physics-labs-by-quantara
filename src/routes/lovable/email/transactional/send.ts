@@ -101,19 +101,31 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           )
         }
 
-        // Resolve effective recipient: template-level `to` takes precedence over
-        // the caller-provided recipientEmail. This allows notification templates
-        // to always send to a fixed address (e.g., site owner from env var).
-        const effectiveRecipient = template.to || recipientEmail
+        // Resolve effective recipient: template-level `to` takes precedence;
+        // otherwise we force the authenticated user's own email address.
+        // We do NOT trust caller-supplied recipientEmail — that would let any
+        // signed-in user send mail to arbitrary addresses (spam/abuse vector).
+        const authedEmail = user.email ?? null;
+        const effectiveRecipient = template.to || authedEmail
 
         if (!effectiveRecipient) {
           return Response.json(
             {
-              error: 'recipientEmail is required (unless the template defines a fixed recipient)',
+              error: 'recipientEmail cannot be set by the caller; template must define a fixed recipient or the authenticated user must have an email on file',
             },
             { status: 400 }
           )
         }
+
+        // If the caller supplied a recipient that doesn't match their own
+        // address and the template has no fixed `to`, reject explicitly.
+        if (!template.to && recipientEmail && recipientEmail.toLowerCase() !== (authedEmail ?? '').toLowerCase()) {
+          return Response.json(
+            { error: 'You can only send to your own email address for this template' },
+            { status: 403 }
+          )
+        }
+
 
         // 2. Check suppression list (fail-closed: if we can't verify, don't send)
         const { data: suppressed, error: suppressionError } = await supabase

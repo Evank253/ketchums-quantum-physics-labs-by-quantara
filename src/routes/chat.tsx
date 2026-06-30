@@ -4,8 +4,11 @@
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { sendChatMessage } from "@/lib/chat.functions";
 import { pushLoad, popLoad } from "@/lib/thermal-governor";
+
 
 export const Route = createFileRoute("/chat")({
   ssr: false,

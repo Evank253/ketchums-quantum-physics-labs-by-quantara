@@ -51,15 +51,29 @@ export const claimDat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ClaimInput.parse(d))
   .handler(async ({ data, context }) => {
-    void context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const mint = await import("./dat-mint.server");
 
     const wallet = mint.normalizeAddress(data.wallet);
     if (!wallet) throw new Error("Invalid wallet address");
 
+    // Authz: caller must own the wallet they're claiming to. Look up their
+    // linked wallet from profiles and verify it matches the submitted wallet.
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_address")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    const linked = profile?.wallet_address
+      ? mint.normalizeAddress(profile.wallet_address)
+      : null;
+    if (!linked || linked !== wallet) {
+      throw new Error("Wallet is not linked to your account. Link it first to claim.");
+    }
+
     const preset = CLAIM_PRESETS[data.preset];
     const reasonKey = "key" in preset ? preset.key : null;
+
 
     let ip: string | null = null;
     try {

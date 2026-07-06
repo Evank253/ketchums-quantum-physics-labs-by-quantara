@@ -91,11 +91,31 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           if (body.templateData && typeof body.templateData === 'object') {
             templateData = body.templateData
           }
-        } catch {
+        let parsed: z.infer<typeof SendBody>
+        try {
+          const raw = await request.json()
+          parsed = SendBody.parse(raw)
+        } catch (e: any) {
           return Response.json(
-            { error: 'Invalid JSON in request body' },
+            { error: 'Invalid request body', detail: e?.message ?? String(e) },
             { status: 400 }
           )
+        }
+
+        templateName = (parsed.templateName || parsed.template_name || '') as string
+        recipientEmail = (parsed.recipientEmail || parsed.recipient_email || '') as string
+        messageId = crypto.randomUUID()
+        idempotencyKey = (parsed.idempotencyKey || parsed.idempotency_key || messageId) as string
+        if (parsed.templateData && typeof parsed.templateData === 'object') {
+          templateData = parsed.templateData as Record<string, any>
+        }
+        // Bound templateData size to keep the queue payload small.
+        try {
+          if (JSON.stringify(templateData).length > 8000) {
+            return Response.json({ error: 'templateData too large' }, { status: 413 })
+          }
+        } catch {
+          return Response.json({ error: 'templateData not serializable' }, { status: 400 })
         }
 
         if (!templateName) {
@@ -105,18 +125,21 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           )
         }
 
-        // 1. Look up template from registry (early — needed to resolve recipient)
-        const template = TEMPLATES[templateName]
-
-        if (!template) {
-          console.error('Template not found in registry', { templateName })
+        // Per-user rate limit (defense-in-depth against enumeration/abuse).
+        const rateSince = new Date(Date.now() - RATE_WINDOW_MS).toISOString()
+        const { count: recentCount } = await supabase
+          .from('email_send_log')
+          .select('id', { count: 'exact', head: true })
+          .eq('recipient_email', (user.email ?? '').toLowerCase())
+          .gte('created_at', rateSince)
+        if ((recentCount ?? 0) >= RATE_MAX_PER_WINDOW) {
           return Response.json(
-            {
-              error: `Template '${templateName}' not found. Available: ${Object.keys(TEMPLATES).join(', ')}`,
-            },
-            { status: 404 }
+            { error: 'Rate limit exceeded — try again shortly' },
+            { status: 429, headers: { 'Retry-After': '60' } }
           )
         }
+
+
 
         // Resolve effective recipient: template-level `to` takes precedence;
         // otherwise we force the authenticated user's own email address.

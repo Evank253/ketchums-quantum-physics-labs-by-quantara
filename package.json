@@ -51,7 +51,7 @@
     "@react-three/fiber": "^9.6.1",
     "@react-three/postprocessing": "^3.0.4",
     "@stripe/react-stripe-js": "6.2.0",
-    "@stripe/stripe-js": "9.2.0",
+    "@stripe/stripe-js": "9.9.0",
     "@supabase/supabase-js": "^2.108.1",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/history": "^1.162.0",

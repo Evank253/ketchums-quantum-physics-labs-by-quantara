@@ -2,7 +2,24 @@ import * as React from 'react'
 import { render as renderAsync } from '@react-email/components'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
+import { z } from 'zod'
 import { TEMPLATES } from '@/lib/email-templates/registry'
+
+// Per-user throttle: at most N transactional sends in the last window.
+// Counts distinct message_ids in email_send_log to keep the check cheap.
+const RATE_WINDOW_MS = 60_000
+const RATE_MAX_PER_WINDOW = 10
+
+const SendBody = z.object({
+  templateName: z.string().trim().min(1).max(128).optional(),
+  template_name: z.string().trim().min(1).max(128).optional(),
+  recipientEmail: z.string().trim().email().max(254).optional(),
+  recipient_email: z.string().trim().email().max(254).optional(),
+  idempotencyKey: z.string().trim().min(1).max(128).optional(),
+  idempotency_key: z.string().trim().min(1).max(128).optional(),
+  templateData: z.record(z.any()).optional(),
+}).passthrough()
+
 
 // Configuration baked in at scaffold time
 const SITE_NAME = "ketchums-quantum-physics-labs-by-quantara"
@@ -59,47 +76,69 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Parse request body
+        // Parse & validate request body with Zod
         let templateName: string
         let recipientEmail: string
         let idempotencyKey: string
         let messageId: string
         let templateData: Record<string, any> = {}
+
+        let parsed: z.infer<typeof SendBody>
         try {
-          const body = await request.json()
-          templateName = body.templateName || body.template_name
-          recipientEmail = body.recipientEmail || body.recipient_email
-          messageId = crypto.randomUUID()
-          idempotencyKey = body.idempotencyKey || body.idempotency_key || messageId
-          if (body.templateData && typeof body.templateData === 'object') {
-            templateData = body.templateData
-          }
-        } catch {
+          const raw = await request.json()
+          parsed = SendBody.parse(raw)
+        } catch (e: any) {
           return Response.json(
-            { error: 'Invalid JSON in request body' },
+            { error: 'Invalid request body', detail: e?.message ?? String(e) },
             { status: 400 }
           )
+        }
+
+        templateName = (parsed.templateName || parsed.template_name || '') as string
+        recipientEmail = (parsed.recipientEmail || parsed.recipient_email || '') as string
+        messageId = crypto.randomUUID()
+        idempotencyKey = (parsed.idempotencyKey || parsed.idempotency_key || messageId) as string
+        if (parsed.templateData && typeof parsed.templateData === 'object') {
+          templateData = parsed.templateData as Record<string, any>
+        }
+        try {
+          if (JSON.stringify(templateData).length > 8000) {
+            return Response.json({ error: 'templateData too large' }, { status: 413 })
+          }
+        } catch {
+          return Response.json({ error: 'templateData not serializable' }, { status: 400 })
         }
 
         if (!templateName) {
+          return Response.json({ error: 'templateName is required' }, { status: 400 })
+        }
+
+        // Per-user rate limit (defense-in-depth against enumeration/abuse).
+        const rateSince = new Date(Date.now() - RATE_WINDOW_MS).toISOString()
+        const { count: recentCount } = await supabase
+          .from('email_send_log')
+          .select('id', { count: 'exact', head: true })
+          .eq('recipient_email', (user.email ?? '').toLowerCase())
+          .gte('created_at', rateSince)
+        if ((recentCount ?? 0) >= RATE_MAX_PER_WINDOW) {
           return Response.json(
-            { error: 'templateName is required' },
-            { status: 400 }
+            { error: 'Rate limit exceeded — try again shortly' },
+            { status: 429, headers: { 'Retry-After': '60' } }
           )
         }
 
-        // 1. Look up template from registry (early — needed to resolve recipient)
+        // Look up template from registry (early — needed to resolve recipient)
         const template = TEMPLATES[templateName]
-
         if (!template) {
           console.error('Template not found in registry', { templateName })
           return Response.json(
-            {
-              error: `Template '${templateName}' not found. Available: ${Object.keys(TEMPLATES).join(', ')}`,
-            },
+            { error: `Template '${templateName}' not found. Available: ${Object.keys(TEMPLATES).join(', ')}` },
             { status: 404 }
           )
         }
+
+
+
 
         // Resolve effective recipient: template-level `to` takes precedence;
         // otherwise we force the authenticated user's own email address.

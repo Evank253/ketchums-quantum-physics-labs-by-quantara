@@ -64,3 +64,64 @@ describe.skipIf(!URL || !KEY)("RLS — chat_messages cannot be inserted by anon 
     expect(error).not.toBeNull();
   });
 });
+
+describe.skipIf(!URL || !KEY)("RLS — recent hardening (dispatch/achievements/dat_claims)", () => {
+  const anon = createClient(URL!, KEY!, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+
+  it("anon INSERT on notification_dispatch is rejected (server-side only)", async () => {
+    const { error } = await anon.from("notification_dispatch").insert({
+      theory: "spam",
+      solver: "attacker",
+      recipient: "Victim",
+      recipient_kind: "institution",
+      email: "victim@example.com",
+      subject: "spam",
+      body: "spam",
+    } as any);
+    expect(error).not.toBeNull();
+  });
+
+  it("anon INSERT on public_achievements is rejected (server-side only)", async () => {
+    const { error } = await anon.from("public_achievements").insert({
+      achievement_id: "hacked_1",
+      title: "Fake",
+      tier: "mythic",
+      reward: 1_000_000,
+    } as any);
+    expect(error).not.toBeNull();
+  });
+
+  it("anon cannot read dat_claims by wallet (auth-only policy)", async () => {
+    const { data, error } = await anon
+      .from("dat_claims")
+      .select("*")
+      .eq("wallet", "0x0000000000000000000000000000000000000000")
+      .limit(1);
+    if (error) {
+      expect(error.message.toLowerCase()).toMatch(/permission|rls|not authorized|denied|policy/);
+    } else {
+      expect(data ?? []).toEqual([]);
+    }
+  });
+});
+
+describe.skipIf(!URL || !KEY)("RLS — admin-only SECURITY DEFINER functions are not callable by anon", () => {
+  const anon = createClient(URL!, KEY!, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+
+  for (const fn of [
+    "admin_list_cron_jobs",
+    "admin_list_cron_runs",
+    "invention_encrypt",
+    "promote_user_role",
+  ]) {
+    it(`anon RPC ${fn} is rejected`, async () => {
+      const { error } = await anon.rpc(fn as any, {} as any);
+      expect(error).not.toBeNull();
+    });
+  }
+});
+

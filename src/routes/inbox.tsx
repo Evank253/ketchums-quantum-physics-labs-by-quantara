@@ -56,7 +56,13 @@ function InboxPage() {
       }
       reload();
     });
+    // Poll every 20s for new messages (cheap; RLS-scoped)
+    const t = setInterval(reload, 20_000);
+    return () => clearInterval(t);
   }, [navigate, reload]);
+
+  const unreadCount = rows.filter((r) => r.recipient_id === me && !r.read_at).length;
+
 
   const send = async () => {
     setBusy(true);
@@ -87,10 +93,18 @@ function InboxPage() {
     <main className="min-h-screen bg-[oklch(0.06_0.01_280)] px-6 py-12 text-white">
       <div className="mx-auto max-w-3xl">
         <h1 className="text-2xl font-black md:text-4xl">Inbox</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Direct messages between Quantara users. RLS-scoped — only you and the
-          recipient can read.
-        </p>
+        <div className="mt-2 flex items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            Direct messages between Quantara users. RLS-scoped — only you and the
+            recipient can read.
+          </p>
+          {unreadCount > 0 && (
+            <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-semibold text-accent">
+              {unreadCount} unread
+            </span>
+          )}
+        </div>
+
 
         <section className="mt-6 rounded border border-white/10 bg-card/40 p-4">
           <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">

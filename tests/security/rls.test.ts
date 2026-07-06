@@ -125,3 +125,65 @@ describe.skipIf(!URL || !KEY)("RLS — admin-only SECURITY DEFINER functions are
   }
 });
 
+describe.skipIf(!URL || !KEY)("RLS — additional deny matrix (write paths on sensitive tables)", () => {
+  const anon = createClient(URL!, KEY!, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+
+  const WRITE_DENY = [
+    "audit_log",
+    "admin_logs",
+    "email_send_log",
+    "email_send_state",
+    "suppressed_emails",
+    "email_unsubscribe_tokens",
+    "owner_inventions",
+    "system_quarantine",
+    "security_findings",
+    "dat_mint_audit",
+    "inbox_messages",
+    "subscriptions",
+    "user_roles",
+    "run_cards",
+    "solved_theories",
+    "institution_api_keys",
+  ] as const;
+
+  for (const t of WRITE_DENY) {
+    it(`anon INSERT on ${t} is rejected`, async () => {
+      const { error } = await anon.from(t as any).insert({} as any);
+      expect(error).not.toBeNull();
+    });
+    it(`anon UPDATE on ${t} affects 0 rows`, async () => {
+      const { data, error } = await anon.from(t as any).update({ __x: 1 } as any).eq("id", "00000000-0000-0000-0000-000000000000").select();
+      // Either policy rejects, or update matched nothing
+      if (!error) expect(data ?? []).toEqual([]);
+    });
+    it(`anon DELETE on ${t} affects 0 rows`, async () => {
+      const { data, error } = await anon.from(t as any).delete().eq("id", "00000000-0000-0000-0000-000000000000").select();
+      if (!error) expect(data ?? []).toEqual([]);
+    });
+  }
+});
+
+describe.skipIf(!URL || !KEY)("RLS — user_roles cannot be self-granted by anon", () => {
+  const anon = createClient(URL!, KEY!, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+  it("anon cannot insert into user_roles", async () => {
+    const { error } = await anon.from("user_roles").insert({
+      user_id: "00000000-0000-0000-0000-000000000000",
+      role: "admin",
+    } as any);
+    expect(error).not.toBeNull();
+  });
+  it("anon cannot read user_roles", async () => {
+    const { data, error } = await anon.from("user_roles").select("*").limit(1);
+    if (error) {
+      expect(error.message.toLowerCase()).toMatch(/permission|rls|policy/);
+    } else {
+      expect(data ?? []).toEqual([]);
+    }
+  });
+});
+

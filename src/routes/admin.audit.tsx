@@ -3,7 +3,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRoles } from "@/lib/compute/roles.functions";
-import { listAuditLog } from "@/lib/audit-log.functions";
+import { listAuditLog, exportAuditLog } from "@/lib/audit-log.functions";
 
 export const Route = createFileRoute("/admin/audit")({
   ssr: false,

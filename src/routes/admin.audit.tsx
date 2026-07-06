@@ -31,6 +31,7 @@ function AdminAuditPage() {
   const navigate = useNavigate();
   const callRoles = useServerFn(getMyRoles);
   const callList = useServerFn(listAuditLog);
+  const callExport = useServerFn(exportAuditLog);
 
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);

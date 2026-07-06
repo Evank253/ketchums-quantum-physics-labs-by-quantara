@@ -3,7 +3,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRoles } from "@/lib/compute/roles.functions";
-import { listAuditLog } from "@/lib/audit-log.functions";
+import { listAuditLog, exportAuditLog } from "@/lib/audit-log.functions";
 
 export const Route = createFileRoute("/admin/audit")({
   ssr: false,
@@ -31,6 +31,7 @@ function AdminAuditPage() {
   const navigate = useNavigate();
   const callRoles = useServerFn(getMyRoles);
   const callList = useServerFn(listAuditLog);
+  const callExport = useServerFn(exportAuditLog);
 
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -156,6 +157,32 @@ function AdminAuditPage() {
             className="rounded bg-primary px-3 py-1 font-medium text-primary-foreground disabled:opacity-50"
           >
             {busy ? "Loading…" : "Refresh"}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              try {
+                setBusy(true);
+                const r = await callExport({ data: { limit: 5000, table: table || undefined, op: op || undefined } });
+                const blob = new Blob([r.csv], { type: "text/csv;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `audit-log-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+              } catch (e) {
+                setErr((e as Error)?.message ?? String(e));
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="rounded border border-border px-3 py-1 font-medium disabled:opacity-50"
+          >
+            Export CSV
           </button>
           <div className="ml-auto flex gap-2 font-mono text-[10px]">
             <span className="rounded bg-green-500/15 px-2 py-1 text-green-300">INSERT {counts.INSERT}</span>

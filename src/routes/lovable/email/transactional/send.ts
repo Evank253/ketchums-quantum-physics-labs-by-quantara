@@ -76,21 +76,13 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Parse request body
+        // Parse & validate request body with Zod
         let templateName: string
         let recipientEmail: string
         let idempotencyKey: string
         let messageId: string
         let templateData: Record<string, any> = {}
-        try {
-          const body = await request.json()
-          templateName = body.templateName || body.template_name
-          recipientEmail = body.recipientEmail || body.recipient_email
-          messageId = crypto.randomUUID()
-          idempotencyKey = body.idempotencyKey || body.idempotency_key || messageId
-          if (body.templateData && typeof body.templateData === 'object') {
-            templateData = body.templateData
-          }
+
         let parsed: z.infer<typeof SendBody>
         try {
           const raw = await request.json()
@@ -109,7 +101,6 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
         if (parsed.templateData && typeof parsed.templateData === 'object') {
           templateData = parsed.templateData as Record<string, any>
         }
-        // Bound templateData size to keep the queue payload small.
         try {
           if (JSON.stringify(templateData).length > 8000) {
             return Response.json({ error: 'templateData too large' }, { status: 413 })
@@ -119,10 +110,7 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
         }
 
         if (!templateName) {
-          return Response.json(
-            { error: 'templateName is required' },
-            { status: 400 }
-          )
+          return Response.json({ error: 'templateName is required' }, { status: 400 })
         }
 
         // Per-user rate limit (defense-in-depth against enumeration/abuse).
@@ -138,6 +126,17 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
             { status: 429, headers: { 'Retry-After': '60' } }
           )
         }
+
+        // Look up template from registry (early — needed to resolve recipient)
+        const template = TEMPLATES[templateName]
+        if (!template) {
+          console.error('Template not found in registry', { templateName })
+          return Response.json(
+            { error: `Template '${templateName}' not found. Available: ${Object.keys(TEMPLATES).join(', ')}` },
+            { status: 404 }
+          )
+        }
+
 
 
 

@@ -56,7 +56,13 @@ function InboxPage() {
       }
       reload();
     });
+    // Poll every 20s for new messages (cheap; RLS-scoped)
+    const t = setInterval(reload, 20_000);
+    return () => clearInterval(t);
   }, [navigate, reload]);
+
+  const unreadCount = rows.filter((r) => r.recipient_id === me && !r.read_at).length;
+
 
   const send = async () => {
     setBusy(true);

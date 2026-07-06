@@ -2,7 +2,24 @@ import * as React from 'react'
 import { render as renderAsync } from '@react-email/components'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
+import { z } from 'zod'
 import { TEMPLATES } from '@/lib/email-templates/registry'
+
+// Per-user throttle: at most N transactional sends in the last window.
+// Counts distinct message_ids in email_send_log to keep the check cheap.
+const RATE_WINDOW_MS = 60_000
+const RATE_MAX_PER_WINDOW = 10
+
+const SendBody = z.object({
+  templateName: z.string().trim().min(1).max(128).optional(),
+  template_name: z.string().trim().min(1).max(128).optional(),
+  recipientEmail: z.string().trim().email().max(254).optional(),
+  recipient_email: z.string().trim().email().max(254).optional(),
+  idempotencyKey: z.string().trim().min(1).max(128).optional(),
+  idempotency_key: z.string().trim().min(1).max(128).optional(),
+  templateData: z.record(z.any()).optional(),
+}).passthrough()
+
 
 // Configuration baked in at scaffold time
 const SITE_NAME = "ketchums-quantum-physics-labs-by-quantara"

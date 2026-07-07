@@ -22,20 +22,25 @@ const ADDON_CREDITS: Record<string, { amount: number; credits: number }> = {
   physics_dataset_pack_once: { amount: 499, credits: 0 },
 };
 
-async function fetchBasePaymentStatus(paymentId: string, testnet: boolean): Promise<{ status: string; amount?: string; tx_hash?: string }> {
+async function fetchBasePaymentStatus(paymentId: string, testnet: boolean): Promise<{ status: string; amount?: string; tx_hash?: string; payer_address?: string }> {
   // Base Pay status API — keeping it tolerant of various response shapes
   const base = testnet ? "https://api.developer.coinbase.com/onramp/v1" : "https://api.developer.coinbase.com/onramp/v1";
-  // NOTE: the public window.base.getPaymentStatus uses an internal endpoint that does not require auth for status lookup
-  // by paymentId. Fall back to "completed" trust when we can't reach the API (client already attested).
   try {
     const r = await fetch(`${base}/transactions/${encodeURIComponent(paymentId)}`, { method: "GET" });
     if (!r.ok) return { status: "unknown" };
     const json: any = await r.json();
-    return { status: json.status ?? "unknown", amount: json.amount, tx_hash: json.tx_hash ?? json.transaction_hash };
+    const payer = json.payer_address ?? json.from ?? json.sender ?? json.wallet_address ?? json.source_address;
+    return {
+      status: json.status ?? "unknown",
+      amount: json.amount,
+      tx_hash: json.tx_hash ?? json.transaction_hash,
+      payer_address: typeof payer === "string" ? payer.toLowerCase() : undefined,
+    };
   } catch {
     return { status: "unknown" };
   }
 }
+
 
 export const verifyBasePayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

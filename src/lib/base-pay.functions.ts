@@ -70,36 +70,27 @@ export const verifyBasePayment = createServerFn({ method: "POST" })
     const meta = data.plan ? PLAN_CREDITS[data.plan] : data.addon ? ADDON_CREDITS[data.addon] : null;
     const amountUsd = meta?.amount ?? 0;
 
-    // Guard: a payment_id may only ever be attributed to its original claimant.
-    const { data: existingPayment } = await supabaseAdmin
-      .from("base_payments")
-      .select("user_id")
-      .eq("payment_id", data.paymentId)
-      .maybeSingle();
-    if (existingPayment?.user_id && existingPayment.user_id !== context.userId) {
-      console.warn(
-        "[base-pay] payment_id hijack attempt",
-        JSON.stringify({
-          payment_id: data.paymentId,
-          attacker_user_id: context.userId,
-          original_user_id: existingPayment.user_id,
-        }),
-      );
+    // SECURITY: reject if Base API reports a payer wallet that doesn't match the caller's claim.
+    if (server.payer_address && server.payer_address !== data.walletAddress.toLowerCase()) {
       await supabaseAdmin.from("security_alerts").insert({
-        kind: "base_pay_hijack_attempt",
+        kind: "base_pay_wallet_mismatch",
         severity: "high",
-        message: "Attempt to claim payment_id already attributed to another user",
+        message: "Claimed walletAddress does not match on-chain payer",
         metadata: {
           payment_id: data.paymentId,
-          attacker_user_id: context.userId,
-          original_user_id: existingPayment.user_id,
+          claimed_wallet: data.walletAddress.toLowerCase(),
+          onchain_payer: server.payer_address,
+          user_id: context.userId,
         },
       } as any);
-      return { ok: false, status: "rejected", error: "payment_id already claimed" } as const;
+      return { ok: false, status: "rejected", error: "wallet does not match payer" } as const;
     }
 
-    const { error: insErr } = await supabaseAdmin.from("base_payments").upsert(
-      {
+    // Atomic first-claim: rely on UNIQUE(payment_id) + INSERT ... ON CONFLICT DO NOTHING.
+    // This closes the race window where two concurrent callers both pass a prior SELECT guard.
+    const { data: inserted, error: insErr } = await supabaseAdmin
+      .from("base_payments")
+      .insert({
         user_id: context.userId,
         wallet_address: data.walletAddress.toLowerCase(),
         payment_id: data.paymentId,
@@ -110,10 +101,54 @@ export const verifyBasePayment = createServerFn({ method: "POST" })
         testnet: data.testnet,
         tx_hash: server.tx_hash ?? null,
         raw: { server, clientReportedStatus: data.clientReportedStatus },
-      },
-      { onConflict: "payment_id" },
-    );
-    if (insErr) throw new Error(insErr.message);
+      })
+      .select("user_id")
+      .maybeSingle();
+
+    if (insErr && !/duplicate key|unique/i.test(insErr.message)) {
+      throw new Error(insErr.message);
+    }
+
+    if (!inserted) {
+      // Row already existed — verify original claimant.
+      const { data: existingPayment } = await supabaseAdmin
+        .from("base_payments")
+        .select("user_id")
+        .eq("payment_id", data.paymentId)
+        .maybeSingle();
+      if (existingPayment?.user_id && existingPayment.user_id !== context.userId) {
+        console.warn(
+          "[base-pay] payment_id hijack attempt",
+          JSON.stringify({
+            payment_id: data.paymentId,
+            attacker_user_id: context.userId,
+            original_user_id: existingPayment.user_id,
+          }),
+        );
+        await supabaseAdmin.from("security_alerts").insert({
+          kind: "base_pay_hijack_attempt",
+          severity: "high",
+          message: "Attempt to claim payment_id already attributed to another user",
+          metadata: {
+            payment_id: data.paymentId,
+            attacker_user_id: context.userId,
+            original_user_id: existingPayment.user_id,
+          },
+        } as any);
+        return { ok: false, status: "rejected", error: "payment_id already claimed" } as const;
+      }
+      // Same user retrying — idempotent update of status/tx_hash.
+      await supabaseAdmin
+        .from("base_payments")
+        .update({
+          status: isCompleted ? "completed" : effective,
+          tx_hash: server.tx_hash ?? null,
+          raw: { server, clientReportedStatus: data.clientReportedStatus },
+        })
+        .eq("payment_id", data.paymentId)
+        .eq("user_id", context.userId);
+    }
+
 
 
     if (!isCompleted) return { ok: false, status: effective };

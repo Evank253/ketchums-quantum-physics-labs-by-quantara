@@ -19,8 +19,12 @@ export const sendInboxMessage = createServerFn({ method: "POST" })
     const recipient = (u?.users ?? []).find(
       (x: any) => (x.email ?? "").toLowerCase() === data.recipient_email.toLowerCase(),
     );
-    if (!recipient) throw new Error("recipient not found");
-    if (recipient.id === context.userId) throw new Error("cannot message yourself");
+    // SECURITY: do NOT reveal whether an email is a registered account.
+    // Return generic success for both "recipient not found" and "self-message"
+    // so callers cannot use this endpoint as a user-enumeration oracle.
+    if (!recipient || recipient.id === context.userId) {
+      return { ok: true };
+    }
     const { error } = await context.supabase.from("inbox_messages").insert({
       sender_id: context.userId,
       recipient_id: recipient.id,
@@ -29,6 +33,7 @@ export const sendInboxMessage = createServerFn({ method: "POST" })
     });
     if (error) throw error;
     return { ok: true };
+
   });
 
 export const listInbox = createServerFn({ method: "GET" })
